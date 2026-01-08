@@ -1,0 +1,19 @@
+{
+  "name": "@saas-platform/database",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Database Entities and Migrations (MikroORM)",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mikro-orm/core": "^6.3.13",
+    "@mikro-orm/postgresql": "^6.3.13",
+    "@saas-platform/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

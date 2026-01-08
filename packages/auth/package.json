@@ -1,0 +1,21 @@
+{
+  "name": "@saas-platform/auth",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authentication and Authorization Module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@saas-platform/shared-types": "workspace:*",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/bcrypt": "^5.0.2",
+    "typescript": "^5.7.2"
+  }
+}

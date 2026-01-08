@@ -1,0 +1,27 @@
+{
+  "name": "saas-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-tenant SaaS Platform with Unlimited Agent Hierarchy and White-label Support",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "deploy:tenant": "node scripts/deploy-tenant.js",
+    "create:tenant": "node scripts/create-tenant.js"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^2.3.3",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

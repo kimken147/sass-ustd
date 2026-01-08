@@ -1,0 +1,18 @@
+{
+  "name": "@saas-platform/api-client",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unified API Client for Platform and Tenant APIs",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@saas-platform/shared-types": "workspace:*",
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
