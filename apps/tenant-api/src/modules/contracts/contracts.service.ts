@@ -489,7 +489,7 @@ export class ContractsService {
     // 3️⃣ 分配代理佣金（向上分潤）
     const commissionPayouts: CommissionPayout[] = [];
     if (customer.referralAgent) {
-      // 從直接推薦代理開始分配
+      // 從直接推薦代理開始分配（傳遞 tenant 避免重複查詢）
       await this.distributeAgentCommission(
         tenantId,
         customer,
@@ -497,7 +497,12 @@ export class ContractsService {
         totalCommission,
         investmentAmount,
         agentCommissionRate,
-        commissionPayouts
+        commissionPayouts,
+        true, // isDirectReferrer
+        undefined, // sourceAgent
+        new Set(), // visitedAgentIds (初始為空)
+        0, // depth (初始為 0)
+        tenant // 傳遞已查詢的 tenant
       );
     } else {
       // 如果沒有推薦代理，將佣金給站長（頂級代理）
@@ -605,6 +610,9 @@ export class ContractsService {
   /**
    * 分配代理佣金（向上分潤）
    * @param isDirectReferrer 是否為直接推薦代理（第一個調用的代理）
+   * @param visitedAgentIds 已訪問的代理 ID 集合（用於循環檢測）
+   * @param depth 當前遞歸深度（用於防止過深遞歸）
+   * @param tenant 租戶資訊（避免重複查詢）
    */
   private async distributeAgentCommission(
     tenantId: number,
@@ -615,8 +623,33 @@ export class ContractsService {
     commissionRate: number,
     payouts: CommissionPayout[],
     isDirectReferrer: boolean = true,
-    sourceAgent?: Agent
+    sourceAgent?: Agent,
+    visitedAgentIds: Set<number> = new Set(),
+    depth: number = 0,
+    tenant?: Tenant
   ): Promise<void> {
+    // 安全限制：最大遞歸深度（防止過深代理鏈）
+    const MAX_DEPTH = 100;
+    if (depth >= MAX_DEPTH) {
+      console.warn(
+        `代理佣金分配達到最大深度限制 (${MAX_DEPTH})，停止向上分潤。代理 ID: ${agent.id}`
+      );
+      return;
+    }
+
+    // 循環檢測：防止代理鏈中的循環引用
+    if (visitedAgentIds.has(agent.id)) {
+      console.error(
+        `檢測到代理鏈循環！代理 ID: ${agent.id} 已在訪問路徑中。已訪問的代理: ${Array.from(visitedAgentIds).join(", ")}`
+      );
+      throw new BadRequestException(
+        `代理鏈中存在循環引用，無法繼續分配佣金。代理 ID: ${agent.id}`
+      );
+    }
+
+    // 將當前代理加入已訪問集合
+    visitedAgentIds.add(agent.id);
+
     // 獲取完整的代理資訊
     const fullAgent = await this.agentRepository.findOne(
       { id: agent.id },
@@ -627,6 +660,54 @@ export class ContractsService {
 
     if (!fullAgent || !fullAgent.wallet) {
       throw new BadRequestException("代理錢包未設定");
+    }
+
+    // 檢查代理狀態：只給啟用的代理分潤
+    if (fullAgent.status !== AgentStatus.ACTIVE) {
+      console.warn(
+        `代理 ID: ${fullAgent.id} 狀態為 ${fullAgent.status}，跳過分潤`
+      );
+      // 如果代理未啟用，但還有上級代理，繼續向上分潤
+      if (fullAgent.parentAgent && receivedCommission > 0.000001) {
+        await this.distributeAgentCommission(
+          tenantId,
+          customer,
+          fullAgent.parentAgent,
+          receivedCommission, // 將全部佣金傳給上級
+          investmentAmount,
+          commissionRate,
+          payouts,
+          false,
+          fullAgent,
+          visitedAgentIds,
+          depth + 1,
+          tenant
+        );
+      }
+      return;
+    }
+
+    // 檢查佣金是否啟用
+    if (!fullAgent.commission.isEnabled) {
+      console.warn(`代理 ID: ${fullAgent.id} 的佣金功能已停用，跳過分潤`);
+      // 如果佣金未啟用，但還有上級代理，繼續向上分潤
+      if (fullAgent.parentAgent && receivedCommission > 0.000001) {
+        await this.distributeAgentCommission(
+          tenantId,
+          customer,
+          fullAgent.parentAgent,
+          receivedCommission, // 將全部佣金傳給上級
+          investmentAmount,
+          commissionRate,
+          payouts,
+          false,
+          fullAgent,
+          visitedAgentIds,
+          depth + 1,
+          tenant
+        );
+      }
+      return;
     }
 
     // 計算當前代理的佣金
@@ -663,13 +744,15 @@ export class ContractsService {
 
     // 執行轉帳
     try {
-      // 獲取租戶配置和執行合約的錢包地址
-      const tenant = await this.tenantRepository.findOne(
-        { id: tenantId },
-        { populate: [] }
-      );
+      // 獲取租戶配置和執行合約的錢包地址（如果未傳入則查詢）
       if (!tenant) {
-        throw new NotFoundException("租戶不存在");
+        tenant = await this.tenantRepository.findOne(
+          { id: tenantId },
+          { populate: [] }
+        );
+        if (!tenant) {
+          throw new NotFoundException("租戶不存在");
+        }
       }
 
       const executionWalletAddress =
@@ -727,7 +810,10 @@ export class ContractsService {
         commissionRate,
         payouts,
         false, // 不是直接推薦代理
-        fullAgent // 來源代理
+        fullAgent, // 來源代理
+        visitedAgentIds, // 傳遞已訪問集合
+        depth + 1, // 增加深度
+        tenant // 傳遞租戶資訊避免重複查詢
       );
     } else if (uplineAmount > 0.000001) {
       // 如果沒有上級代理但還有剩餘佣金，給當前代理（頂級代理全拿）
@@ -749,13 +835,15 @@ export class ContractsService {
       });
 
       try {
-        // 獲取租戶配置和執行合約的錢包地址
-        const tenant = await this.tenantRepository.findOne(
-          { id: tenantId },
-          { populate: [] }
-        );
+        // 獲取租戶配置和執行合約的錢包地址（如果未傳入則查詢）
         if (!tenant) {
-          throw new NotFoundException("租戶不存在");
+          tenant = await this.tenantRepository.findOne(
+            { id: tenantId },
+            { populate: [] }
+          );
+          if (!tenant) {
+            throw new NotFoundException("租戶不存在");
+          }
         }
 
         const executionWalletAddress =
