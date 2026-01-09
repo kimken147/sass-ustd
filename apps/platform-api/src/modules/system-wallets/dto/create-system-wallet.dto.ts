@@ -63,4 +63,12 @@ export class CreateSystemWalletDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiPropertyOptional({
+    description: "私鑰（僅 CONTRACT_EXECUTION 類型需要，將被加密存儲）",
+    example: "明文私鑰",
+  })
+  @IsString()
+  @IsOptional()
+  privateKey?: string;
 }

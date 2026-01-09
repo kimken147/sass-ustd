@@ -16,6 +16,7 @@ import {
   SystemWalletStatus,
   SystemWalletAssignment,
 } from "@saas-platform/database";
+import { EncryptionService } from "@saas-platform/auth";
 import { CreateTenantDto } from "./dto/create-tenant.dto";
 import { UpdateTenantDto } from "./dto/update-tenant.dto";
 import { TenantResponseDto } from "./dto/tenant-response.dto";
@@ -28,7 +29,8 @@ export class TenantsService {
     @InjectRepository(SystemWallet)
     private readonly systemWalletRepository: EntityRepository<SystemWallet>,
     private readonly em: EntityManager,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly encryptionService: EncryptionService
   ) {}
 
   /**
@@ -100,6 +102,47 @@ export class TenantsService {
       });
     }
 
+    // 處理 cryptoConfig
+    let cryptoConfig = createTenantDto.cryptoConfig || {
+      supportedChains: ["tron"],
+      supportedTokens: ["USDT", "TRX"],
+      investmentContractAddress: "",
+      usdtTokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+      minInvestment: 100,
+      maxInvestment: 100000,
+      tenantRevenueRate: 60.0,
+      agentCommissionRate: 30.0,
+    };
+
+    // 如果提供了 executionWalletId，從 SystemWallet 獲取地址和私鑰
+    if (cryptoConfig.executionWalletId) {
+      const executionWallet = await this.systemWalletRepository.findOne({
+        id: cryptoConfig.executionWalletId,
+        type: SystemWalletType.CONTRACT_EXECUTION,
+        status: SystemWalletStatus.ACTIVE,
+      });
+
+      if (!executionWallet) {
+        throw new NotFoundException(
+          `執行合約錢包 ID ${cryptoConfig.executionWalletId} 不存在或不是執行合約類型`
+        );
+      }
+
+      if (!executionWallet.privateKey) {
+        throw new BadRequestException(
+          `執行合約錢包 ID ${cryptoConfig.executionWalletId} 未設定私鑰`
+        );
+      }
+
+      // 將地址和加密的私鑰複製到 cryptoConfig（供 tenant-api 使用）
+      // 注意：私鑰已經是加密的，直接複製即可
+      cryptoConfig = {
+        ...cryptoConfig,
+        executionWalletAddress: executionWallet.address,
+        executionWalletPrivateKey: executionWallet.privateKey,
+      };
+    }
+
     // 創建租戶實體
     const tenant = this.em.create(Tenant, {
       name: createTenantDto.name,
@@ -112,16 +155,7 @@ export class TenantsService {
       customDomain: createTenantDto.customDomain,
       branding: createTenantDto.branding,
       systemFeeRate: createTenantDto.systemFeeRate || 10.0,
-      cryptoConfig: createTenantDto.cryptoConfig || {
-        supportedChains: ["tron"],
-        supportedTokens: ["USDT", "TRX"],
-        investmentContractAddress: "",
-        usdtTokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-        minInvestment: 100,
-        maxInvestment: 100000,
-        tenantRevenueRate: 60.0,
-        agentCommissionRate: 30.0,
-      },
+      cryptoConfig,
       revenueWallets: createTenantDto.revenueWallets || [],
       systemWallets: systemWalletsWithDetails,
     });
@@ -259,6 +293,34 @@ export class TenantsService {
     // 如果提供了 systemWallets，使用填充完整資訊的版本
     if (systemWalletsWithDetails) {
       updateData.systemWallets = systemWalletsWithDetails;
+    }
+
+    // 如果更新了 cryptoConfig 且提供了 executionWalletId，從 SystemWallet 獲取地址和私鑰
+    if (updateData.cryptoConfig?.executionWalletId) {
+      const executionWallet = await this.systemWalletRepository.findOne({
+        id: updateData.cryptoConfig.executionWalletId,
+        type: SystemWalletType.CONTRACT_EXECUTION,
+        status: SystemWalletStatus.ACTIVE,
+      });
+
+      if (!executionWallet) {
+        throw new NotFoundException(
+          `執行合約錢包 ID ${updateData.cryptoConfig.executionWalletId} 不存在或不是執行合約類型`
+        );
+      }
+
+      if (!executionWallet.privateKey) {
+        throw new BadRequestException(
+          `執行合約錢包 ID ${updateData.cryptoConfig.executionWalletId} 未設定私鑰`
+        );
+      }
+
+      // 將地址和加密的私鑰複製到 cryptoConfig（供 tenant-api 使用）
+      updateData.cryptoConfig = {
+        ...updateData.cryptoConfig,
+        executionWalletAddress: executionWallet.address,
+        executionWalletPrivateKey: executionWallet.privateKey,
+      };
     }
 
     this.em.assign(tenant, updateData);

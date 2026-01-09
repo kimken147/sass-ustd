@@ -12,6 +12,7 @@ packages/database/src/entities/
   ├─ commission-payout.entity.ts ✅
   ├─ revenue-distribution.entity.ts ✅
   ├─ system-fee-distribution.entity.ts ✅
+  ├─ system-wallet.entity.ts ✅
   └─ index.ts ✅
 ```
 
@@ -35,10 +36,14 @@ packages/database/src/entities/
 
 ```
 Platform
-  └─ systemWallet (系統商錢包)
+  └─ SystemWallet[] (系統商錢包)
+      ├─ type: CONTRACT_EXECUTION (執行合約的錢包)
+      └─ type: REVENUE_DISTRIBUTION (分潤的錢包)
 
 Tenant
   ├─ systemFeeRate (10%) - 由 Platform 設定
+  ├─ systemWallets[] (系統錢包指派 - 用於分潤)
+  │   └─ 每個指派包含：walletId, address, name, chain, percentage
   ├─ revenueWallets[] (60%) - 租戶營運錢包組
   └─ cryptoConfig
       ├─ tenantRevenueRate (60%)
@@ -62,7 +67,13 @@ RevenueDistribution (租戶分潤記錄)
   └─ walletDistributions[] (每個錢包的分配)
 
 SystemFeeDistribution (系統費記錄)
-  └─ systemWalletAddress
+  └─ systemWalletAddress (從 Tenant.systemWallets 中獲取)
+
+SystemWallet (系統商錢包)
+  ├─ type: CONTRACT_EXECUTION (執行合約)
+  ├─ type: REVENUE_DISTRIBUTION (分潤)
+  ├─ address, name, chain
+  └─ totalRevenue (累計系統費收入)
 ```
 
 ---
@@ -74,6 +85,10 @@ SystemFeeDistribution (系統費記錄)
 ```typescript
 tenant: {
   systemFeeRate: 10.0,  // 系統費（由 Platform 設定）
+  systemWallets: [       // 系統錢包指派（用於接收系統費）
+    { walletId: 1, address: 'TXxx...', percentage: 60 },
+    { walletId: 2, address: 'TYyy...', percentage: 40 },
+  ],  // 比例總和必須 = 100%
   cryptoConfig: {
     tenantRevenueRate: 60.0,      // 租戶收入
     agentCommissionRate: 30.0,    // 代理佣金
@@ -81,6 +96,7 @@ tenant: {
 }
 
 // 驗證：10 + 60 + 30 = 100 ✅
+// 系統費 10% 會按 systemWallets 的比例分配到多個系統錢包
 ```
 
 ### 2. 租戶分潤錢包組
@@ -275,7 +291,9 @@ psql -U postgres -d saas_platform -c "\dt"
 
 ### 已完成
 
-- [x] 8 個 Entity 檔案創建完成
+- [x] 9 個 Entity 檔案創建完成（包含 SystemWallet）
+- [x] 系統商錢包管理（兩種類型：執行合約、分潤）
+- [x] 租戶系統錢包指派機制（支援多錢包和比例分配）
 - [x] 分潤模式確認（100% 分配）
 - [x] 頂級代理邏輯（租戶本人）
 - [x] 第一次分潤驗證

@@ -1,20 +1,38 @@
 import { Module } from "@nestjs/common";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { ConfigModule } from "@nestjs/config";
 import {
   Tenant,
   User,
   Customer,
   Agent,
+  SystemFeeDistribution,
+  RevenueDistribution,
+  CommissionPayout,
 } from "@saas-platform/database";
-import { PasswordService } from "@saas-platform/auth";
+import { PasswordService, EncryptionService } from "@saas-platform/auth";
 import { ContractsController } from "./contracts.controller";
 import { ContractsService } from "./contracts.service";
+import { TronService } from "./services/tron.service";
 
 @Module({
-  imports: [MikroOrmModule.forFeature([Tenant, User, Customer, Agent])],
+  imports: [
+    MikroOrmModule.forFeature([
+      Tenant,
+      User,
+      Customer,
+      Agent,
+      SystemFeeDistribution,
+      RevenueDistribution,
+      CommissionPayout,
+    ]),
+    ConfigModule,
+  ],
   controllers: [ContractsController],
   providers: [
     ContractsService,
+    TronService,
+    EncryptionService,
     {
       provide: PasswordService,
       useFactory: () => new PasswordService(10),

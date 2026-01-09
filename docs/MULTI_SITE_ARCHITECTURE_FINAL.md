@@ -71,23 +71,38 @@
 ### Platform Level（總後台）
 
 ```typescript
-// 新增：Platform Settings
-export interface PlatformSettings {
-  // 系統商資訊
-  systemWallet: {
-    address: string;          // TRON 地址
-    chain: 'tron';
-    verified: boolean;
-    verifiedAt?: Date;
-    totalRevenue: number;     // 累計系統費收入
-  };
-  
-  // 預設系統費率（可為每個 Tenant 單獨設定）
-  defaultSystemFeeRate: number; // 例如 1.0 表示 1%
-  
-  // 其他全局設定
-  supportedChains: string[];
-  supportedTokens: string[];
+// SystemWallet Entity（系統商錢包）
+export enum SystemWalletType {
+  CONTRACT_EXECUTION = "contract_execution",     // 執行合約的錢包
+  REVENUE_DISTRIBUTION = "revenue_distribution", // 分潤的錢包
+}
+
+export enum SystemWalletChain {
+  TRON = "tron",
+  ETHEREUM = "ethereum",
+  BSC = "bsc",
+}
+
+@Entity({ tableName: "system_wallets" })
+export class SystemWallet extends BaseEntity {
+  name!: string;              // 錢包名稱
+  address!: string;           // 錢包地址
+  chain!: SystemWalletChain;  // 區塊鏈
+  type!: SystemWalletType;    // 錢包類型
+  status!: SystemWalletStatus; // 狀態
+  verified!: boolean;         // 是否已驗證
+  totalRevenue!: string;      // 累計系統費收入
+  // ...
+}
+
+// 租戶指派系統錢包（用於分潤）
+export interface SystemWalletAssignment {
+  walletId: number;    // 系統商錢包 ID
+  address: string;     // 錢包地址（複製，供 tenant-api 使用）
+  name: string;        // 錢包名稱（複製）
+  chain: string;       // 區塊鏈（複製）
+  percentage: number;  // 分潤比例（整數，%）
+  syncedAt: Date;      // 同步時間
 }
 ```
 
@@ -342,15 +357,35 @@ export class SystemFeeDistribution extends BaseEntity {
 // ==================== 配置 ====================
 
 // Platform 設定（總後台）
-const platformSettings = {
-  systemWallet: {
-    address: 'TSystem...',
+// 系統商錢包（兩種類型）
+const systemWallets = [
+  {
+    id: 1,
+    type: 'CONTRACT_EXECUTION',
+    address: 'TContract...',
+    name: '執行合約錢包',
   },
-};
+  {
+    id: 2,
+    type: 'REVENUE_DISTRIBUTION',
+    address: 'TRevenue1...',
+    name: '分潤錢包 1',
+  },
+  {
+    id: 3,
+    type: 'REVENUE_DISTRIBUTION',
+    address: 'TRevenue2...',
+    name: '分潤錢包 2',
+  },
+];
 
 // Tenant 設定（由總後台設定）
 const tenant = {
   systemFeeRate: 1.0,        // 🔑 系統費 1%（總後台設定）
+  systemWallets: [           // 🔑 系統錢包指派（用於分潤）
+    { walletId: 2, address: 'TRevenue1...', percentage: 60 },
+    { walletId: 3, address: 'TRevenue2...', percentage: 40 },
+  ],  // 比例總和必須 = 100%
   cryptoConfig: {
     platformFeeRate: 2.0,    // 租戶平台費 2%
   },
@@ -387,19 +422,26 @@ const investment = 1000; // USDT
 // 1️⃣ 系統費（總後台收取）
 const systemFee = investment * 0.01; // = 10 USDT
 
-// 創建 system_fee_distribution 記錄
-const systemFeeDistribution = {
-  tenant: tenant,
-  amount: 10,
-  feeRate: 1.0,
-  systemWalletAddress: 'TSystem...',
-  status: 'pending'
-};
+// 按 tenant.systemWallets 的比例分配到多個系統錢包
+const systemFeeDistributions = tenant.systemWallets.map(sw => {
+  const amount = systemFee * (sw.percentage / 100);
+  return {
+    tenant: tenant,
+    amount: amount,
+    feeRate: 1.0,
+    systemWalletAddress: sw.address,
+    systemWalletId: sw.walletId,
+    status: 'pending'
+  };
+});
 
-// 💸 實時轉帳
-await transferUSDT('TSystem...', 10);
-systemFeeDistribution.status = 'completed';
-systemFeeDistribution.txHash = '0x...';
+// 💸 實時轉帳（逐個系統錢包）
+for (const dist of systemFeeDistributions) {
+  const txHash = await transferUSDT(dist.systemWalletAddress, dist.amount);
+  dist.txHash = txHash;
+  dist.status = 'completed';
+  dist.completedAt = new Date();
+}
 
 // 2️⃣ 租戶平台費
 const platformFee = investment * 0.02; // = 20 USDT

@@ -58,6 +58,11 @@ export interface TenantCryptoConfig {
   investmentContractAddress: string; // 投資合約地址
   usdtTokenAddress: string; // USDT Token 地址
 
+  // 🔑 執行合約的錢包（用於調用 transferFrom）
+  executionWalletId?: number; // 執行合約的錢包 ID（引用 SystemWallet，類型為 CONTRACT_EXECUTION）
+  executionWalletAddress?: string; // 執行合約的錢包地址（從 SystemWallet 複製，供 tenant-api 使用）
+  executionWalletPrivateKey?: string; // 執行合約的錢包私鑰（從 SystemWallet 複製，已加密，供 tenant-api 使用）
+
   // 投資限制
   minInvestment: number;
   maxInvestment: number;

@@ -19,16 +19,35 @@
 ### 配置
 
 ```typescript
-// Platform 設定
-const platformSettings = {
-  systemWallet: {
-    address: 'TSystem...',
+// Platform 設定（系統商錢包）
+const systemWallets = [
+  {
+    id: 1,
+    type: 'CONTRACT_EXECUTION',
+    address: 'TContract...',
+    name: '執行合約錢包',
   },
-};
+  {
+    id: 2,
+    type: 'REVENUE_DISTRIBUTION',
+    address: 'TRevenue1...',
+    name: '分潤錢包 1',
+  },
+  {
+    id: 3,
+    type: 'REVENUE_DISTRIBUTION',
+    address: 'TRevenue2...',
+    name: '分潤錢包 2',
+  },
+];
 
 // Tenant 設定
 const tenant = {
   systemFeeRate: 10.0,  // 系統費 10%（由總後台設定）
+  systemWallets: [       // 系統錢包指派（用於分潤）
+    { walletId: 2, address: 'TRevenue1...', name: '分潤錢包 1', percentage: 60 },
+    { walletId: 3, address: 'TRevenue2...', name: '分潤錢包 2', percentage: 40 },
+  ],  // 比例總和必須 = 100%
   cryptoConfig: {
     tenantRevenueRate: 60.0,      // 租戶收入 60%
     agentCommissionRate: 30.0,    // 代理佣金 30%
@@ -100,24 +119,33 @@ const investment = 1000;
 const systemFee = investment * (tenant.systemFeeRate / 100);
 // = 1000 × 10% = 100 USDT
 
-// 創建 system_fee_distribution 記錄
-const systemFeeDistribution = {
-  tenant: tenant,
-  customer: customer,
-  amount: '100.000000',
-  originalAmount: '1000.000000',
-  feeRate: 10.0,
-  systemWalletAddress: 'TSystem...',
-  status: 'pending'
-};
+// 按 tenant.systemWallets 的比例分配到多個系統錢包
+const systemFeeDistributions = tenant.systemWallets.map(sw => {
+  const amount = systemFee * (sw.percentage / 100);
+  return {
+    tenant: tenant,
+    customer: customer,
+    amount: amount.toFixed(6),
+    originalAmount: '1000.000000',
+    feeRate: 10.0,
+    systemWalletAddress: sw.address,
+    systemWalletId: sw.walletId,
+    status: 'pending'
+  };
+});
 
-// 💸 實時轉帳
-const systemTxHash = await transferUSDT('TSystem...', '100.000000');
-systemFeeDistribution.txHash = systemTxHash;
-systemFeeDistribution.status = 'completed';
-systemFeeDistribution.completedAt = new Date();
+// 💸 實時轉帳（逐個系統錢包）
+for (const dist of systemFeeDistributions) {
+  const txHash = await transferUSDT(dist.systemWalletAddress, dist.amount);
+  dist.txHash = txHash;
+  dist.status = 'completed';
+  dist.completedAt = new Date();
+  console.log(`✅ 系統費: ${dist.amount} USDT → ${dist.systemWalletAddress} (${dist.systemWalletId})`);
+}
 
-console.log('✅ 系統費: 100 USDT → TSystem...');
+// 範例輸出：
+// ✅ 系統費: 60.000000 USDT → TRevenue1... (2)
+// ✅ 系統費: 40.000000 USDT → TRevenue2... (3)
 
 // ==================== 2️⃣ 租戶收入 ====================
 
@@ -308,7 +336,8 @@ console.log('✅ 代理佣金 (Top Agent - 租戶): 60 USDT → TTopAgent...');
 分配明細:
 ┌─────────────────────────────────────────┐
 │ 系統費 (10%):                 100 USDT  │
-│   └─ TSystem...               100 USDT  │
+│   ├─ 分潤錢包 1 (60%)          60 USDT  │
+│   └─ 分潤錢包 2 (40%)          40 USDT  │
 ├─────────────────────────────────────────┤
 │ 租戶收入 (60%):               600 USDT  │
 │   ├─ 營運錢包 (60%)           360 USDT  │

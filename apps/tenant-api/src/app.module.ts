@@ -1,7 +1,15 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
-import { Tenant, User, Agent } from "@saas-platform/database";
+import {
+  Tenant,
+  User,
+  Agent,
+  Customer,
+  SystemFeeDistribution,
+  RevenueDistribution,
+  CommissionPayout,
+} from "@saas-platform/database";
 import { AuthModule } from "./modules/auth/auth.module";
 import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.module";
 import { AgentsModule } from "./modules/agents/agents.module";
@@ -38,7 +46,15 @@ import { ContractsModule } from "./modules/contracts/contracts.module";
           password: configService.get("TENANT_DB_PASSWORD", "postgres"),
 
           // 實體列表
-          entities: [Tenant, User, Agent],
+          entities: [
+            Tenant,
+            User,
+            Agent,
+            Customer,
+            SystemFeeDistribution,
+            RevenueDistribution,
+            CommissionPayout,
+          ],
 
           // 開發環境設置
           debug: configService.get("NODE_ENV") !== "production",

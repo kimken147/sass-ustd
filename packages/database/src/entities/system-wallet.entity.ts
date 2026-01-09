@@ -64,4 +64,8 @@ export class SystemWallet extends BaseEntity {
 
   @Property({ nullable: true })
   lastUsedAt?: Date; // 最後使用時間
+
+  // 🔑 執行合約錢包的私鑰（僅 CONTRACT_EXECUTION 類型需要，加密存儲）
+  @Property({ nullable: true, hidden: true })
+  privateKey?: string; // 加密後的私鑰
 }
