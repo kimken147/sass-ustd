@@ -5,6 +5,7 @@ import { Tenant, User, Agent } from "@saas-platform/database";
 import { AuthModule } from "./modules/auth/auth.module";
 import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.module";
 import { AgentsModule } from "./modules/agents/agents.module";
+import { ContractsModule } from "./modules/contracts/contracts.module";
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AgentsModule } from "./modules/agents/agents.module";
     AuthModule,
     RevenueWalletsModule,
     AgentsModule,
+    ContractsModule,
     // CustomersModule,
     // ProductsModule,
     // OrdersModule,
