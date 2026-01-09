@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Tenant, User, Agent } from '@saas-platform/database';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { Tenant, User, Agent } from '@saas-platform/database';
       inject: [ConfigService],
     }),
 
-    // 在這裡導入其他功能模組
+    // 功能模組
+    AuthModule,
     // TenantsModule,
     // BillingModule,
     // AnalyticsModule,

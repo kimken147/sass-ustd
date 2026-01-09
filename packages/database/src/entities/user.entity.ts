@@ -1,18 +1,25 @@
-import { Entity, Property, Enum, ManyToOne, Index, Unique } from '@mikro-orm/core';
-import { BaseEntity } from './base.entity';
-import { Tenant } from './tenant.entity';
+import {
+  Entity,
+  Property,
+  Enum,
+  ManyToOne,
+  Index,
+  Unique,
+} from "@mikro-orm/core";
+import { BaseEntity } from "./base.entity";
+import { Tenant } from "./tenant.entity";
 
 export enum UserRole {
-  PLATFORM_ADMIN = 'platform_admin', // 平台管理員
-  TENANT_ADMIN = 'tenant_admin',     // 租戶管理員
-  AGENT = 'agent',                   // 代理商
-  CUSTOMER = 'customer',             // 投資客戶
+  PLATFORM_ADMIN = "platform_admin", // 平台管理員
+  TENANT_ADMIN = "tenant_admin", // 租戶管理員
+  AGENT = "agent", // 代理商
+  CUSTOMER = "customer", // 投資客戶
 }
 
 export enum UserStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  SUSPENDED = "suspended",
 }
 
 export interface UserSecurity {
@@ -23,10 +30,15 @@ export interface UserSecurity {
   lastFailedLogin?: Date;
 }
 
-@Entity({ tableName: 'users' })
-@Unique({ properties: ['email', 'tenant'] })
+@Entity({ tableName: "users" })
+@Unique({ properties: ["email", "tenant"] })
+@Unique({ properties: ["username", "tenant"] })
 export class User extends BaseEntity {
   // 基本資訊
+  @Property()
+  @Index()
+  username!: string; // 登入帳號（在租戶內唯一，Platform Admin 全局唯一）
+
   @Property()
   @Index()
   email!: string;
@@ -52,7 +64,7 @@ export class User extends BaseEntity {
   tenant?: Tenant;
 
   // 安全設置
-  @Property({ type: 'json' })
+  @Property({ type: "json" })
   security: UserSecurity = {
     twoFactorEnabled: false,
     failedLoginAttempts: 0,
