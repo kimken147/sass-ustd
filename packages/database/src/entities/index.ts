@@ -6,3 +6,4 @@ export * from './customer.entity';
 export * from './commission-payout.entity';
 export * from './revenue-distribution.entity';
 export * from './system-fee-distribution.entity';
+export * from './system-wallet.entity';

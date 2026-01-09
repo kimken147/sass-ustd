@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Tenant, User, Agent } from '@saas-platform/database';
+import { Tenant, User, Agent, SystemWallet } from '@saas-platform/database';
 import { AuthModule } from './modules/auth/auth.module';
+import { TenantsModule } from './modules/tenants/tenants.module';
+import { SystemWalletsModule } from './modules/system-wallets/system-wallets.module';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { AuthModule } from './modules/auth/auth.module';
         password: configService.get('PLATFORM_DB_PASSWORD', 'postgres'),
         
         // 實體列表
-        entities: [Tenant, User, Agent],
+        entities: [Tenant, User, Agent, SystemWallet],
         
         // 開發環境自動同步（生產環境應使用 migrations）
         debug: configService.get('NODE_ENV') !== 'production',
@@ -46,7 +48,8 @@ import { AuthModule } from './modules/auth/auth.module';
 
     // 功能模組
     AuthModule,
-    // TenantsModule,
+    SystemWalletsModule,
+    TenantsModule,
     // BillingModule,
     // AnalyticsModule,
   ],

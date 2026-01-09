@@ -10,6 +10,7 @@ import {
   CommissionPayout,
   RevenueDistribution,
   SystemFeeDistribution,
+  SystemWallet,
 } from "@saas-platform/database";
 
 export default defineConfig({
@@ -31,6 +32,7 @@ export default defineConfig({
     CommissionPayout,
     RevenueDistribution,
     SystemFeeDistribution,
+    SystemWallet,
   ],
 
   // Migration 設定
