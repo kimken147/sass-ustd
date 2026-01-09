@@ -14,6 +14,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.module";
 import { AgentsModule } from "./modules/agents/agents.module";
 import { ContractsModule } from "./modules/contracts/contracts.module";
+import { TransactionsModule } from "./modules/transactions/transactions.module";
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { ContractsModule } from "./modules/contracts/contracts.module";
     RevenueWalletsModule,
     AgentsModule,
     ContractsModule,
+    TransactionsModule,
     // CustomersModule,
     // ProductsModule,
     // OrdersModule,

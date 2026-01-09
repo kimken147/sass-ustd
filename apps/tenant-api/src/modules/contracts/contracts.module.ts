@@ -7,8 +7,6 @@ import {
   Customer,
   Agent,
   SystemFeeDistribution,
-  RevenueDistribution,
-  CommissionPayout,
 } from "@saas-platform/database";
 import { PasswordService, EncryptionService } from "@saas-platform/auth";
 import { ContractsController } from "./contracts.controller";
@@ -23,8 +21,6 @@ import { TronService } from "./services/tron.service";
       Customer,
       Agent,
       SystemFeeDistribution,
-      RevenueDistribution,
-      CommissionPayout,
     ]),
     ConfigModule,
   ],
