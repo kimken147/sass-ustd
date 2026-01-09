@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Tenant, User, Agent } from "@saas-platform/database";
 import { AuthModule } from "./modules/auth/auth.module";
+import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.module";
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 
     // 功能模組
     AuthModule,
+    RevenueWalletsModule,
     // AgentsModule,
     // CustomersModule,
     // ProductsModule,
