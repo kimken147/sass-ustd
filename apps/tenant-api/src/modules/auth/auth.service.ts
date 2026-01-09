@@ -1,7 +1,13 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, Inject } from "@nestjs/common";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
-import { User, UserRole, Agent } from "@saas-platform/database";
+import {
+  User,
+  UserRole,
+  UserStatus,
+  Agent,
+  AgentStatus,
+} from "@saas-platform/database";
 import {
   JwtService,
   PasswordService,
@@ -32,6 +38,7 @@ export class AuthService extends BaseAuthService {
     em: EntityManager,
     jwtService: JwtService,
     passwordService: PasswordService,
+    @Inject("TokenBlacklistService")
     tokenBlacklist: TokenBlacklistService
   ) {
     super();
@@ -46,7 +53,11 @@ export class AuthService extends BaseAuthService {
    * 租戶用戶登入（Tenant Admin, Agent, Customer）
    */
   async login(loginDto: LoginDto, tenantId?: number): Promise<AuthResponseDto> {
-    const result = await this.doLogin(loginDto.username, loginDto.password, tenantId);
+    const result = await this.doLogin(
+      loginDto.username,
+      loginDto.password,
+      tenantId
+    );
     return {
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
@@ -61,35 +72,24 @@ export class AuthService extends BaseAuthService {
   }
 
   /**
-   * 代理登入（使用代理碼）
+   * 代理登入（使用 username）
    * 這是 tenant-api 特有的功能
    */
   async agentLogin(
-    agentCode: string,
+    username: string,
     password: string,
     tenantId: number
   ): Promise<AuthResponseDto> {
-    // 查找代理
-    const agent = await this.em.findOne(Agent, {
-      code: agentCode,
-      tenant: tenantId,
-      status: "active",
-    });
-
-    if (!agent) {
-      throw new UnauthorizedException("代理碼不存在或已被停用");
-    }
-
-    // 查找對應的用戶
+    // 先查找用戶（必須是 AGENT 角色）
     const user = await this.userRepository.findOne({
-      id: agent.user.id,
+      username,
       role: UserRole.AGENT,
       tenant: tenantId,
-      status: "active",
+      status: UserStatus.ACTIVE,
     });
 
     if (!user) {
-      throw new UnauthorizedException("用戶不存在或已被停用");
+      throw new UnauthorizedException("帳號或密碼錯誤");
     }
 
     // 驗證密碼
@@ -99,7 +99,24 @@ export class AuthService extends BaseAuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException("代理碼或密碼錯誤");
+      throw new UnauthorizedException("帳號或密碼錯誤");
+    }
+
+    // 查找對應的代理記錄
+    const agent = await this.em.findOne(
+      Agent,
+      {
+        user: user.id,
+        tenant: tenantId,
+        status: AgentStatus.ACTIVE,
+      },
+      {
+        populate: ["tenant"],
+      }
+    );
+
+    if (!agent) {
+      throw new UnauthorizedException("代理記錄不存在或已被停用");
     }
 
     // 生成 Token
@@ -132,6 +149,25 @@ export class AuthService extends BaseAuthService {
    * 刷新 Token
    */
   async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
-    return super.refreshToken(refreshToken);
+    const result = await this.doRefreshToken(refreshToken);
+    return {
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+        tenantId: result.user.tenantId,
+      },
+    };
+  }
+
+  /**
+   * 登出
+   */
+  async logout(accessToken: string, refreshToken?: string): Promise<void> {
+    return super.logout(accessToken, refreshToken);
   }
 }
