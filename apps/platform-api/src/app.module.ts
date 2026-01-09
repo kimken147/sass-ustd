@@ -5,6 +5,7 @@ import { Tenant, User, Agent, SystemWallet } from '@saas-platform/database';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { SystemWalletsModule } from './modules/system-wallets/system-wallets.module';
+import { SitesModule } from './modules/sites/sites.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SystemWalletsModule } from './modules/system-wallets/system-wallets.mod
     AuthModule,
     SystemWalletsModule,
     TenantsModule,
+    SitesModule,
     // BillingModule,
     // AnalyticsModule,
   ],
