@@ -4,6 +4,7 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Tenant, User, Agent } from "@saas-platform/database";
 import { AuthModule } from "./modules/auth/auth.module";
 import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.module";
+import { AgentsModule } from "./modules/agents/agents.module";
 
 @Module({
   imports: [
@@ -60,7 +61,7 @@ import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.
     // 功能模組
     AuthModule,
     RevenueWalletsModule,
-    // AgentsModule,
+    AgentsModule,
     // CustomersModule,
     // ProductsModule,
     // OrdersModule,
