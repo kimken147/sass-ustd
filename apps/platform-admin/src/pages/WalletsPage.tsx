@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useList, useCreate, type CrudFilter } from "@refinedev/core";
-import { ListView } from "@/components/refine-ui/views/list-view";
+import { ListView } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import {

@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import { Layout } from "@/components/refine-ui/layout/layout";
+import { Layout } from "@saas-platform/ui";
 
 /**
  * DashboardLayout - 使用 Refine 官方的 Layout 01 組件

@@ -3,8 +3,8 @@ import { useCustom, useApiUrl } from "@refinedev/core";
 import {
   ListView,
   ListViewHeader,
-} from "@/components/refine-ui/views/list-view";
-import { EditButton } from "@/components/refine-ui/buttons/edit";
+  EditButton,
+} from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import {

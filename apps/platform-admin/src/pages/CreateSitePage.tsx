@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { useCreate, useList, useNavigation } from "@refinedev/core";
-import {
-  CreateView,
-  CreateViewHeader,
-} from "@/components/refine-ui/views/create-view";
+import { CreateView, CreateViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import { Label } from "@saas-platform/ui";
