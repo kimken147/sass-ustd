@@ -170,7 +170,7 @@ export default function CustomersPage() {
 
     harvestMutate(
       {
-        url: "/customers/harvest",
+        url: "/api/customers/harvest",
         method: "post",
         values: { customerIds: Array.from(selectedIds) },
       },
@@ -242,7 +242,7 @@ export default function CustomersPage() {
 
     harvestAllMutate(
       {
-        url: `/customers/harvest-all${queryString ? `?${queryString}` : ""}`,
+        url: `/api/customers/harvest-all${queryString ? `?${queryString}` : ""}`,
         method: "post",
         values: {},
       },

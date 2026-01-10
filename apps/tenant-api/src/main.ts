@@ -26,6 +26,14 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // API 前綴
+  // 作用：
+  // 1. 區分 API 路由和靜態資源/健康檢查端點
+  // 2. 便於反向代理和網關統一管理
+  // 3. 符合 REST API 命名慣例
+  // 4. 避免與前端路由衝突
+  app.setGlobalPrefix("api");
+
   // Swagger 文檔
   const config = new DocumentBuilder()
     .setTitle("Tenant API")
@@ -34,13 +42,13 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("docs", app, document);
+  SwaggerModule.setup("api/docs", app, document);
 
   const port = process.env.TENANT_API_PORT || 3001;
   await app.listen(port);
 
   console.log(`🚀 Tenant API is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger docs: http://localhost:${port}/docs`);
+  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

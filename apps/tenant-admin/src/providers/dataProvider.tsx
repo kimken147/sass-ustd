@@ -34,7 +34,7 @@ export const dataProvider: DataProvider = {
 
       const response = await client.request({
         method: "GET",
-        url: `/${resource}`,
+        url: `/api/${resource}`,
         params,
       });
 
@@ -68,7 +68,7 @@ export const dataProvider: DataProvider = {
     try {
       const response = await client.request({
         method: "GET",
-        url: `/${resource}/${id}`,
+        url: `/api/${resource}/${id}`,
       });
 
       return {
@@ -87,7 +87,7 @@ export const dataProvider: DataProvider = {
     try {
       const response = await client.request({
         method: "POST",
-        url: `/${resource}`,
+        url: `/api/${resource}`,
         data: variables,
       });
 
@@ -107,7 +107,7 @@ export const dataProvider: DataProvider = {
     try {
       const response = await client.request({
         method: "PATCH",
-        url: `/${resource}/${id}`,
+        url: `/api/${resource}/${id}`,
         data: variables,
       });
 
@@ -128,7 +128,7 @@ export const dataProvider: DataProvider = {
     try {
       const response = await client.request({
         method: "DELETE",
-        url: `/${resource}/${id}`,
+        url: `/api/${resource}/${id}`,
       });
 
       return {

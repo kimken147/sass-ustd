@@ -1,8 +1,8 @@
-import { NestFactory, Reflector } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-import { TransformInterceptor } from '@saas-platform/shared';
+import { NestFactory, Reflector } from "@nestjs/core";
+import { ValidationPipe } from "@nestjs/common";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { AppModule } from "./app.module";
+import { TransformInterceptor } from "@saas-platform/shared";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,7 +14,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    }),
+    })
   );
 
   // 全局響應攔截器
@@ -22,26 +22,31 @@ async function bootstrap() {
 
   // CORS 設置
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+    origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
     credentials: true,
   });
 
   // API 前綴
-  app.setGlobalPrefix('api');
+  // 作用：
+  // 1. 區分 API 路由和靜態資源/健康檢查端點
+  // 2. 便於反向代理和網關統一管理
+  // 3. 符合 REST API 命名慣例
+  // 4. 避免與前端路由衝突
+  app.setGlobalPrefix("api");
 
   // Swagger 文檔
   const config = new DocumentBuilder()
-    .setTitle('Platform API')
-    .setDescription('SaaS Platform Management API')
-    .setVersion('1.0')
+    .setTitle("Platform API")
+    .setDescription("SaaS Platform Management API")
+    .setVersion("1.0")
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup("api/docs", app, document);
 
   const port = process.env.PLATFORM_API_PORT || 3000;
   await app.listen(port);
-  
+
   console.log(`🚀 Platform API is running on: http://localhost:${port}`);
   console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
 }

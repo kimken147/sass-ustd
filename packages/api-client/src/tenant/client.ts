@@ -108,7 +108,7 @@ export class TenantApiClient {
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     const response = await this.client.post<AuthResponse>(
-      '/auth/login',
+      '/api/auth/login',
       credentials
     );
     const data = response.data;
@@ -119,7 +119,7 @@ export class TenantApiClient {
 
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
     const response = await this.client.post<AuthResponse>(
-      '/auth/refresh',
+      '/api/auth/refresh',
       { refreshToken }
     );
     const data = response.data;
@@ -130,7 +130,7 @@ export class TenantApiClient {
 
   async logout(refreshToken?: string): Promise<void> {
     try {
-      await this.client.post('/auth/logout', { refreshToken });
+      await this.client.post('/api/auth/logout', { refreshToken });
     } catch (error) {
       // 即使登出失敗也清除本地 token
       console.error('Logout error:', error);
@@ -140,7 +140,7 @@ export class TenantApiClient {
   }
 
   async getMe(): Promise<UserInfo> {
-    const response = await this.client.post<UserInfo>('/auth/me', {});
+    const response = await this.client.post<UserInfo>('/api/auth/me', {});
     return response.data;
   }
 
