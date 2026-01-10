@@ -126,6 +126,8 @@ saas-platform/
 - 全局數據看板
 - 系統配置
 
+**重要**：使用 Refine 官方的 shadcn/ui 整合組件（Layout 01、ListView、CreateButton 等），詳見 [REFINE_SHADCN_INTEGRATION.md](./apps/platform-admin/REFINE_SHADCN_INTEGRATION.md)
+
 ### tenant-admin (Vite + React + Refine)
 租戶管理後台。
 
@@ -182,13 +184,23 @@ saas-platform/
 ### ui
 shadcn/ui 共享組件庫。
 
+**重要**：所有 shadcn/ui 提供的組件都必須通過官方 CLI 安裝，不要手動創建。
+
 ```typescript
 - components/
-  - ui/                 // shadcn/ui 原始組件
+  - ui/                 // shadcn/ui 原始組件（通過 CLI 安裝）
   - business/           // 業務封裝組件
 - hooks/                // 共享 Hooks
 - lib/                  // 工具函數
 ```
+
+**添加新組件**：
+```bash
+cd packages/ui
+pnpm dlx shadcn@latest add <component-name> --yes --overwrite
+```
+
+詳細說明請參考 [packages/ui/README.md](./packages/ui/README.md)
 
 ### auth
 統一的認證授權模組。

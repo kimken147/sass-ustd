@@ -56,23 +56,43 @@ VITE_PLATFORM_API_URL=http://localhost:3000
 ```
 platform-admin/
 ├── src/
-│   ├── pages/          # 頁面組件
-│   │   └── LoginPage.tsx
-│   ├── layouts/        # 布局組件
+│   ├── pages/              # 頁面組件
+│   │   ├── LoginPage.tsx
+│   │   └── DashboardPage.tsx
+│   ├── layouts/            # 布局組件（已棄用，改用 Refine Layout）
 │   │   └── DashboardLayout.tsx
-│   ├── providers/      # Refine Providers
+│   ├── components/
+│   │   ├── ui/             # shadcn/ui 基礎組件
+│   │   └── refine-ui/      # Refine 官方 shadcn/ui 整合組件 ⭐
+│   │       ├── layout/      # Layout 01（側邊欄、標頭）
+│   │       ├── views/      # ListView, CreateView, EditView, ShowView
+│   │       ├── buttons/    # CreateButton, EditButton, DeleteButton 等
+│   │       └── theme/      # ThemeProvider, ThemeToggle
+│   ├── providers/          # Refine Providers
 │   │   ├── authProvider.tsx
 │   │   └── dataProvider.tsx
-│   ├── lib/            # 工具函數
+│   ├── lib/                # 工具函數
 │   │   └── utils.ts
-│   ├── App.tsx         # 應用入口（Refine 配置）
-│   ├── main.tsx        # React 入口
-│   └── index.css       # 全局樣式
-├── index.html          # HTML 模板
-├── vite.config.ts      # Vite 配置
-├── tailwind.config.js  # Tailwind 配置
-└── tsconfig.json       # TypeScript 配置
+│   ├── App.tsx             # 應用入口（Refine 配置）
+│   ├── main.tsx            # React 入口
+│   └── index.css           # 全局樣式
+├── components.json          # shadcn/ui 配置
+├── index.html              # HTML 模板
+├── vite.config.ts          # Vite 配置
+├── tailwind.config.js      # Tailwind 配置
+├── tsconfig.json           # TypeScript 配置
+└── REFINE_SHADCN_INTEGRATION.md  # Refine 整合指南 ⭐
 ```
+
+## ⚠️ 重要：使用 Refine 官方組件
+
+**請優先使用 Refine 官方的 shadcn/ui 整合組件**，而不是手動創建：
+
+- ✅ **Layout 01** - 使用 `@/components/refine-ui/layout/layout` 而不是手動創建的 DashboardLayout
+- ✅ **ListView** - 使用 `@/components/refine-ui/views/list-view` 構建列表頁面
+- ✅ **CreateButton, EditButton 等** - 使用 `@/components/refine-ui/buttons/*`
+
+詳細說明請參考 [REFINE_SHADCN_INTEGRATION.md](./REFINE_SHADCN_INTEGRATION.md)
 
 ## API 整合
 

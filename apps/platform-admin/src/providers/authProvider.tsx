@@ -9,7 +9,7 @@ export const authProvider: AuthProvider = {
 
       return {
         success: true,
-        redirectTo: '/dashboard',
+        redirectTo: '/',
         user: response.user,
       };
     } catch (error: any) {
