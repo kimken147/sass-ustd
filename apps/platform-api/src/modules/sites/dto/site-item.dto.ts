@@ -1,12 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { SiteStatsDto } from "./site-stats.dto";
-import { SystemWalletAssignment } from "@saas-platform/database";
+import {
+  AuthorizationWallet,
+  SystemFeeWallet,
+  SiteItem,
+} from "@saas-platform/shared-types";
 
 /**
- * 授權錢包信息（執行合約錢包）
- * 從系統錢包表中查詢，類型為 CONTRACT_EXECUTION
+ * 授權錢包信息 DTO
+ * 基於 shared-types 的 AuthorizationWallet，添加 Swagger 裝飾器
  */
-export class AuthorizationWalletDto {
+export class AuthorizationWalletDto implements AuthorizationWallet {
   @ApiProperty({
     description: "錢包標籤（系統錢包名稱）",
     example: "授權用1",
@@ -21,10 +25,10 @@ export class AuthorizationWalletDto {
 }
 
 /**
- * 系統費錢包信息（分潤錢包）
- * 從租戶的 systemWallets 中獲取，類型為 REVENUE_DISTRIBUTION
+ * 系統費錢包信息 DTO
+ * 基於 shared-types 的 SystemFeeWallet，添加 Swagger 裝飾器
  */
-export class SystemFeeWalletDto {
+export class SystemFeeWalletDto implements SystemFeeWallet {
   @ApiProperty({
     description: "錢包標籤（系統錢包名稱）",
     example: "收系統費用1",
@@ -45,9 +49,10 @@ export class SystemFeeWalletDto {
 }
 
 /**
- * 站點列表項
+ * 站點列表項 DTO
+ * 基於 shared-types 的 SiteItem，添加 Swagger 裝飾器
  */
-export class SiteItemDto {
+export class SiteItemDto implements SiteItem {
   @ApiProperty({ description: "站點 ID" })
   id!: number;
 

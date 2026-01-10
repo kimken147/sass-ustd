@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { TenantDbConnectionService } from "./tenant-db-connection.service";
 import { SiteStatsDto } from "../dto/site-stats.dto";
-import { SiteListQueryDto, TimeType } from "../dto/site-list-query.dto";
+import { SiteListQueryDto } from "../dto/site-list-query.dto";
+import { TimeType } from "@saas-platform/shared-types";
 
 /**
  * 站點統計服務

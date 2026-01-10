@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

@@ -12,25 +12,13 @@ import {
 } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
 import { Search, Calendar, Plus, Trash2 } from "lucide-react";
-
-// 類型定義
-interface SystemWallet {
-  id: number;
-  name: string;
-  address: string;
-  chain: string;
-  type: string; // "contract_execution" | "revenue_distribution"
-  status: string; // "active" | "inactive" | "suspended"
-  verified: boolean;
-  totalRevenue: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { SystemWallet, SystemWalletType } from "@saas-platform/shared-types";
+import { formatDateTimeLocalized } from "@saas-platform/utils";
 
 // 類型映射
 const typeMap: Record<string, string> = {
-  contract_execution: "授權",
-  revenue_distribution: "收款",
+  [SystemWalletType.CONTRACT_EXECUTION]: "授權",
+  [SystemWalletType.REVENUE_DISTRIBUTION]: "收款",
 };
 
 // 新增錢包表單數據類型
@@ -100,20 +88,6 @@ export default function WalletsPage() {
     walletsQuery.query.refetch();
   };
 
-  // 格式化日期
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleString("zh-TW", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  };
-
   // 獲取分配比例（需要從站點配置中獲取，這裡暫時顯示 "-"）
   const getPercentage = (_wallet: SystemWallet) => {
     // TODO: 從站點配置中獲取該錢包的分配比例
@@ -162,7 +136,7 @@ export default function WalletsPage() {
   // 計算收款類型錢包的總比例
   const totalRevenuePercentage = useMemo(() => {
     return newWallets
-      .filter((w) => w.type === "revenue_distribution")
+      .filter((w) => w.type === SystemWalletType.REVENUE_DISTRIBUTION)
       .reduce((sum, w) => {
         const percentage = parseFloat(w.percentage) || 0;
         return sum + percentage;
@@ -179,7 +153,7 @@ export default function WalletsPage() {
       }
       // 如果是收款類型，必須填寫比例
       if (
-        wallet.type === "revenue_distribution" &&
+        wallet.type === SystemWalletType.REVENUE_DISTRIBUTION &&
         (!wallet.percentage || parseFloat(wallet.percentage) <= 0)
       ) {
         alert("收款類型錢包必須填寫分配比例");
@@ -337,8 +311,12 @@ export default function WalletsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="contract_execution">授權</SelectItem>
-                  <SelectItem value="revenue_distribution">收款</SelectItem>
+                  <SelectItem value={SystemWalletType.CONTRACT_EXECUTION}>
+                    授權
+                  </SelectItem>
+                  <SelectItem value={SystemWalletType.REVENUE_DISTRIBUTION}>
+                    收款
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -404,7 +382,9 @@ export default function WalletsPage() {
                           {wallet.address}
                         </td>
                         <td className="p-4">{getPercentage(wallet)}</td>
-                        <td className="p-4">{formatDate(wallet.createdAt)}</td>
+                        <td className="p-4">
+                          {formatDateTimeLocalized(wallet.createdAt)}
+                        </td>
                         {isAddingMode && <td className="p-4"></td>}
                       </tr>
                     );
@@ -424,10 +404,14 @@ export default function WalletsPage() {
                             <SelectValue placeholder="請選擇類型" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="contract_execution">
+                            <SelectItem
+                              value={SystemWalletType.CONTRACT_EXECUTION}
+                            >
                               授權
                             </SelectItem>
-                            <SelectItem value="revenue_distribution">
+                            <SelectItem
+                              value={SystemWalletType.REVENUE_DISTRIBUTION}
+                            >
                               收款
                             </SelectItem>
                           </SelectContent>
@@ -456,7 +440,8 @@ export default function WalletsPage() {
                         />
                       </td>
                       <td className="p-4">
-                        {newWallet.type === "revenue_distribution" ? (
+                        {newWallet.type ===
+                        SystemWalletType.REVENUE_DISTRIBUTION ? (
                           <Input
                             type="number"
                             min="0"

@@ -13,19 +13,11 @@ import {
 } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
 import { Plus, Trash2 } from "lucide-react";
-
-// 類型定義
-interface SystemWallet {
-  id: number;
-  name: string;
-  address: string;
-  type: string;
-}
-
-interface SystemWalletAssignment {
-  walletId: number;
-  percentage: number;
-}
+import {
+  SystemWallet,
+  SystemWalletAssignment,
+  SystemWalletType,
+} from "@saas-platform/shared-types";
 
 interface CreateSiteFormData {
   name: string;
@@ -61,12 +53,14 @@ export default function CreateSitePage() {
 
   // 獲取可用於授權的錢包（類型為 CONTRACT_EXECUTION）
   const authorizationWallets = wallets.filter(
-    (wallet: SystemWallet) => wallet.type === "CONTRACT_EXECUTION"
+    (wallet: SystemWallet) =>
+      wallet.type === SystemWalletType.CONTRACT_EXECUTION
   );
 
   // 獲取可用於系統費的錢包（類型為 REVENUE_DISTRIBUTION）
   const systemFeeWallets = wallets.filter(
-    (wallet: SystemWallet) => wallet.type === "REVENUE_DISTRIBUTION"
+    (wallet: SystemWallet) =>
+      wallet.type === SystemWalletType.REVENUE_DISTRIBUTION
   );
 
   // 處理表單輸入變更
@@ -79,8 +73,13 @@ export default function CreateSitePage() {
 
   // 添加系統費錢包
   const handleAddSystemWallet = () => {
+    const selectedWallet = systemFeeWallets[0];
+    if (!selectedWallet) return;
+
     const newWallet: SystemWalletAssignment = {
-      walletId: systemFeeWallets[0]?.id || 0,
+      walletId: selectedWallet.id,
+      name: selectedWallet.name,
+      address: selectedWallet.address,
       percentage: 0,
     };
     setFormData((prev) => ({
@@ -105,10 +104,21 @@ export default function CreateSitePage() {
   ) => {
     setFormData((prev) => {
       const updated = [...prev.systemWallets];
-      updated[index] = {
+      const updatedWallet = {
         ...updated[index],
         [field]: value,
       };
+
+      // 當 walletId 改變時，自動更新 name 和 address
+      if (field === "walletId") {
+        const selectedWallet = systemFeeWallets.find((w) => w.id === value);
+        if (selectedWallet) {
+          updatedWallet.name = selectedWallet.name;
+          updatedWallet.address = selectedWallet.address;
+        }
+      }
+
+      updated[index] = updatedWallet;
       return {
         ...prev,
         systemWallets: updated,

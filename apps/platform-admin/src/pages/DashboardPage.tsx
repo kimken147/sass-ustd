@@ -16,50 +16,14 @@ import {
 } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
 import { Calendar, Search } from "lucide-react";
-
-// 類型定義
-type TimeType = "authorization_time" | "harvest_time";
-
-interface SiteStats {
-  authorizedClients: number;
-  totalQuantity: number;
-  harvestQuantity: number;
-  profit: number;
-  merchantAgent: number;
-  systemFee: number;
-  growthPercentage?: number;
-}
-
-interface AuthorizationWallet {
-  label: string;
-  address: string;
-}
-
-interface SystemFeeWallet {
-  label: string;
-  address: string;
-  percentage: number;
-}
-
-interface SiteItem {
-  id: number;
-  name: string;
-  slug: string;
-  customDomain?: string;
-  siteRate: number;
-  authorizationWallet: AuthorizationWallet;
-  systemFeeWallets: SystemFeeWallet[];
-  stats: SiteStats;
-}
-
-interface SiteListResponse {
-  totalStats: SiteStats;
-  sites: SiteItem[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import {
+  TimeType,
+  SiteStats,
+  AuthorizationWallet,
+  SystemFeeWallet,
+  SiteItem,
+  SiteListResponse,
+} from "@saas-platform/shared-types";
 
 // 統計卡片組件
 function StatsCard({
@@ -109,7 +73,7 @@ export default function DashboardPage() {
   // 篩選器狀態
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
-  const [timeType, setTimeType] = useState<TimeType>("authorization_time");
+  const [timeType, setTimeType] = useState<TimeType>(TimeType.AUTHORIZATION_TIME);
 
   // 構建查詢參數
   const queryParams = useMemo(() => {
@@ -195,8 +159,8 @@ export default function DashboardPage() {
                   <SelectValue placeholder="選擇時間類型" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="authorization_time">授權時間</SelectItem>
-                  <SelectItem value="harvest_time">收割時間</SelectItem>
+                  <SelectItem value={TimeType.AUTHORIZATION_TIME}>授權時間</SelectItem>
+                  <SelectItem value={TimeType.HARVEST_TIME}>收割時間</SelectItem>
                 </SelectContent>
               </Select>
             </div>

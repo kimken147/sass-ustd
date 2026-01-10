@@ -1,23 +1,10 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsEnum, IsDateString, IsString } from "class-validator";
 import { Type } from "class-transformer";
+import { TimeType, AuthorizationStatus } from "@saas-platform/shared-types";
 
-/**
- * 時間類型
- */
-export enum TimeType {
-  AUTHORIZATION_TIME = "authorization_time", // 授權時間
-  HARVEST_TIME = "harvest_time", // 收割時間
-}
-
-/**
- * 授權狀態
- */
-export enum AuthorizationStatus {
-  ALL = "all",
-  AUTHORIZED = "authorized",
-  UNAUTHORIZED = "unauthorized",
-}
+// 重新匯出 enum 供 Swagger 使用
+export { TimeType, AuthorizationStatus };
 
 /**
  * 站點列表查詢 DTO

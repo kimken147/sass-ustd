@@ -1,9 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { SiteStats } from "@saas-platform/shared-types";
 
 /**
- * 站點統計數據
+ * 站點統計數據 DTO
+ * 基於 shared-types 的 SiteStats，添加 Swagger 裝飾器
  */
-export class SiteStatsDto {
+export class SiteStatsDto implements SiteStats {
   @ApiProperty({ description: "授權客戶數量", example: 5 })
   authorizedClients!: number;
 
