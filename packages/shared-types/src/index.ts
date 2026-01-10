@@ -5,3 +5,4 @@
 
 export * from "./site.types";
 export * from "./wallet.types";
+export * from "./customer.types";

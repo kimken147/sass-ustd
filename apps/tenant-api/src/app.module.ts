@@ -15,6 +15,7 @@ import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.
 import { AgentsModule } from "./modules/agents/agents.module";
 import { ContractsModule } from "./modules/contracts/contracts.module";
 import { TransactionsModule } from "./modules/transactions/transactions.module";
+import { CustomersModule } from "./modules/customers/customers.module";
 
 @Module({
   imports: [
@@ -82,7 +83,7 @@ import { TransactionsModule } from "./modules/transactions/transactions.module";
     AgentsModule,
     ContractsModule,
     TransactionsModule,
-    // CustomersModule,
+    CustomersModule,
     // ProductsModule,
     // OrdersModule,
   ],
