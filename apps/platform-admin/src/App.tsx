@@ -11,6 +11,8 @@ import { authProvider } from "./providers/authProvider";
 import { dataProvider } from "./providers/dataProvider";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import CreateSitePage from "./pages/CreateSitePage";
+import WalletsPage from "./pages/WalletsPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createPlatformApiClient } from "@saas-platform/api-client";
 
@@ -40,6 +42,7 @@ function App() {
             {
               name: "sites",
               list: "/",
+              create: "/sites/create",
               meta: {
                 label: "站點列表",
                 icon: (
@@ -61,8 +64,13 @@ function App() {
               },
             },
             {
+              name: "system-wallets",
+              list: "/system-wallets",
+            },
+            {
               name: "wallets",
               list: "/wallets",
+              create: "/wallets/create",
               meta: {
                 label: "錢包管理",
                 icon: (
@@ -123,10 +131,8 @@ function App() {
             >
               <Route element={<DashboardLayout />}>
                 <Route index element={<DashboardPage />} />
-                <Route
-                  path="/wallets"
-                  element={<div>錢包管理頁面（待實現）</div>}
-                />
+                <Route path="/sites/create" element={<CreateSitePage />} />
+                <Route path="/wallets" element={<WalletsPage />} />
               </Route>
             </Route>
             <Route
