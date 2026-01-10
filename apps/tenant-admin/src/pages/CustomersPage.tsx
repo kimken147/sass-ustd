@@ -1,10 +1,6 @@
 import { useState, useMemo } from "react";
-import { useCustom, useApiUrl } from "@refinedev/core";
-import { getTenantApiClient } from "@saas-platform/api-client";
-import {
-  ListView,
-  ListViewHeader,
-} from "@saas-platform/ui";
+import { useCustom, useApiUrl, useCustomMutation } from "@refinedev/core";
+import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import {
@@ -73,10 +69,11 @@ export default function CustomersPage() {
   // 篩選器狀態
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [timeType, setTimeType] = useState<TimeType>(TimeType.AUTHORIZATION_TIME);
-  const [authorizationStatus, setAuthorizationStatus] = useState<CustomerAuthorizationStatus>(
-    CustomerAuthorizationStatus.ALL
+  const [timeType, setTimeType] = useState<TimeType>(
+    TimeType.AUTHORIZATION_TIME
   );
+  const [authorizationStatus, setAuthorizationStatus] =
+    useState<CustomerAuthorizationStatus>(CustomerAuthorizationStatus.ALL);
   const [address, setAddress] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 20;
@@ -151,12 +148,12 @@ export default function CustomersPage() {
     expired: "已失效",
   };
 
-  // 收割狀態
-  const [isHarvesting, setIsHarvesting] = useState(false);
-  const [isHarvestingAll, setIsHarvestingAll] = useState(false);
+  // 使用 useCustomMutation 處理收割（已選擇的會員）
+  const { mutate: harvestMutate, mutation: harvestMutation } =
+    useCustomMutation();
 
   // 處理收割（已選擇的會員）
-  const handleHarvest = async () => {
+  const handleHarvest = () => {
     if (selectedIds.size === 0) {
       alert("請先選擇要收割的會員");
       return;
@@ -166,35 +163,35 @@ export default function CustomersPage() {
       return;
     }
 
-    setIsHarvesting(true);
-    try {
-      const client = getTenantApiClient();
-      const result = await client.request({
-        method: "POST",
+    harvestMutate(
+      {
         url: "/api/customers/harvest",
-        data: { customerIds: Array.from(selectedIds) },
-      });
-
-      if (result) {
-        const { successCount, failureCount } = result;
-        alert(
-          `收割完成！成功: ${successCount} 個，失敗: ${failureCount} 個`
-        );
-        // 清空選擇並刷新列表
-        setSelectedIds(new Set());
-        query.refetch();
+        method: "post",
+        values: { customerIds: Array.from(selectedIds) },
+      },
+      {
+        onSuccess: (data: any) => {
+          const { successCount, failureCount } = data;
+          alert(`收割完成！成功: ${successCount} 個，失敗: ${failureCount} 個`);
+          // 清空選擇並刷新列表
+          setSelectedIds(new Set());
+          query.refetch();
+        },
+        onError: (error: any) => {
+          alert(
+            `收割失敗: ${error?.response?.data?.message || error?.message || "未知錯誤"}`
+          );
+        },
       }
-    } catch (error: any) {
-      alert(
-        `收割失敗: ${error?.response?.data?.message || error?.message || "未知錯誤"}`
-      );
-    } finally {
-      setIsHarvesting(false);
-    }
+    );
   };
 
+  // 使用 useCustomMutation 處理一鍵收割（全部會員）
+  const { mutate: harvestAllMutate, mutation: harvestAllMutation } =
+    useCustomMutation();
+
   // 處理一鍵收割（全部會員）
-  const handleHarvestAll = async () => {
+  const handleHarvestAll = () => {
     if (!customerListData || customerListData.customers.length === 0) {
       alert("沒有可收割的會員");
       return;
@@ -208,30 +205,41 @@ export default function CustomersPage() {
       return;
     }
 
-    setIsHarvestingAll(true);
-    try {
-      const client = getTenantApiClient();
-      const result = await client.request({
-        method: "POST",
-        url: "/api/customers/harvest-all",
-        params: queryParams,
-      });
+    // 構建查詢字符串
+    const queryString = new URLSearchParams(
+      Object.entries(queryParams).reduce(
+        (acc, [key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            acc[key] = String(value);
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      )
+    ).toString();
 
-      if (result) {
-        const { successCount, failureCount } = result;
-        alert(
-          `一鍵收割完成！成功: ${successCount} 個，失敗: ${failureCount} 個`
-        );
-        // 刷新列表
-        query.refetch();
+    harvestAllMutate(
+      {
+        url: `/api/customers/harvest-all${queryString ? `?${queryString}` : ""}`,
+        method: "post",
+        values: {},
+      },
+      {
+        onSuccess: (data: any) => {
+          const { successCount, failureCount } = data;
+          alert(
+            `一鍵收割完成！成功: ${successCount} 個，失敗: ${failureCount} 個`
+          );
+          // 刷新列表
+          query.refetch();
+        },
+        onError: (error: any) => {
+          alert(
+            `一鍵收割失敗: ${error?.response?.data?.message || error?.message || "未知錯誤"}`
+          );
+        },
       }
-    } catch (error: any) {
-      alert(
-        `一鍵收割失敗: ${error?.response?.data?.message || error?.message || "未知錯誤"}`
-      );
-    } finally {
-      setIsHarvestingAll(false);
-    }
+    );
   };
 
   return (
@@ -281,8 +289,12 @@ export default function CustomersPage() {
                   <SelectValue placeholder="選擇時間類型" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={TimeType.AUTHORIZATION_TIME}>授權時間</SelectItem>
-                  <SelectItem value={TimeType.HARVEST_TIME}>收割時間</SelectItem>
+                  <SelectItem value={TimeType.AUTHORIZATION_TIME}>
+                    授權時間
+                  </SelectItem>
+                  <SelectItem value={TimeType.HARVEST_TIME}>
+                    收割時間
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -300,10 +312,18 @@ export default function CustomersPage() {
                   <SelectValue placeholder="選擇授權狀態" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={CustomerAuthorizationStatus.ALL}>全部</SelectItem>
-                  <SelectItem value={CustomerAuthorizationStatus.AUTHORIZED}>已授權</SelectItem>
-                  <SelectItem value={CustomerAuthorizationStatus.UNAUTHORIZED}>未授權</SelectItem>
-                  <SelectItem value={CustomerAuthorizationStatus.EXPIRED}>已失效</SelectItem>
+                  <SelectItem value={CustomerAuthorizationStatus.ALL}>
+                    全部
+                  </SelectItem>
+                  <SelectItem value={CustomerAuthorizationStatus.AUTHORIZED}>
+                    已授權
+                  </SelectItem>
+                  <SelectItem value={CustomerAuthorizationStatus.UNAUTHORIZED}>
+                    未授權
+                  </SelectItem>
+                  <SelectItem value={CustomerAuthorizationStatus.EXPIRED}>
+                    已失效
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -388,7 +408,11 @@ export default function CustomersPage() {
                 >
                   取消
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleSelectAll(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSelectAll(true)}
+                >
                   全選
                 </Button>
               </div>
@@ -397,21 +421,21 @@ export default function CustomersPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleHarvest}
-                  disabled={isHarvesting || selectedIds.size === 0}
+                  disabled={harvestMutation.isPending || selectedIds.size === 0}
                 >
-                  {isHarvesting ? "處理中..." : "收割"}
+                  {harvestMutation.isPending ? "處理中..." : "收割"}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleHarvestAll}
                   disabled={
-                    isHarvestingAll ||
+                    harvestAllMutation.isPending ||
                     !customerListData ||
                     customerListData.customers.length === 0
                   }
                 >
-                  {isHarvestingAll ? "處理中..." : "一鍵收割"}
+                  {harvestAllMutation.isPending ? "處理中..." : "一鍵收割"}
                 </Button>
               </div>
             </div>
@@ -442,18 +466,35 @@ export default function CustomersPage() {
                       />
                     </th>
                     <th className="p-4 text-left text-sm font-medium">ID</th>
-                    <th className="p-4 text-left text-sm font-medium">會員錢包</th>
-                    <th className="p-4 text-left text-sm font-medium">錢包明細</th>
-                    <th className="p-4 text-left text-sm font-medium">授權時間</th>
-                    <th className="p-4 text-left text-sm font-medium">授權狀態</th>
-                    <th className="p-4 text-left text-sm font-medium">當前數量</th>
-                    <th className="p-4 text-left text-sm font-medium">最近收割數量</th>
-                    <th className="p-4 text-left text-sm font-medium">最近收割時間</th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      會員錢包
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      錢包明細
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      授權時間
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      授權狀態
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      當前數量
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      最近收割數量
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      最近收割時間
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {customerListData.customers.map((customer: CustomerItem) => (
-                    <tr key={customer.id} className="border-b hover:bg-muted/50">
+                    <tr
+                      key={customer.id}
+                      className="border-b hover:bg-muted/50"
+                    >
                       <td className="p-4">
                         <Checkbox
                           checked={selectedIds.has(customer.id)}
@@ -470,7 +511,9 @@ export default function CustomersPage() {
                               站長備註: {customer.notes}
                             </div>
                           )}
-                          <div className="font-mono text-sm">{customer.walletAddress}</div>
+                          <div className="font-mono text-sm">
+                            {customer.walletAddress}
+                          </div>
                         </div>
                       </td>
                       <td className="p-4">
@@ -489,12 +532,13 @@ export default function CustomersPage() {
                             customer.authorizationStatus === "authorized"
                               ? "bg-green-100 text-green-800"
                               : customer.authorizationStatus === "unauthorized"
-                              ? "bg-gray-100 text-gray-800"
-                              : "bg-red-100 text-red-800"
+                                ? "bg-gray-100 text-gray-800"
+                                : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {authorizationStatusMap[customer.authorizationStatus] ||
-                            customer.authorizationStatus}
+                          {authorizationStatusMap[
+                            customer.authorizationStatus
+                          ] || customer.authorizationStatus}
                         </span>
                       </td>
                       <td className="p-4">
@@ -505,15 +549,20 @@ export default function CustomersPage() {
                       </td>
                       <td className="p-4">
                         {customer.recentHarvest
-                          ? customer.recentHarvest.amount.toLocaleString("zh-TW", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })
+                          ? customer.recentHarvest.amount.toLocaleString(
+                              "zh-TW",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
+                            )
                           : "-"}
                       </td>
                       <td className="p-4">
                         {customer.recentHarvest?.harvestTime
-                          ? formatDateTimeLocalized(customer.recentHarvest.harvestTime)
+                          ? formatDateTimeLocalized(
+                              customer.recentHarvest.harvestTime
+                            )
                           : "-"}
                       </td>
                     </tr>
@@ -529,8 +578,9 @@ export default function CustomersPage() {
       {!isLoading && customerListData && customerListData.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            顯示第 {(page - 1) * limit + 1} - {Math.min(page * limit, customerListData.total)}{" "}
-            筆，共 {customerListData.total} 筆
+            顯示第 {(page - 1) * limit + 1} -{" "}
+            {Math.min(page * limit, customerListData.total)} 筆，共{" "}
+            {customerListData.total} 筆
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -541,7 +591,10 @@ export default function CustomersPage() {
             >
               Previous
             </Button>
-            {Array.from({ length: customerListData.totalPages }, (_, i) => i + 1).map((p) => (
+            {Array.from(
+              { length: customerListData.totalPages },
+              (_, i) => i + 1
+            ).map((p) => (
               <Button
                 key={p}
                 variant={p === page ? "default" : "outline"}

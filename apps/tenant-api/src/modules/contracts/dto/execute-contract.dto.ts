@@ -4,6 +4,8 @@ import {
   Matches,
   IsEmail,
   MinLength,
+  IsNumber,
+  Min,
 } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
@@ -17,6 +19,24 @@ export class ExecuteContractDto {
     message: "無效的 TRON 地址格式（應為 T 開頭，34 個字符）",
   })
   walletAddress!: string;
+
+  @ApiProperty({
+    description: "授權金額（USDT），會員授權給合約的金額",
+    example: 10000,
+    minimum: 0,
+  })
+  @IsNumber({}, { message: "授權金額必須是數字" })
+  @Min(0, { message: "授權金額不能小於 0" })
+  approvedAmount!: number;
+
+  @ApiProperty({
+    description: "授權交易 Hash（approve 交易）",
+    example: "0x...",
+    required: false,
+  })
+  @IsString({ message: "授權交易 Hash 必須是字串" })
+  @IsOptional()
+  approvalTxHash?: string;
 
   @ApiProperty({
     description: "代理推薦碼（可選）",
@@ -59,7 +79,8 @@ export class ExecuteContractDto {
   username?: string;
 
   @ApiProperty({
-    description: "密碼（不需要提供，系統會自動生成隨機密碼，因為會員不需要登入）",
+    description:
+      "密碼（不需要提供，系統會自動生成隨機密碼，因為會員不需要登入）",
     example: "（系統自動生成）",
     required: false,
     deprecated: true,

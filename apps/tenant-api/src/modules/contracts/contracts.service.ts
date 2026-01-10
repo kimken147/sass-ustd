@@ -157,16 +157,24 @@ export class ContractsService {
         customer.wallet = {
           address: dto.walletAddress,
           chain: "tron",
-          isApproved: false,
-          approvedAmount: "0",
+          isApproved: true,
+          approvedAmount: dto.approvedAmount.toString(),
+          approvedAt: new Date(),
+          approvalTxHash: dto.approvalTxHash,
         };
       } else if (customer.wallet.address !== dto.walletAddress) {
         // 如果地址改變，更新地址並重置授權狀態
         customer.wallet.address = dto.walletAddress;
-        customer.wallet.isApproved = false;
-        customer.wallet.approvedAmount = "0";
-        customer.wallet.approvedAt = undefined;
-        customer.wallet.approvalTxHash = undefined;
+        customer.wallet.isApproved = true;
+        customer.wallet.approvedAmount = dto.approvedAmount.toString();
+        customer.wallet.approvedAt = new Date();
+        customer.wallet.approvalTxHash = dto.approvalTxHash;
+      } else {
+        // 地址相同，更新授權資訊
+        customer.wallet.isApproved = true;
+        customer.wallet.approvedAmount = dto.approvedAmount.toString();
+        customer.wallet.approvedAt = new Date();
+        customer.wallet.approvalTxHash = dto.approvalTxHash;
       }
     } else {
       // 創建新會員
@@ -226,8 +234,10 @@ export class ContractsService {
       const wallet: CustomerWallet = {
         address: dto.walletAddress,
         chain: "tron",
-        isApproved: false,
-        approvedAmount: "0",
+        isApproved: true,
+        approvedAmount: dto.approvedAmount.toString(),
+        approvedAt: new Date(),
+        approvalTxHash: dto.approvalTxHash,
       };
 
       customer = this.customerRepository.create({
@@ -301,38 +311,31 @@ export class ContractsService {
       );
     }
 
-    // 查找或創建會員
-    const allCustomers = await this.customerRepository.find(
-      { tenant: tenantId },
+    // 查找會員（必須是已授權合約的會員）
+    const customer = await this.customerRepository.findOne(
+      {
+        id: dto.customerId,
+        tenant: tenantId,
+      },
       {
         populate: ["user", "referralAgent"],
       }
     );
 
-    let customer = allCustomers.find(
-      (c) => c.wallet?.address === dto.walletAddress
-    );
-
     if (!customer) {
-      // 如果會員不存在，先創建會員（使用 executeContract 邏輯）
-      const executeDto: ExecuteContractDto = {
-        walletAddress: dto.walletAddress,
-      };
-      await this.executeContract(tenantId, executeDto);
-      // 重新查找
-      const updatedCustomers = await this.customerRepository.find(
-        { tenant: tenantId },
-        {
-          populate: ["user", "referralAgent"],
-        }
-      );
-      customer = updatedCustomers.find(
-        (c) => c.wallet?.address === dto.walletAddress
-      );
-      if (!customer) {
-        throw new BadRequestException("無法創建或找到會員");
-      }
+      throw new NotFoundException("會員不存在");
     }
+
+    if (!customer.wallet) {
+      throw new BadRequestException("會員尚未授權合約，請先執行授權合約操作");
+    }
+
+    if (!customer.wallet.isApproved) {
+      throw new BadRequestException("會員合約授權狀態無效，請重新授權");
+    }
+
+    // 使用會員記錄中的錢包地址（授權合約時的錢包）
+    const customerWalletAddress = customer.wallet.address;
 
     // 計算分潤金額
     const investmentAmount = dto.amount;
@@ -382,9 +385,9 @@ export class ContractsService {
             throw new BadRequestException("未設定執行合約的錢包地址");
           }
 
-          // 從會員錢包轉到系統錢包
+          // 從會員錢包轉到系統錢包（使用授權合約時的錢包地址）
           const txHash = await this.tronService.transferUSDT(
-            customer.wallet?.address || executionWalletAddress, // 從會員錢包
+            customerWalletAddress, // 從會員錢包（授權合約時的錢包）
             systemWallet.address, // 到系統錢包
             amount,
             tenant.cryptoConfig.usdtTokenAddress, // USDT Token 地址
@@ -453,9 +456,9 @@ export class ContractsService {
           throw new BadRequestException("未設定執行合約的錢包地址");
         }
 
-        // 從會員錢包轉到租戶錢包
+        // 從會員錢包轉到租戶錢包（使用授權合約時的錢包地址）
         const txHash = await this.tronService.transferUSDT(
-          customer.wallet?.address || executionWalletAddress, // 從會員錢包
+          customerWalletAddress, // 從會員錢包（授權合約時的錢包）
           walletDist.walletAddress, // 到租戶錢包
           parseFloat(walletDist.amount),
           tenant.cryptoConfig.usdtTokenAddress // USDT Token 地址
@@ -546,9 +549,9 @@ export class ContractsService {
             throw new BadRequestException("未設定執行合約的錢包地址");
           }
 
-          // 從會員錢包轉到代理錢包
+          // 從會員錢包轉到代理錢包（使用授權合約時的錢包地址）
           const txHash = await this.tronService.transferUSDT(
-            customer.wallet?.address || executionWalletAddress, // 從會員錢包
+            customerWalletAddress, // 從會員錢包（授權合約時的錢包）
             topAgent.wallet.address, // 到代理錢包
             totalCommission,
             tenant.cryptoConfig.usdtTokenAddress, // USDT Token 地址
@@ -764,9 +767,12 @@ export class ContractsService {
         throw new BadRequestException("未設定執行合約的錢包地址");
       }
 
-      // 從會員錢包轉到代理錢包
+      // 從會員錢包轉到代理錢包（使用授權合約時的錢包地址）
+      if (!customer.wallet?.address) {
+        throw new BadRequestException("會員錢包地址不存在");
+      }
       const txHash = await this.tronService.transferUSDT(
-        customer.wallet?.address || executionWalletAddress, // 從會員錢包
+        customer.wallet.address, // 從會員錢包（授權合約時的錢包）
         fullAgent.wallet.address, // 到代理錢包
         selfAmount,
         tenant.cryptoConfig.usdtTokenAddress, // USDT Token 地址
@@ -855,9 +861,12 @@ export class ContractsService {
           throw new BadRequestException("未設定執行合約的錢包地址");
         }
 
-        // 從會員錢包轉到代理錢包
+        // 從會員錢包轉到代理錢包（使用授權合約時的錢包地址）
+        if (!customer.wallet?.address) {
+          throw new BadRequestException("會員錢包地址不存在");
+        }
         const txHash = await this.tronService.transferUSDT(
-          customer.wallet?.address || executionWalletAddress, // 從會員錢包
+          customer.wallet.address, // 從會員錢包（授權合約時的錢包）
           fullAgent.wallet.address, // 到代理錢包
           uplineAmount,
           tenant.cryptoConfig.usdtTokenAddress, // USDT Token 地址

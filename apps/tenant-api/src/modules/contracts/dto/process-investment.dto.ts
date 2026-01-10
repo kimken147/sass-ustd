@@ -1,21 +1,14 @@
-import {
-  IsString,
-  IsNumber,
-  Min,
-  Matches,
-} from "class-validator";
+import { IsString, IsNumber, Min, IsInt } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class ProcessInvestmentDto {
   @ApiProperty({
-    description: "會員錢包地址（TRON）",
-    example: "TXxx...",
+    description: "會員 ID（必須是已授權合約的會員）",
+    example: 1,
   })
-  @IsString({ message: "錢包地址必須是字串" })
-  @Matches(/^T[A-Za-z1-9]{33}$/, {
-    message: "無效的 TRON 地址格式（應為 T 開頭，34 個字符）",
-  })
-  walletAddress!: string;
+  @IsInt({ message: "會員 ID 必須是整數" })
+  @Min(1, { message: "會員 ID 必須大於 0" })
+  customerId!: number;
 
   @ApiProperty({
     description: "投資金額（USDT）",
