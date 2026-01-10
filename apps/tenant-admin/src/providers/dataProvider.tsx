@@ -4,10 +4,25 @@ import { getTenantApiClient } from "@saas-platform/api-client";
 export const dataProvider: DataProvider = {
   getList: async ({ resource, pagination, filters, sorters }) => {
     const client = getTenantApiClient();
-    const { currentPage = 1, pageSize = 10 } = pagination ?? {};
 
     try {
-      // 構建查詢參數
+      // revenue-wallets 特殊處理：不使用 /api 前綴，直接返回數組
+      if (resource === "revenue-wallets") {
+        const response = await client.request({
+          method: "GET",
+          url: `/revenue-wallets`,
+        });
+
+        // API 直接返回數組
+        const data = Array.isArray(response) ? response : response.data || [];
+        return {
+          data,
+          total: data.length,
+        };
+      }
+
+      // 其他資源使用標準格式
+      const { currentPage = 1, pageSize = 10 } = pagination ?? {};
       const params: Record<string, any> = {
         page: currentPage,
         limit: pageSize,
@@ -68,14 +83,17 @@ export const dataProvider: DataProvider = {
     const client = getTenantApiClient();
 
     try {
+      // revenue-wallets 特殊處理：不使用 /api 前綴
+      const url = resource === "revenue-wallets" ? `/${resource}` : `/api/${resource}`;
+
       const response = await client.request({
         method: "POST",
-        url: `/api/${resource}`,
+        url,
         data: variables,
       });
 
       return {
-        data: response,
+        data: response.data || response,
       };
     } catch (error: any) {
       throw new Error(
@@ -88,14 +106,18 @@ export const dataProvider: DataProvider = {
     const client = getTenantApiClient();
 
     try {
+      // revenue-wallets 特殊處理：使用 PUT 而不是 PATCH，不使用 /api 前綴
+      const url = resource === "revenue-wallets" ? `/${resource}/${id}` : `/api/${resource}/${id}`;
+      const method = resource === "revenue-wallets" ? "PUT" : "PATCH";
+
       const response = await client.request({
-        method: "PATCH",
-        url: `/api/${resource}/${id}`,
+        method: method as any,
+        url,
         data: variables,
       });
 
       return {
-        data: response,
+        data: response.data || response,
       };
     } catch (error: any) {
       throw new Error(
@@ -109,9 +131,12 @@ export const dataProvider: DataProvider = {
     const client = getTenantApiClient();
 
     try {
+      // revenue-wallets 特殊處理：不使用 /api 前綴
+      const url = resource === "revenue-wallets" ? `/${resource}/${id}` : `/api/${resource}/${id}`;
+
       const response = await client.request({
         method: "DELETE",
-        url: `/api/${resource}/${id}`,
+        url,
       });
 
       return {

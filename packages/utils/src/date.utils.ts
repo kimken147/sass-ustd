@@ -101,7 +101,7 @@ export function isValidDate(date: Date | string | null | undefined): boolean {
  * @returns 格式化的日期時間字串（例如：2025-01-24T00:00）
  */
 export function getTodayStartLocal(): string {
-  const today = dayjs();
+  const today = dayjs().startOf("day");
   return today.format("YYYY-MM-DDTHH:mm");
 }
 
@@ -111,6 +111,6 @@ export function getTodayStartLocal(): string {
  * @returns 格式化的日期時間字串（例如：2025-01-24T00:00）
  */
 export function getDateStartLocal(date?: Date | string): string {
-  const targetDate = date ? dayjs(date) : dayjs();
+  const targetDate = date ? dayjs(date).startOf("day") : dayjs().startOf("day");
   return targetDate.format("YYYY-MM-DDTHH:mm");
 }

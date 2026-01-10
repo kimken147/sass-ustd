@@ -14,6 +14,7 @@ import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
 import RevenueDistributionPage from "./pages/RevenueDistributionPage";
 import CommissionPayoutPage from "./pages/CommissionPayoutPage";
+import WalletsPage from "./pages/WalletsPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
@@ -86,6 +87,30 @@ function App() {
                     <circle cx="9" cy="7" r="4" />
                     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                ),
+              },
+            },
+            {
+              name: "wallets",
+              list: "/wallets",
+              meta: {
+                label: "收款錢包",
+                icon: (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                    <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                    <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
                   </svg>
                 ),
               },
@@ -177,6 +202,7 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="/customers" element={<CustomersPage />} />
+                <Route path="/wallets" element={<WalletsPage />} />
                 <Route
                   path="/revenue-distributions"
                   element={<RevenueDistributionPage />}
