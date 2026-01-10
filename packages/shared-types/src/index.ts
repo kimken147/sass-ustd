@@ -7,3 +7,4 @@ export * from "./site.types";
 export * from "./wallet.types";
 export * from "./customer.types";
 export * from "./revenue-distribution.types";
+export * from "./commission-payout.types";

@@ -19,7 +19,10 @@ import {
   CustomerItem,
   CustomerAuthorizationStatus,
 } from "@saas-platform/shared-types";
-import { formatDateTimeLocalized } from "@saas-platform/utils";
+import {
+  formatDateTimeLocalized,
+  getTodayStartLocal,
+} from "@saas-platform/utils";
 
 // 統計卡片組件
 function StatsCard({
@@ -67,7 +70,7 @@ export default function CustomersPage() {
   const apiUrl = useApiUrl();
 
   // 篩選器狀態
-  const [startDate, setStartDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(
     TimeType.AUTHORIZATION_TIME

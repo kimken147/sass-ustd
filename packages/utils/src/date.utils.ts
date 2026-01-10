@@ -95,3 +95,22 @@ export function isValidDate(date: Date | string | null | undefined): boolean {
   if (!date) return false;
   return dayjs(date).isValid();
 }
+
+/**
+ * 獲取本地時間今天的 00:00，格式為 datetime-local 輸入框需要的格式
+ * @returns 格式化的日期時間字串（例如：2025-01-24T00:00）
+ */
+export function getTodayStartLocal(): string {
+  const today = dayjs();
+  return today.format("YYYY-MM-DDTHH:mm");
+}
+
+/**
+ * 獲取指定日期的 00:00，格式為 datetime-local 輸入框需要的格式
+ * @param date - 日期（可選，預設為今天）
+ * @returns 格式化的日期時間字串（例如：2025-01-24T00:00）
+ */
+export function getDateStartLocal(date?: Date | string): string {
+  const targetDate = date ? dayjs(date) : dayjs();
+  return targetDate.format("YYYY-MM-DDTHH:mm");
+}

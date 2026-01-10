@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
 import RevenueDistributionPage from "./pages/RevenueDistributionPage";
+import CommissionPayoutPage from "./pages/CommissionPayoutPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
@@ -112,6 +113,28 @@ function App() {
                 ),
               },
             },
+            {
+              name: "commission-payouts",
+              list: "/commission-payouts",
+              meta: {
+                label: "代理分潤列表",
+                icon: (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                ),
+              },
+            },
           ]}
           options={{
             syncWithLocation: true,
@@ -157,6 +180,10 @@ function App() {
                 <Route
                   path="/revenue-distributions"
                   element={<RevenueDistributionPage />}
+                />
+                <Route
+                  path="/commission-payouts"
+                  element={<CommissionPayoutPage />}
                 />
               </Route>
             </Route>

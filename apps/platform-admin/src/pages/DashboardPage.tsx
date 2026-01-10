@@ -24,6 +24,7 @@ import {
   SiteItem,
   SiteListResponse,
 } from "@saas-platform/shared-types";
+import { getTodayStartLocal } from "@saas-platform/utils";
 
 // 統計卡片組件
 function StatsCard({
@@ -71,7 +72,7 @@ export default function DashboardPage() {
   const apiUrl = useApiUrl();
 
   // 篩選器狀態
-  const [startTime, setStartTime] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>(getTodayStartLocal());
   const [endTime, setEndTime] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(TimeType.AUTHORIZATION_TIME);
 
