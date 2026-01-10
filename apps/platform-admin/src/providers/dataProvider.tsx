@@ -34,9 +34,27 @@ export const dataProvider: DataProvider = {
         params,
       });
 
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      // TransformInterceptor 會將回應包裝為 { success: true, data: <原始回應>, timestamp: "..." }
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
+      // 特殊處理 sites 資源：它返回 { totalStats, sites, total, page, limit, totalPages }
+      if (resource === "sites" && responseData.sites) {
+        return {
+          data: responseData.sites,
+          total: responseData.total || 0,
+          // 保留額外的 totalStats 信息在 meta 中
+          meta: {
+            totalStats: responseData.totalStats,
+          },
+        };
+      }
+
+      // 標準格式：{ data: [...], total: ... }
       return {
-        data: response.data || response.items || [],
-        total: response.total || response.count || 0,
+        data: responseData.data || responseData.items || [],
+        total: responseData.total || responseData.count || 0,
       };
     } catch (error: any) {
       throw new Error(
@@ -54,8 +72,12 @@ export const dataProvider: DataProvider = {
         url: `/api/${resource}/${id}`,
       });
 
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
       return {
-        data: response,
+        data: responseData,
       };
     } catch (error: any) {
       throw new Error(
@@ -74,8 +96,12 @@ export const dataProvider: DataProvider = {
         data: variables,
       });
 
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
       return {
-        data: response,
+        data: responseData,
       };
     } catch (error: any) {
       throw new Error(
@@ -94,8 +120,12 @@ export const dataProvider: DataProvider = {
         data: variables,
       });
 
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
       return {
-        data: response,
+        data: responseData,
       };
     } catch (error: any) {
       throw new Error(

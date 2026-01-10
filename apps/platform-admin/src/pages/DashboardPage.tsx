@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useCustom, useApiUrl } from "@refinedev/core";
+import { useList, type CrudFilter } from "@refinedev/core";
 import {
   ListView,
   ListViewHeader,
@@ -19,10 +19,8 @@ import { Calendar, Search } from "lucide-react";
 import {
   TimeType,
   SiteStats,
-  AuthorizationWallet,
   SystemFeeWallet,
   SiteItem,
-  SiteListResponse,
 } from "@saas-platform/shared-types";
 import { getTodayStartLocal } from "@saas-platform/utils";
 
@@ -69,52 +67,62 @@ function StatsCard({
 }
 
 export default function DashboardPage() {
-  const apiUrl = useApiUrl();
-
   // 篩選器狀態
   const [startTime, setStartTime] = useState<string>(getTodayStartLocal());
   const [endTime, setEndTime] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(TimeType.AUTHORIZATION_TIME);
 
-  // 構建查詢參數
-  const queryParams = useMemo(() => {
-    const params: Record<string, any> = {
-      page: 1,
-      limit: 100,
-      timeType,
-    };
-
+  // 構建查詢參數作為 filters
+  const filters = useMemo(() => {
+    const crudFilters: CrudFilter[] = [];
+    
     if (startTime) {
-      params.startTime = new Date(startTime).toISOString();
+      crudFilters.push({
+        field: "startTime",
+        operator: "eq",
+        value: new Date(startTime).toISOString(),
+      });
     }
     if (endTime) {
-      params.endTime = new Date(endTime).toISOString();
+      crudFilters.push({
+        field: "endTime",
+        operator: "eq",
+        value: new Date(endTime).toISOString(),
+      });
+    }
+    if (timeType) {
+      crudFilters.push({
+        field: "timeType",
+        operator: "eq",
+        value: timeType,
+      });
     }
 
-    return params;
+    return crudFilters;
   }, [startTime, endTime, timeType]);
 
-  // 使用 useCustom hook 獲取站點列表
-  const { query, result } = useCustom<SiteListResponse>({
-    url: `${apiUrl}/sites`,
-    method: "get",
-    config: {
-      query: queryParams,
+  // 使用標準的 useList hook 獲取站點列表
+  const sitesQuery = useList<SiteItem>({
+    resource: "sites",
+    pagination: {
+      mode: "off" as const, // 關閉 Refine 的分頁，使用手動管理
     },
+    filters,
   });
 
   const handleSearch = () => {
-    query.refetch();
+    sitesQuery.query.refetch();
   };
 
-  // result.data 已經是從 dataProvider.custom 返回的數據
-  // 根據 dataProvider 的實現，它返回 { data: response }
-  // 所以 result.data 就是 SiteListResponse
-  const siteListData = result.data as SiteListResponse | undefined;
-  const isLoading = query.isLoading;
-  const isError = query.isError;
-  const error = query.error;
-  const updateTime = siteListData ? new Date().toLocaleString("zh-TW") : "";
+  // 從 result 中獲取數據
+  const sites = (sitesQuery.result?.data || []) as SiteItem[];
+  // 從 query 的原始數據中獲取 meta（dataProvider 返回的數據包含 meta）
+  const queryData = sitesQuery.query.data as any;
+  const totalStats = queryData?.meta?.totalStats as SiteStats | undefined;
+  const isLoading = sitesQuery.query.isLoading;
+  const isError = sitesQuery.query.isError;
+  const error = sitesQuery.query.error;
+  const updateTime = sites.length > 0 ? new Date().toLocaleString("zh-TW") : "";
 
   return (
     <ListView>
@@ -190,37 +198,37 @@ export default function DashboardPage() {
       )}
 
       {/* 總體統計數據 */}
-      {siteListData?.totalStats && (
+      {totalStats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <StatsCard
             title="授權客戶"
-            value={siteListData.totalStats.authorizedClients}
-            growth={siteListData.totalStats.growthPercentage}
+            value={totalStats.authorizedClients}
+            growth={totalStats.growthPercentage}
           />
           <StatsCard
             title="總數量"
-            value={siteListData.totalStats.totalQuantity}
-            growth={siteListData.totalStats.growthPercentage}
+            value={totalStats.totalQuantity}
+            growth={totalStats.growthPercentage}
           />
           <StatsCard
             title="收割數量"
-            value={siteListData.totalStats.harvestQuantity}
-            growth={siteListData.totalStats.growthPercentage}
+            value={totalStats.harvestQuantity}
+            growth={totalStats.growthPercentage}
           />
           <StatsCard
             title="利潤"
-            value={siteListData.totalStats.profit}
-            growth={siteListData.totalStats.growthPercentage}
+            value={totalStats.profit}
+            growth={totalStats.growthPercentage}
           />
           <StatsCard
             title="商戶代理"
-            value={siteListData.totalStats.merchantAgent}
-            growth={siteListData.totalStats.growthPercentage}
+            value={totalStats.merchantAgent}
+            growth={totalStats.growthPercentage}
           />
           <StatsCard
             title="系統費用"
-            value={siteListData.totalStats.systemFee}
-            growth={siteListData.totalStats.growthPercentage}
+            value={totalStats.systemFee}
+            growth={totalStats.growthPercentage}
           />
         </div>
       )}
@@ -231,9 +239,9 @@ export default function DashboardPage() {
       )}
 
       {/* 站點列表 */}
-      {!isLoading && siteListData && (
+      {!isLoading && sites.length > 0 && (
         <div className="space-y-6">
-          {siteListData.sites.map((site: SiteItem, index: number) => (
+          {sites.map((site: SiteItem, index: number) => (
             <Card key={site.id} className={index > 0 ? "mt-6" : ""}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -328,7 +336,7 @@ export default function DashboardPage() {
             </Card>
           ))}
 
-          {siteListData.sites.length === 0 && (
+          {sites.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               暫無站點數據
             </div>

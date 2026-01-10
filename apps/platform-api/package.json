@@ -33,6 +33,7 @@
     "@nestjs/swagger": "^11.2.3",
     "@saas-platform/auth": "workspace:*",
     "@saas-platform/database": "workspace:*",
+    "@saas-platform/shared": "workspace:*",
     "@saas-platform/shared-types": "workspace:*",
     "@saas-platform/utils": "workspace:*",
     "bcrypt": "^5.1.1",
