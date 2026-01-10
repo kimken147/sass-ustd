@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
-import { useCustom, useApiUrl } from "@refinedev/core";
+import { useList, type CrudFilter } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import { Card, CardContent } from "@saas-platform/ui";
 import { Calendar, Search } from "lucide-react";
 import {
-  CommissionPayoutResponse,
   CommissionPayoutItem,
   CommissionPayoutType,
   CommissionPayoutStatus,
@@ -17,48 +16,80 @@ import {
 } from "@saas-platform/utils";
 
 export default function CommissionPayoutPage() {
-  const apiUrl = useApiUrl();
-
   // 篩選器狀態
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 構建查詢參數
-  const queryParams = useMemo(() => {
-    const params: Record<string, any> = {
-      page,
-      limit,
-    };
+  // 構建 Refine 篩選參數
+  const filters = useMemo(() => {
+    const filterArray: CrudFilter[] = [];
 
     if (startDate) {
-      params.startDate = new Date(startDate).toISOString();
+      filterArray.push({
+        field: "startDate",
+        operator: "eq",
+        value: new Date(startDate).toISOString(),
+      });
     }
     if (endDate) {
-      params.endDate = new Date(endDate).toISOString();
+      filterArray.push({
+        field: "endDate",
+        operator: "eq",
+        value: new Date(endDate).toISOString(),
+      });
+    }
+    if (page) {
+      filterArray.push({
+        field: "page",
+        operator: "eq",
+        value: page,
+      });
+    }
+    if (limit) {
+      filterArray.push({
+        field: "limit",
+        operator: "eq",
+        value: limit,
+      });
     }
 
-    return params;
+    return filterArray;
   }, [startDate, endDate, page, limit]);
 
-  // 使用 useCustom hook 獲取代理分潤列表
-  const { query, result } = useCustom<CommissionPayoutResponse>({
-    url: `${apiUrl}/transactions/commission-payouts`,
-    method: "get",
-    config: {
-      query: queryParams,
+  // 使用 useList hook 獲取代理分潤列表（使用官方 Refine hooks）
+  // 注意：resource 直接使用嵌合路徑 "transactions/commission-payouts"
+  const payoutQuery = useList<CommissionPayoutItem>({
+    resource: "transactions/commission-payouts",
+    filters,
+    pagination: {
+      mode: "off" as const, // 關閉 Refine 的分頁，使用手動管理（因為需要保留完整的 pagination 信息）
     },
   });
 
   const handleSearch = () => {
-    query.refetch();
+    payoutQuery.query.refetch();
   };
 
-  const payoutData = result.data as CommissionPayoutResponse | undefined;
-  const isLoading = query.isLoading;
-  const isError = query.isError;
-  const error = query.error;
+  // 轉換數據格式：useList 返回 { data: CommissionPayoutItem[], total: number }
+  // 但我們需要 { items, total, page, limit, totalPages } 格式
+  const payoutData = useMemo(() => {
+    const data = payoutQuery.result?.data || [];
+    const total = payoutQuery.result?.total || 0;
+
+    return {
+      items: data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }, [payoutQuery.result?.data, payoutQuery.result?.total, page, limit]);
+
+  const isLoading = payoutQuery.query.isLoading;
+  const isError = payoutQuery.query.isError;
+  const error = payoutQuery.query.error;
 
   // 狀態映射
   const statusMap: Record<string, { label: string; className: string }> = {
@@ -198,10 +229,7 @@ export default function CommissionPayoutPage() {
                 </thead>
                 <tbody>
                   {payoutData.items.map((item: CommissionPayoutItem) => (
-                    <tr
-                      key={item.id}
-                      className="border-b hover:bg-muted/50"
-                    >
+                    <tr key={item.id} className="border-b hover:bg-muted/50">
                       <td className="p-4">
                         {item.transactionTime
                           ? formatDateTimeLocalized(item.transactionTime)
@@ -232,13 +260,12 @@ export default function CommissionPayoutPage() {
                         })}
                       </td>
                       <td className="p-4">
-                        {parseFloat(item.originalInvestmentAmount).toLocaleString(
-                          "zh-TW",
-                          {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 6,
-                          }
-                        )}
+                        {parseFloat(
+                          item.originalInvestmentAmount
+                        ).toLocaleString("zh-TW", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 6,
+                        })}
                       </td>
                       <td className="p-4">{item.ratio.toFixed(2)}%</td>
                       <td className="p-4">{item.commissionRate.toFixed(2)}%</td>
@@ -296,8 +323,8 @@ export default function CommissionPayoutPage() {
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             顯示第 {(page - 1) * limit + 1} -{" "}
-            {Math.min(page * limit, payoutData.total)} 筆，共{" "}
-            {payoutData.total} 筆
+            {Math.min(page * limit, payoutData.total)} 筆，共 {payoutData.total}{" "}
+            筆
           </div>
           <div className="flex items-center gap-2">
             <Button

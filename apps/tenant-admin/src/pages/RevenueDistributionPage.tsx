@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
-import { useCustom, useApiUrl } from "@refinedev/core";
+import { useList, type CrudFilter } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import { Card, CardContent } from "@saas-platform/ui";
 import { Calendar, Search } from "lucide-react";
 import {
-  RevenueDistributionResponse,
   RevenueDistributionItem,
 } from "@saas-platform/shared-types";
 import {
@@ -15,48 +14,80 @@ import {
 } from "@saas-platform/utils";
 
 export default function RevenueDistributionPage() {
-  const apiUrl = useApiUrl();
-
   // 篩選器狀態
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 構建查詢參數
-  const queryParams = useMemo(() => {
-    const params: Record<string, any> = {
-      page,
-      limit,
-    };
+  // 構建 Refine 篩選參數
+  const filters = useMemo(() => {
+    const filterArray: CrudFilter[] = [];
 
     if (startDate) {
-      params.startDate = new Date(startDate).toISOString();
+      filterArray.push({
+        field: "startDate",
+        operator: "eq",
+        value: new Date(startDate).toISOString(),
+      });
     }
     if (endDate) {
-      params.endDate = new Date(endDate).toISOString();
+      filterArray.push({
+        field: "endDate",
+        operator: "eq",
+        value: new Date(endDate).toISOString(),
+      });
+    }
+    if (page) {
+      filterArray.push({
+        field: "page",
+        operator: "eq",
+        value: page,
+      });
+    }
+    if (limit) {
+      filterArray.push({
+        field: "limit",
+        operator: "eq",
+        value: limit,
+      });
     }
 
-    return params;
+    return filterArray;
   }, [startDate, endDate, page, limit]);
 
-  // 使用 useCustom hook 獲取站長收益列表
-  const { query, result } = useCustom<RevenueDistributionResponse>({
-    url: `${apiUrl}/transactions/revenue-distributions`,
-    method: "get",
-    config: {
-      query: queryParams,
+  // 使用 useList hook 獲取站長收益列表（使用官方 Refine hooks）
+  // 注意：resource 直接使用嵌合路徑 "transactions/revenue-distributions"
+  const revenueQuery = useList<RevenueDistributionItem>({
+    resource: "transactions/revenue-distributions",
+    filters,
+    pagination: {
+      mode: "off" as const, // 關閉 Refine 的分頁，使用手動管理（因為需要保留完整的 pagination 信息）
     },
   });
 
   const handleSearch = () => {
-    query.refetch();
+    revenueQuery.query.refetch();
   };
 
-  const revenueData = result.data as RevenueDistributionResponse | undefined;
-  const isLoading = query.isLoading;
-  const isError = query.isError;
-  const error = query.error;
+  // 轉換數據格式：useList 返回 { data: RevenueDistributionItem[], total: number }
+  // 但我們需要 { items, total, page, limit, totalPages } 格式
+  const revenueData = useMemo(() => {
+    const data = revenueQuery.result?.data || [];
+    const total = revenueQuery.result?.total || 0;
+    
+    return {
+      items: data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }, [revenueQuery.result?.data, revenueQuery.result?.total, page, limit]);
+
+  const isLoading = revenueQuery.query.isLoading;
+  const isError = revenueQuery.query.isError;
+  const error = revenueQuery.query.error;
 
   // 狀態映射
   const statusMap: Record<string, { label: string; className: string }> = {

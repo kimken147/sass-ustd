@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useCustom, useApiUrl, useCustomMutation } from "@refinedev/core";
+import { useCustom, useCustomMutation, useApiUrl } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
@@ -67,8 +67,6 @@ function StatsCard({
 }
 
 export default function CustomersPage() {
-  const apiUrl = useApiUrl();
-
   // 篩選器狀態
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
@@ -83,6 +81,8 @@ export default function CustomersPage() {
 
   // 選中狀態
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+
+  const apiUrl = useApiUrl();
 
   // 構建查詢參數
   const queryParams = useMemo(() => {
@@ -107,6 +107,8 @@ export default function CustomersPage() {
   }, [startDate, endDate, timeType, authorizationStatus, address, page, limit]);
 
   // 使用 useCustom hook 獲取會員列表
+  // 注意：CustomerListResponse 是特殊格式（包含 customers, stats, total 等），
+  // 不符合標準的 { data: Array, total: number } 格式，所以需要使用 useCustom
   const { query, result } = useCustom<CustomerListResponse>({
     url: `${apiUrl}/customers`,
     method: "get",
@@ -209,8 +211,25 @@ export default function CustomersPage() {
     }
 
     // 構建查詢字符串
+    const queryParamsObj: Record<string, string> = {
+      page: page.toString(),
+      limit: limit.toString(),
+      timeType,
+      authorizationStatus,
+    };
+    
+    if (startDate) {
+      queryParamsObj.startDate = new Date(startDate).toISOString();
+    }
+    if (endDate) {
+      queryParamsObj.endDate = new Date(endDate).toISOString();
+    }
+    if (address) {
+      queryParamsObj.address = address;
+    }
+
     const queryString = new URLSearchParams(
-      Object.entries(queryParams).reduce(
+      Object.entries(queryParamsObj).reduce(
         (acc, [key, value]) => {
           if (value !== undefined && value !== null && value !== "") {
             acc[key] = String(value);
