@@ -3,10 +3,10 @@
 import type { PropsWithChildren } from "react";
 
 import { useResourceParams, useUserFriendlyName } from "@refinedev/core";
-import { Breadcrumb } from "./layout/breadcrumb";
-import { Separator } from "../ui/separator";
-import { CreateButton } from "./buttons/create";
-import { cn } from "../../lib/utils";
+import { Breadcrumb } from "../layout/breadcrumb";
+import { Separator } from "../../ui/separator";
+import { CreateButton } from "../buttons/create";
+import { cn } from "../../../lib/utils";
 
 type ListViewProps = PropsWithChildren<{
   className?: string;
@@ -46,7 +46,7 @@ export const ListViewHeader = ({
     titleFromProps ??
     getUserFriendlyName(
       resource?.meta?.label ?? identifier ?? resource?.name,
-      "plural",
+      "plural"
     );
 
   return (

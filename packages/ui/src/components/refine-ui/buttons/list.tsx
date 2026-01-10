@@ -2,7 +2,7 @@
 
 import React from "react";
 import { type BaseKey, useListButton } from "@refinedev/core";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { List } from "lucide-react";
 
 type ListButtonProps = {

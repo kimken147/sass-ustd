@@ -3,9 +3,9 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "../ui/avatar";
-import { Skeleton } from "../ui/skeleton";
-import { cn } from "../../lib/utils";
+} from "../../ui/avatar";
+import { Skeleton } from "../../ui/skeleton";
+import { cn } from "../../../lib/utils";
 
 type User = {
   id: number;

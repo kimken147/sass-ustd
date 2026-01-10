@@ -14,21 +14,21 @@ import {
   SidebarHeader as ShadcnSidebarHeader,
   useSidebar as useShadcnSidebar,
   SidebarTrigger as ShadcnSidebarTrigger,
-} from "../ui/sidebar";
+} from "../../ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "../../ui/dropdown-menu";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../ui/collapsible";
-import { Button } from "../ui/button";
+} from "../../ui/collapsible";
+import { Button } from "../../ui/button";
 import { ChevronRight, ListIcon } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../../lib/utils";
 
 export function Sidebar() {
   const { open } = useShadcnSidebar();

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { type BaseKey, useEditButton } from "@refinedev/core";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { Pencil } from "lucide-react";
 
 type EditButtonProps = {

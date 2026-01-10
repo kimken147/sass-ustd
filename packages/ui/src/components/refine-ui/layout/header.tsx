@@ -7,13 +7,13 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   DropdownMenuContent,
-} from "../ui/dropdown-menu";
-import { DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { ThemeToggle } from "./theme/theme-toggle";
-import { UserAvatar } from "./layout/user-avatar";
-import { useSidebar, SidebarTrigger } from "../ui/sidebar";
+} from "../../ui/dropdown-menu";
+import { DropdownMenuTrigger } from "../../ui/dropdown-menu";
+import { ThemeToggle } from "../theme/theme-toggle";
+import { UserAvatar } from "./user-avatar";
+import { useSidebar, SidebarTrigger } from "../../ui/sidebar";
 import { LogOutIcon } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../../lib/utils";
 
 export const Header = () => {
   const { isMobile } = useSidebar();

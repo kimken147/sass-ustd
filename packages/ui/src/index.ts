@@ -131,5 +131,8 @@ export { ThemeProvider, useTheme } from './components/refine-ui/theme/theme-prov
 export { ThemeToggle } from './components/refine-ui/theme/theme-toggle';
 export { ThemeSelect } from './components/refine-ui/theme/theme-select';
 
+// Hooks
+export { useIsMobile } from './hooks/use-mobile';
+
 // Utils
 export { cn } from './lib/utils';

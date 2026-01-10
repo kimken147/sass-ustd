@@ -1,11 +1,11 @@
 "use client";
 
 import type { PropsWithChildren } from "react";
-import { SidebarProvider, SidebarInset } from "../ui/sidebar";
-import { Sidebar } from "./layout/sidebar";
-import { Header } from "./layout/header";
-import { ThemeProvider } from "./theme/theme-provider";
-import { cn } from "../../lib/utils";
+import { SidebarProvider, SidebarInset } from "../../ui/sidebar";
+import { Sidebar } from "./sidebar";
+import { Header } from "./header";
+import { ThemeProvider } from "../theme/theme-provider";
+import { cn } from "../../../lib/utils";
 
 export function Layout({ children }: PropsWithChildren) {
   return (

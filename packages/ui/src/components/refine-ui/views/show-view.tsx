@@ -8,11 +8,11 @@ import {
   useResourceParams,
   useUserFriendlyName,
 } from "@refinedev/core";
-import { Breadcrumb } from "./layout/breadcrumb";
-import { Separator } from "../ui/separator";
-import { Button } from "../ui/button";
-import { RefreshButton } from "./buttons/refresh";
-import { cn } from "../../lib/utils";
+import { Breadcrumb } from "../layout/breadcrumb";
+import { Separator } from "../../ui/separator";
+import { Button } from "../../ui/button";
+import { RefreshButton } from "../buttons/refresh";
+import { cn } from "../../../lib/utils";
 import { EditButton } from "../buttons/edit";
 
 type ShowViewProps = PropsWithChildren<{

@@ -7,10 +7,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Button } from "../ui/button";
+} from "../../ui/dropdown-menu";
+import { Button } from "../../ui/button";
 import { Moon, Sun, Monitor, ChevronDown, Check } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { cn } from "../../../lib/utils";
 
 type ThemeOption = {
   value: "light" | "dark" | "system";
@@ -59,7 +59,7 @@ export function ThemeSelect() {
             "hover:text-accent-foreground",
             "focus-visible:outline-none",
             "focus-visible:ring-2",
-            "focus-visible:ring-ring",
+            "focus-visible:ring-ring"
           )}
         >
           <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export function ThemeSelect() {
                 "flex items-center gap-2 cursor-pointer relative pr-8",
                 {
                   "bg-accent text-accent-foreground": isSelected,
-                },
+                }
               )}
             >
               {option.icon}

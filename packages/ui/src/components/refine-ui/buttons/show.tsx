@@ -3,7 +3,7 @@
 import React from "react";
 import { type BaseKey, useShowButton } from "@refinedev/core";
 import { Eye } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 
 type ShowButtonProps = {
   /**

@@ -14,7 +14,7 @@ import {
   BreadcrumbList as ShadcnBreadcrumbList,
   BreadcrumbPage as ShadcnBreadcrumbPage,
   Breadcrumb as ShadcnBreadcrumb,
-} from "../ui/breadcrumb";
+} from "../../ui/breadcrumb";
 
 export function Breadcrumb() {
   const Link = useLink();

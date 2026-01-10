@@ -3,7 +3,7 @@
 import React from "react";
 import { type BaseKey, useCloneButton } from "@refinedev/core";
 import { Copy } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 
 type CloneButtonProps = {
   /**
@@ -36,7 +36,7 @@ export const CloneButton = React.forwardRef<
 >(
   (
     { resource, recordItemId, accessControl, meta, children, onClick, ...rest },
-    ref,
+    ref
   ) => {
     const { hidden, disabled, LinkComponent, to, label } = useCloneButton({
       accessControl,
@@ -75,7 +75,7 @@ export const CloneButton = React.forwardRef<
         </LinkComponent>
       </Button>
     );
-  },
+  }
 );
 
 CloneButton.displayName = "CloneButton";

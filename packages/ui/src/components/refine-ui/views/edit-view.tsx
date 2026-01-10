@@ -1,16 +1,16 @@
 "use client";
 
-import { cn } from "../../lib/utils";
+import { cn } from "../../../lib/utils";
 import {
   useBack,
   useResourceParams,
   useUserFriendlyName,
 } from "@refinedev/core";
 import type { PropsWithChildren } from "react";
-import { Breadcrumb } from "./layout/breadcrumb";
-import { Separator } from "../ui/separator";
-import { Button } from "../ui/button";
-import { RefreshButton } from "./buttons/refresh";
+import { Breadcrumb } from "../layout/breadcrumb";
+import { Separator } from "../../ui/separator";
+import { Button } from "../../ui/button";
+import { RefreshButton } from "../buttons/refresh";
 import { ArrowLeftIcon } from "lucide-react";
 
 type EditViewProps = PropsWithChildren<{
