@@ -12,6 +12,7 @@ import { dataProvider } from "./providers/dataProvider";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
+import RevenueDistributionPage from "./pages/RevenueDistributionPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
@@ -88,6 +89,29 @@ function App() {
                 ),
               },
             },
+            {
+              name: "revenue-distributions",
+              list: "/revenue-distributions",
+              meta: {
+                label: "站長收益列表",
+                icon: (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" y1="2" x2="12" y2="22" />
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                ),
+              },
+            },
           ]}
           options={{
             syncWithLocation: true,
@@ -130,6 +154,10 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="/customers" element={<CustomersPage />} />
+                <Route
+                  path="/revenue-distributions"
+                  element={<RevenueDistributionPage />}
+                />
               </Route>
             </Route>
             <Route
