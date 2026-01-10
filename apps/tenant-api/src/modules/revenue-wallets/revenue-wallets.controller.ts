@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -21,6 +21,7 @@ import { CreateRevenueWalletDto } from "./dto/create-revenue-wallet.dto";
 import { UpdateRevenueWalletDto } from "./dto/update-revenue-wallet.dto";
 import { SetRevenueWalletsDto } from "./dto/set-revenue-wallets.dto";
 import { RevenueWalletResponseDto } from "./dto/revenue-wallet-response.dto";
+import { RevenueWalletListResponseDto } from "./dto/list-response.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "./guards/tenant-admin.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
@@ -38,17 +39,21 @@ export class RevenueWalletsController {
   @ApiResponse({
     status: 200,
     description: "獲取成功",
-    type: [RevenueWalletResponseDto],
+    type: RevenueWalletListResponseDto,
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async getRevenueWallets(
     @CurrentUser() user: User
-  ): Promise<RevenueWalletResponseDto[]> {
+  ): Promise<RevenueWalletListResponseDto> {
     const tenantId = user.tenant?.id;
     if (!tenantId) {
       throw new Error("用戶未關聯租戶");
     }
-    return this.revenueWalletsService.getRevenueWallets(tenantId);
+    const wallets = await this.revenueWalletsService.getRevenueWallets(tenantId);
+    return {
+      data: wallets,
+      total: wallets.length,
+    };
   }
 
   @Post("set")
@@ -92,7 +97,7 @@ export class RevenueWalletsController {
     return this.revenueWalletsService.createRevenueWallet(tenantId, dto);
   }
 
-  @Put(":id")
+  @Patch(":id")
   @ApiOperation({ summary: "更新單個分潤錢包" })
   @ApiResponse({
     status: 200,
