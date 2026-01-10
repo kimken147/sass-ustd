@@ -18,5 +18,5 @@ export class CommissionPayoutListResponseDto {
     description: "代理佣金分配列表",
     type: [CommissionPayoutResponseDto],
   })
-  items!: CommissionPayoutResponseDto[];
+  data!: CommissionPayoutResponseDto[];
 }

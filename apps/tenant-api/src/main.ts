@@ -1,10 +1,12 @@
-import { NestFactory } from "@nestjs/core";
+import { NestFactory, Reflector } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
+import { TransformInterceptor } from "./common/interceptors/transform.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const reflector = app.get(Reflector);
 
   // 全局驗證管道
   app.useGlobalPipes(
@@ -14,6 +16,9 @@ async function bootstrap() {
       transform: true,
     })
   );
+
+  // 全局響應攔截器
+  app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
   // CORS 設置
   app.enableCors({

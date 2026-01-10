@@ -1,10 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityRepository } from "@mikro-orm/postgresql";
-import {
-  RevenueDistribution,
-  CommissionPayout,
-} from "@saas-platform/database";
+import { RevenueDistribution, CommissionPayout } from "@saas-platform/database";
 import { QueryTransactionsDto } from "./dto/query-transactions.dto";
 import { CommissionPayoutListResponseDto } from "./dto/commission-payout-list-response.dto";
 import { RevenueDistributionResponseDto } from "./dto/revenue-distribution-response.dto";
@@ -68,7 +65,7 @@ export class TransactionsService {
     });
 
     // 轉換為響應格式
-    const items = payouts.map((payout) => ({
+    const data = payouts.map((payout) => ({
       id: payout.id,
       transactionTime: payout.createdAt,
       customerId: payout.customer.id,
@@ -80,7 +77,10 @@ export class TransactionsService {
       recipientWallet: payout.agent.wallet?.address || "",
       amount: payout.amount,
       originalInvestmentAmount: payout.originalInvestmentAmount,
-      ratio: parseFloat(payout.amount) / parseFloat(payout.originalInvestmentAmount) * 100,
+      ratio:
+        (parseFloat(payout.amount) /
+          parseFloat(payout.originalInvestmentAmount)) *
+        100,
       commissionRate: payout.commissionRate,
       type: payout.type,
       status: payout.status,
@@ -90,7 +90,7 @@ export class TransactionsService {
     }));
 
     return {
-      items,
+      data,
       total,
       page,
       limit,
@@ -137,10 +137,13 @@ export class TransactionsService {
     }
 
     // 查詢所有符合條件的 distributions（用於展開和計算總數）
-    const allDistributions = await this.revenueDistributionRepository.find(where, {
-      populate: ["customer", "customer.user"],
-      orderBy: { createdAt: "DESC" },
-    });
+    const allDistributions = await this.revenueDistributionRepository.find(
+      where,
+      {
+        populate: ["customer", "customer.user"],
+        orderBy: { createdAt: "DESC" },
+      }
+    );
 
     // 計算總數（展開所有 walletDistributions）
     const totalItems = allDistributions.reduce(
@@ -174,13 +177,15 @@ export class TransactionsService {
     }
 
     // 按時間排序（降序）
-    allItems.sort((a, b) => b.transactionTime.getTime() - a.transactionTime.getTime());
+    allItems.sort(
+      (a, b) => b.transactionTime.getTime() - a.transactionTime.getTime()
+    );
 
     // 分頁處理
     const paginatedItems = allItems.slice(offset, offset + limit);
 
     return {
-      items: paginatedItems,
+      data: paginatedItems,
       total: totalItems,
       page,
       limit,

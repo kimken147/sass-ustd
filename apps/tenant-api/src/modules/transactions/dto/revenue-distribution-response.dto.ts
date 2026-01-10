@@ -68,5 +68,5 @@ export class RevenueDistributionResponseDto {
     description: "交易明細列表",
     type: [RevenueDistributionItemDto],
   })
-  items!: RevenueDistributionItemDto[];
+  data!: RevenueDistributionItemDto[];
 }

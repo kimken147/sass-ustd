@@ -18,11 +18,16 @@ export const dataProvider: DataProvider = {
         params.sort = `${sorter.field}:${sorter.order}`;
       }
 
-      // 添加篩選
+      // 添加篩選（同時處理分頁和日期篩選）
       if (filters && filters.length > 0) {
         filters.forEach((filter) => {
           if ("field" in filter && "value" in filter) {
-            params[filter.field] = filter.value;
+            // 特殊處理分頁參數：如果 filters 中有 page 或 limit，覆蓋默認值
+            if (filter.field === "page" || filter.field === "limit") {
+              params[filter.field] = filter.value;
+            } else {
+              params[filter.field] = filter.value;
+            }
           }
         });
       }
@@ -33,9 +38,18 @@ export const dataProvider: DataProvider = {
         params,
       });
 
-      // 統一處理返回格式：支持 { data, total } 或直接是 { data, total } 結構
+      // 統一處理返回格式：支持多種格式
+      // customers 資源返回 { customers, total, stats, ... } 格式
+      if (resource === "customers" && response.customers) {
+        return {
+          data: response, // 返回完整響應，包含 customers, stats 等
+          total: response.total || 0,
+        };
+      }
+
+      // 標準格式：{ data, total }
       return {
-        data: response.data || response.items || [],
+        data: response.data || [],
         total:
           response.total ||
           response.count ||
