@@ -15,6 +15,12 @@ export class AgentResponseDto {
   userId!: number;
 
   @ApiProperty({
+    description: '登入帳號（username）',
+    example: 'agent001',
+  })
+  username!: string;
+
+  @ApiProperty({
     description: '代理名稱',
     example: '張三',
   })

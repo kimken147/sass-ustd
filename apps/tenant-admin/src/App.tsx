@@ -15,6 +15,9 @@ import CustomersPage from "./pages/CustomersPage";
 import RevenueDistributionPage from "./pages/RevenueDistributionPage";
 import CommissionPayoutPage from "./pages/CommissionPayoutPage";
 import WalletsPage from "./pages/WalletsPage";
+import AgentsPage from "./pages/AgentsPage";
+import CreateAgentPage from "./pages/CreateAgentPage";
+import EditAgentPage from "./pages/EditAgentPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
@@ -116,6 +119,33 @@ function App() {
               },
             },
             {
+              name: "agents",
+              list: "/agents",
+              create: "/agents/create",
+              edit: "/agents/edit/:id",
+              meta: {
+                label: "代理管理",
+                icon: (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                ),
+              },
+            },
+            {
               name: "revenue-distributions",
               list: "/revenue-distributions",
               meta: {
@@ -203,6 +233,9 @@ function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="/customers" element={<CustomersPage />} />
                 <Route path="/wallets" element={<WalletsPage />} />
+                <Route path="/agents" element={<AgentsPage />} />
+                <Route path="/agents/create" element={<CreateAgentPage />} />
+                <Route path="/agents/edit/:id" element={<EditAgentPage />} />
                 <Route
                   path="/revenue-distributions"
                   element={<RevenueDistributionPage />}

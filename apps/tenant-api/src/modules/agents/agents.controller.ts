@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -97,7 +97,7 @@ export class AgentsController {
     return this.mapAgentToDto(agent);
   }
 
-  @Put(":id")
+  @Patch(":id")
   @ApiOperation({ summary: "更新代理" })
   @ApiResponse({
     status: 200,
@@ -148,6 +148,7 @@ export class AgentsController {
     return {
       id: agent.id,
       userId: agent.user.id,
+      username: agent.user.username,
       name: agent.name,
       code: agent.code,
       referralLink,
