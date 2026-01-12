@@ -65,6 +65,47 @@ export class AgentsService {
   }
 
   /**
+   * 獲取指定代理的下級代理列表（支援層級查詢）
+   * 使用 path 字段進行高效查詢：查找所有 path 以 "root/{agentId}" 開頭的代理
+   */
+  async getSubAgents(
+    tenantId: number,
+    agentId: number,
+  ): Promise<Agent[]> {
+    // 先獲取當前代理，確認其存在
+    const currentAgent = await this.agentRepository.findOne(
+      { id: agentId, tenant: tenantId },
+      {
+        populate: ['user', 'parentAgent', 'tenant'],
+      },
+    );
+
+    if (!currentAgent) {
+      throw new NotFoundException('代理不存在');
+    }
+
+    // 構建查詢條件：查找所有 parentAgent 為當前代理的代理
+    // 或者使用 path 查詢：path 以 "root/{agentId}" 或 "{currentAgent.path}/{agentId}" 開頭
+    const pathPrefix = currentAgent.path === 'root' 
+      ? `root/${agentId}` 
+      : `${currentAgent.path}/${agentId}`;
+
+    // 查詢直接下級（parentAgent = currentAgent）
+    const subAgents = await this.agentRepository.find(
+      {
+        parentAgent: agentId,
+        tenant: tenantId,
+      },
+      {
+        populate: ['user', 'parentAgent', 'tenant'],
+        orderBy: { level: 'ASC', createdAt: 'DESC' },
+      },
+    );
+
+    return subAgents;
+  }
+
+  /**
    * 創建代理
    * 1. 創建 User（role = AGENT）
    * 2. 創建 Agent

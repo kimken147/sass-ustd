@@ -12,6 +12,9 @@ import { dataProvider } from "./providers/dataProvider";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import WalletPage from "./pages/WalletPage";
+import SubAgentsPage from "./pages/SubAgentsPage";
+import CreateSubAgentPage from "./pages/CreateSubAgentPage";
+import EditSubAgentPage from "./pages/EditSubAgentPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
@@ -114,6 +117,8 @@ function App() {
             {
               name: "sub-agents",
               list: "/sub-agents",
+              create: "/sub-agents/create",
+              edit: "/sub-agents/edit/:id",
               meta: {
                 label: "下級代理",
                 icon: (
@@ -224,6 +229,9 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="/wallet" element={<WalletPage />} />
+                <Route path="/sub-agents" element={<SubAgentsPage />} />
+                <Route path="/sub-agents/create" element={<CreateSubAgentPage />} />
+                <Route path="/sub-agents/edit/:id" element={<EditSubAgentPage />} />
                 {/* 其他路由將在後續添加 */}
               </Route>
             </Route>

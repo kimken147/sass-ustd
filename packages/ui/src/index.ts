@@ -62,6 +62,18 @@ export {
   PopoverTrigger,
   PopoverContent,
 } from "./components/ui/popover";
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "./components/ui/dialog";
 export { Separator } from "./components/ui/separator";
 export {
   Sheet,

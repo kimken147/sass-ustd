@@ -222,6 +222,144 @@ export class AgentsController {
     return this.mapAgentToDto(updatedAgent);
   }
 
+  @Get("me/subordinates")
+  @UseGuards(JwtAuthGuard, AgentGuard)
+  @ApiOperation({ summary: "獲取當前代理的下級代理列表" })
+  @ApiResponse({
+    status: 200,
+    description: "獲取成功",
+    type: [AgentResponseDto],
+  })
+  @ApiResponse({ status: 403, description: "只有代理可以訪問" })
+  async getMySubAgents(@CurrentUser() user: User): Promise<AgentResponseDto[]> {
+    const tenantId = user.tenant?.id;
+    if (!tenantId) {
+      throw new Error("用戶未關聯租戶");
+    }
+
+    // 查找當前用戶對應的代理記錄
+    const agent = await this.em.findOne(
+      Agent,
+      {
+        user: user.id,
+        tenant: tenantId,
+      },
+      {
+        populate: ["user", "parentAgent", "tenant"],
+      }
+    );
+
+    if (!agent) {
+      throw new Error("代理記錄不存在");
+    }
+
+    // 獲取下級代理列表
+    const subAgents = await this.agentsService.getSubAgents(tenantId, agent.id);
+    return subAgents.map((subAgent) => this.mapAgentToDto(subAgent));
+  }
+
+  @Patch("me/subordinates/:id")
+  @UseGuards(JwtAuthGuard, AgentGuard)
+  @ApiOperation({ summary: "編輯當前代理的下級代理" })
+  @ApiResponse({
+    status: 200,
+    description: "更新成功",
+    type: AgentResponseDto,
+  })
+  @ApiResponse({ status: 403, description: "只有代理可以訪問" })
+  @ApiResponse({ status: 404, description: "下級代理不存在或無權限" })
+  async updateMySubAgent(
+    @CurrentUser() user: User,
+    @Param("id", ParseIntPipe) subAgentId: number,
+    @Body() dto: UpdateAgentDto
+  ): Promise<AgentResponseDto> {
+    const tenantId = user.tenant?.id;
+    if (!tenantId) {
+      throw new Error("用戶未關聯租戶");
+    }
+
+    // 查找當前用戶對應的代理記錄
+    const currentAgent = await this.em.findOne(
+      Agent,
+      {
+        user: user.id,
+        tenant: tenantId,
+      },
+      {
+        populate: ["user", "parentAgent", "tenant"],
+      }
+    );
+
+    if (!currentAgent) {
+      throw new Error("代理記錄不存在");
+    }
+
+    // 驗證要編輯的代理是否是當前代理的下級
+    const subAgents = await this.agentsService.getSubAgents(
+      tenantId,
+      currentAgent.id
+    );
+    const targetSubAgent = subAgents.find((a) => a.id === subAgentId);
+
+    if (!targetSubAgent) {
+      throw new NotFoundException("下級代理不存在或無權限訪問");
+    }
+
+    // 更新下級代理
+    const updatedAgent = await this.agentsService.updateAgent(
+      tenantId,
+      subAgentId,
+      dto
+    );
+    return this.mapAgentToDto(updatedAgent);
+  }
+
+  @Post("me/subordinates")
+  @UseGuards(JwtAuthGuard, AgentGuard)
+  @ApiOperation({ summary: "創建當前代理的下級代理" })
+  @ApiResponse({
+    status: 201,
+    description: "創建成功",
+    type: AgentResponseDto,
+  })
+  @ApiResponse({ status: 400, description: "分潤比率總和不等於 100%" })
+  @ApiResponse({ status: 409, description: "帳號、Email 或代理碼已存在" })
+  @ApiResponse({ status: 403, description: "只有代理可以訪問" })
+  async createMySubAgent(
+    @CurrentUser() user: User,
+    @Body() dto: CreateAgentDto
+  ): Promise<AgentResponseDto> {
+    const tenantId = user.tenant?.id;
+    if (!tenantId) {
+      throw new Error("用戶未關聯租戶");
+    }
+
+    // 查找當前用戶對應的代理記錄
+    const currentAgent = await this.em.findOne(
+      Agent,
+      {
+        user: user.id,
+        tenant: tenantId,
+      },
+      {
+        populate: ["user", "parentAgent", "tenant"],
+      }
+    );
+
+    if (!currentAgent) {
+      throw new Error("代理記錄不存在");
+    }
+
+    // 自動設置 parentAgentId 為當前代理的 ID
+    const createDto = {
+      ...dto,
+      parentAgentId: currentAgent.id,
+    };
+
+    const agent = await this.agentsService.createAgent(tenantId, createDto);
+    return this.mapAgentToDto(agent);
+  }
+
   /**
    * 將 Agent 實體轉換為 DTO
    */
