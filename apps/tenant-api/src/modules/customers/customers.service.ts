@@ -7,6 +7,8 @@ import {
   CommissionPayout,
   SystemFeeDistribution,
   RevenueDistributionStatus,
+  Agent,
+  UserRole,
 } from "@saas-platform/database";
 import { CustomerListQueryDto } from "./dto/customer-list-query.dto";
 import { CustomerListResponseDto } from "./dto/customer-list-response.dto";
@@ -33,22 +35,33 @@ export class CustomersService {
     private readonly commissionPayoutRepository: EntityRepository<CommissionPayout>,
     @InjectRepository(SystemFeeDistribution)
     private readonly systemFeeDistributionRepository: EntityRepository<SystemFeeDistribution>,
+    @InjectRepository(Agent)
+    private readonly agentRepository: EntityRepository<Agent>,
     private readonly em: EntityManager,
     private readonly contractsService: ContractsService
   ) {}
 
   /**
    * 獲取會員列表
+   * @param tenantId 租戶 ID
+   * @param query 查詢條件
+   * @param agentId 可選的代理 ID（如果提供，則只查詢該代理旗下的會員）
    */
   async getCustomerList(
     tenantId: number,
-    query: CustomerListQueryDto
+    query: CustomerListQueryDto,
+    agentId?: number
   ): Promise<CustomerListResponseDto> {
     // 構建查詢條件
     const where: any = {
       tenant: tenantId,
       deletedAt: null, // 只查詢未刪除的
     };
+
+    // 如果提供了 agentId，則只查詢該代理旗下的會員
+    if (agentId) {
+      where.referralAgent = agentId;
+    }
 
     // 授權狀態篩選
     if (query.authorizationStatus && query.authorizationStatus !== SharedCustomerAuthorizationStatus.ALL) {
@@ -67,6 +80,11 @@ export class CustomersService {
       populate: ["user", "referralAgent"],
       orderBy: { createdAt: "DESC" },
     });
+
+    // 如果提供了 agentId，確保只返回該代理旗下的會員
+    if (agentId) {
+      customers = customers.filter((c) => c.referralAgent?.id === agentId);
+    }
 
     // 應用授權狀態篩選和地址篩選
     if (
@@ -188,8 +206,8 @@ export class CustomersService {
       };
     });
 
-    // 計算統計數據
-    const stats = await this.calculateStats(tenantId, query, customers);
+    // 計算統計數據（如果是代理查詢，需要傳入 agentId）
+    const stats = await this.calculateStats(tenantId, query, customers, agentId);
 
     // 分頁
     const page = query.page || 1;
@@ -247,11 +265,16 @@ export class CustomersService {
 
   /**
    * 計算統計數據
+   * @param tenantId 租戶 ID
+   * @param query 查詢條件
+   * @param customers 會員列表
+   * @param agentId 可選的代理 ID（如果提供，則只統計該代理旗下的數據）
    */
   private async calculateStats(
     tenantId: number,
     query: CustomerListQueryDto,
-    customers: Customer[]
+    customers: Customer[],
+    agentId?: number
   ): Promise<CustomerStatsDto> {
     // 授權客戶數
     const authorizedClients = customers.filter(
@@ -272,6 +295,17 @@ export class CustomersService {
       deletedAt: null,
     };
 
+    // 如果提供了 agentId，只統計該代理旗下的會員的收割記錄
+    if (agentId) {
+      const customerIds = customers.map((c) => c.id);
+      if (customerIds.length > 0) {
+        harvestWhere.customer = { $in: customerIds };
+      } else {
+        // 如果沒有會員，直接返回 0
+        harvestWhere.customer = { $in: [] };
+      }
+    }
+
     // 如果指定了時間範圍和收割時間類型，需要加上時間條件
     if (query.timeType === SharedTimeType.HARVEST_TIME) {
       if (query.startDate) {
@@ -291,6 +325,7 @@ export class CustomersService {
     }, 0);
 
     // 系統費用（從 SystemFeeDistribution 聚合）
+    // 注意：如果是代理查詢，系統費用不應包含在代理的統計中
     const systemFeeWhere: any = {
       tenant: tenantId,
       deletedAt: null,
@@ -311,11 +346,16 @@ export class CustomersService {
       return sum + parseFloat(f.amount);
     }, 0);
 
-    // 商戶代理（從 CommissionPayout 聚合所有代理的佣金）
+    // 商戶代理（從 CommissionPayout 聚合代理的佣金）
     const commissionWhere: any = {
       tenant: tenantId,
       deletedAt: null,
     };
+
+    // 如果提供了 agentId，只統計該代理的佣金
+    if (agentId) {
+      commissionWhere.agent = agentId;
+    }
     if (query.timeType === SharedTimeType.HARVEST_TIME) {
       if (query.startDate) {
         commissionWhere.createdAt = { $gte: new Date(query.startDate) };

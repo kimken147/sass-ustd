@@ -6,10 +6,13 @@ import {
   CommissionPayout,
   SystemFeeDistribution,
   Tenant,
+  Agent,
 } from "@saas-platform/database";
 import { CustomersController } from "./customers.controller";
 import { CustomersService } from "./customers.service";
 import { ContractsModule } from "../contracts/contracts.module";
+import { AgentGuard } from "./guards/agent.guard";
+import { TenantAdminOrAgentGuard } from "./guards/tenant-admin-or-agent.guard";
 
 @Module({
   imports: [
@@ -19,11 +22,12 @@ import { ContractsModule } from "../contracts/contracts.module";
       CommissionPayout,
       SystemFeeDistribution,
       Tenant,
+      Agent,
     ]),
     ContractsModule,
   ],
   controllers: [CustomersController],
-  providers: [CustomersService],
+  providers: [CustomersService, AgentGuard, TenantAdminOrAgentGuard],
   exports: [CustomersService],
 })
 export class CustomersModule {}
