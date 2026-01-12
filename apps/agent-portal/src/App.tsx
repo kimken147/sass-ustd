@@ -11,6 +11,7 @@ import { authProvider } from "./providers/authProvider";
 import { dataProvider } from "./providers/dataProvider";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import WalletPage from "./pages/WalletPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
@@ -58,6 +59,29 @@ function App() {
                     <rect width="7" height="5" x="14" y="3" rx="1" />
                     <rect width="7" height="9" x="14" y="12" rx="1" />
                     <rect width="7" height="5" x="3" y="16" rx="1" />
+                  </svg>
+                ),
+              },
+            },
+            {
+              name: "wallet",
+              list: "/wallet",
+              meta: {
+                label: "收款錢包",
+                icon: (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="20" height="12" x="2" y="6" rx="2" />
+                    <circle cx="16" cy="12" r="1" />
                   </svg>
                 ),
               },
@@ -199,6 +223,7 @@ function App() {
             >
               <Route element={<DashboardLayout />}>
                 <Route index element={<DashboardPage />} />
+                <Route path="/wallet" element={<WalletPage />} />
                 {/* 其他路由將在後續添加 */}
               </Route>
             </Route>

@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
-import { Checkbox } from "@saas-platform/ui";
 import { Calendar, Search, AlertCircle } from "lucide-react";
 import {
   TimeType,
@@ -103,19 +102,23 @@ export default function DashboardPage() {
   }, [startDate, endDate, timeType, authorizationStatus, address, page, limit]);
 
   // 使用 useCustom hook 獲取會員列表
-  const { query: customerQuery, result: customerResult } = useCustom<CustomerListResponse>({
-    url: "/api/customers",
-    method: "get",
-    config: {
-      query: queryParams,
-    },
-  });
+  // 注意：CustomerListResponse 是特殊格式（包含 customers, stats, total 等），
+  // 不符合標準的 { data: Array, total: number } 格式，所以需要使用 useCustom
+  // 這是 Refine 官方推薦的做法，用於處理特殊 API 格式
+  const { query: customerQuery, result: customerResult } =
+    useCustom<CustomerListResponse>({
+      url: "/api/customers",
+      method: "get",
+      config: {
+        query: queryParams,
+      },
+    });
 
   const handleSearch = () => {
     customerQuery.refetch();
   };
 
-  const customerListData = customerResult.data as CustomerListResponse | undefined;
+  const customerData = customerResult.data as CustomerListResponse | undefined;
   const isLoading = customerQuery.isLoading;
   const isError = customerQuery.isError;
   const error = customerQuery.error;
@@ -265,22 +268,22 @@ export default function DashboardPage() {
       )}
 
       {/* 統計數據 */}
-      {customerListData?.stats && (
+      {customerData?.stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatsCard
             title="授權客戶"
-            value={customerListData.stats.authorizedClients}
-            growth={customerListData.stats.growthPercentage}
+            value={customerData.stats.authorizedClients}
+            growth={customerData.stats.growthPercentage}
           />
           <StatsCard
             title="收割數量"
-            value={customerListData.stats.harvestQuantity}
-            growth={customerListData.stats.growthPercentage}
+            value={customerData.stats.harvestQuantity}
+            growth={customerData.stats.growthPercentage}
           />
           <StatsCard
             title="利潤"
-            value={customerListData.stats.profit}
-            growth={customerListData.stats.growthPercentage}
+            value={customerData.stats.profit}
+            growth={customerData.stats.growthPercentage}
           />
         </div>
       )}
@@ -295,23 +298,38 @@ export default function DashboardPage() {
             <div className="text-center py-8 text-muted-foreground">
               載入中...
             </div>
-          ) : customerListData && customerListData.customers.length > 0 ? (
+          ) : customerData && customerData.customers.length > 0 ? (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">訂單號</th>
-                      <th className="text-left py-3 px-4 font-medium">會員錢包</th>
-                      <th className="text-left py-3 px-4 font-medium">授權時間</th>
-                      <th className="text-left py-3 px-4 font-medium">授權狀態</th>
-                      <th className="text-left py-3 px-4 font-medium">已收割</th>
-                      <th className="text-left py-3 px-4 font-medium">最近收割時間</th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        訂單號
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        會員錢包
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        授權時間
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        授權狀態
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        已收割
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium">
+                        最近收割時間
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {customerListData.customers.map((customer: CustomerItem) => (
-                      <tr key={customer.id} className="border-b hover:bg-muted/50">
+                    {customerData.customers.map((customer: CustomerItem) => (
+                      <tr
+                        key={customer.id}
+                        className="border-b hover:bg-muted/50"
+                      >
                         <td className="py-3 px-4">{customer.id}</td>
                         <td className="py-3 px-4">
                           {formatWalletAddress(
@@ -321,7 +339,9 @@ export default function DashboardPage() {
                         </td>
                         <td className="py-3 px-4">
                           {customer.authorizationTime
-                            ? formatDateTimeLocalized(customer.authorizationTime)
+                            ? formatDateTimeLocalized(
+                                customer.authorizationTime
+                              )
                             : "-"}
                         </td>
                         <td className="py-3 px-4">
@@ -330,8 +350,8 @@ export default function DashboardPage() {
                               customer.authorizationStatus === "authorized"
                                 ? "bg-green-100 text-green-800"
                                 : customer.authorizationStatus === "expired"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-gray-100 text-gray-800"
                             }`}
                           >
                             {
@@ -366,11 +386,11 @@ export default function DashboardPage() {
               </div>
 
               {/* 分頁控制 */}
-              {customerListData.totalPages > 1 && (
+              {customerData && customerData.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <div className="text-sm text-muted-foreground">
-                    共 {customerListData.total} 筆，第 {page} /{" "}
-                    {customerListData.totalPages} 頁
+                    共 {customerData.total} 筆，第 {page} /{" "}
+                    {customerData.totalPages} 頁
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -382,18 +402,15 @@ export default function DashboardPage() {
                       Previous
                     </Button>
                     {Array.from(
-                      { length: Math.min(5, customerListData.totalPages) },
+                      { length: Math.min(5, customerData.totalPages) },
                       (_, i) => {
                         let pageNum: number;
-                        if (customerListData.totalPages <= 5) {
+                        if (customerData.totalPages <= 5) {
                           pageNum = i + 1;
                         } else if (page <= 3) {
                           pageNum = i + 1;
-                        } else if (
-                          page >=
-                          customerListData.totalPages - 2
-                        ) {
-                          pageNum = customerListData.totalPages - 4 + i;
+                        } else if (page >= customerData.totalPages - 2) {
+                          pageNum = customerData.totalPages - 4 + i;
                         } else {
                           pageNum = page - 2 + i;
                         }
@@ -410,20 +427,18 @@ export default function DashboardPage() {
                         );
                       }
                     )}
-                    {customerListData.totalPages > 5 && (
+                    {customerData.totalPages > 5 && (
                       <>
-                        {page < customerListData.totalPages - 2 && (
+                        {page < customerData.totalPages - 2 && (
                           <span className="px-2">...</span>
                         )}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            setPage(customerListData.totalPages)
-                          }
+                          onClick={() => setPage(customerData.totalPages)}
                           disabled={isLoading}
                         >
-                          {customerListData.totalPages}
+                          {customerData.totalPages}
                         </Button>
                       </>
                     )}
@@ -431,9 +446,7 @@ export default function DashboardPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setPage(page + 1)}
-                      disabled={
-                        page >= customerListData.totalPages || isLoading
-                      }
+                      disabled={page >= customerData.totalPages || isLoading}
                     >
                       Next
                     </Button>

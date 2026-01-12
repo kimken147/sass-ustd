@@ -18,14 +18,18 @@ import {
   ApiBearerAuth,
 } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
+import { InjectEntityManager } from "@mikro-orm/nestjs";
+import { EntityManager } from "@mikro-orm/postgresql";
 import { AgentsService } from "./agents.service";
 import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdateAgentDto } from "./dto/update-agent.dto";
+import { UpdateAgentWalletDto } from "./dto/update-agent-wallet.dto";
 import { AgentResponseDto } from "./dto/agent-response.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "../revenue-wallets/guards/tenant-admin.guard";
+import { AgentGuard } from "../customers/guards/agent.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { User, Agent } from "@saas-platform/database";
+import { User, Agent, UserRole } from "@saas-platform/database";
 
 @ApiTags("代理管理")
 @Controller("agents")
@@ -34,7 +38,9 @@ import { User, Agent } from "@saas-platform/database";
 export class AgentsController {
   constructor(
     private readonly agentsService: AgentsService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    @InjectEntityManager()
+    private readonly em: EntityManager
   ) {}
 
   @Get()
@@ -136,6 +142,84 @@ export class AgentsController {
       throw new Error("用戶未關聯租戶");
     }
     return this.agentsService.deleteAgent(tenantId, agentId);
+  }
+
+  // ========== 代理自己的 API ==========
+
+  @Get("me")
+  @UseGuards(JwtAuthGuard, AgentGuard)
+  @ApiOperation({ summary: "獲取當前代理信息" })
+  @ApiResponse({
+    status: 200,
+    description: "獲取成功",
+    type: AgentResponseDto,
+  })
+  @ApiResponse({ status: 403, description: "只有代理可以訪問" })
+  async getMyAgent(@CurrentUser() user: User): Promise<AgentResponseDto> {
+    const tenantId = user.tenant?.id;
+    if (!tenantId) {
+      throw new Error("用戶未關聯租戶");
+    }
+
+    // 查找當前用戶對應的代理記錄
+    const agent = await this.em.findOne(
+      Agent,
+      {
+        user: user.id,
+        tenant: tenantId,
+      },
+      {
+        populate: ["user", "parentAgent", "tenant"],
+      }
+    );
+
+    if (!agent) {
+      throw new Error("代理記錄不存在");
+    }
+
+    return this.mapAgentToDto(agent);
+  }
+
+  @Patch("me/wallet")
+  @UseGuards(JwtAuthGuard, AgentGuard)
+  @ApiOperation({ summary: "更新當前代理的收款錢包" })
+  @ApiResponse({
+    status: 200,
+    description: "更新成功",
+    type: AgentResponseDto,
+  })
+  @ApiResponse({ status: 403, description: "只有代理可以訪問" })
+  async updateMyWallet(
+    @CurrentUser() user: User,
+    @Body() dto: UpdateAgentWalletDto
+  ): Promise<AgentResponseDto> {
+    const tenantId = user.tenant?.id;
+    if (!tenantId) {
+      throw new Error("用戶未關聯租戶");
+    }
+
+    // 查找當前用戶對應的代理記錄
+    const agent = await this.em.findOne(
+      Agent,
+      {
+        user: user.id,
+        tenant: tenantId,
+      },
+      {
+        populate: ["user", "parentAgent", "tenant"],
+      }
+    );
+
+    if (!agent) {
+      throw new Error("代理記錄不存在");
+    }
+
+    // 使用現有的 updateAgent 方法，但只更新錢包地址
+    const updatedAgent = await this.agentsService.updateAgent(tenantId, agent.id, {
+      walletAddress: dto.walletAddress,
+    });
+
+    return this.mapAgentToDto(updatedAgent);
   }
 
   /**
