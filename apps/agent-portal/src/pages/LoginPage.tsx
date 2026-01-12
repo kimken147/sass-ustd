@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLogin } from "@refinedev/core";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import { Label } from "@saas-platform/ui";
+import { Checkbox } from "@saas-platform/ui";
 import {
   Card,
   CardContent,
@@ -16,11 +17,28 @@ export default function LoginPage() {
   const { mutate: login, isPending } = useLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 從 localStorage 恢復記住的用戶名
+  useEffect(() => {
+    const savedUsername = localStorage.getItem("agent_portal_username");
+    if (savedUsername) {
+      setUsername(savedUsername);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // 處理記住我功能
+    if (rememberMe) {
+      localStorage.setItem("agent_portal_username", username);
+    } else {
+      localStorage.removeItem("agent_portal_username");
+    }
 
     login(
       {
@@ -111,19 +129,31 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember-me"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) =>
+                      setRememberMe(checked === true)
+                    }
                   />
-                  <span className="text-muted-foreground">記住我</span>
-                </label>
-                <a
-                  href="#"
+                  <Label
+                    htmlFor="remember-me"
+                    className="text-sm font-normal cursor-pointer text-muted-foreground"
+                  >
+                    記住我
+                  </Label>
+                </div>
+                <button
+                  type="button"
                   className="text-primary hover:underline font-medium"
+                  onClick={() => {
+                    // TODO: 實作忘記密碼功能
+                    alert("忘記密碼功能開發中");
+                  }}
                 >
                   忘記密碼？
-                </a>
+                </button>
               </div>
 
               <Button
