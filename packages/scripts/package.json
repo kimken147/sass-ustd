@@ -1,0 +1,27 @@
+{
+  "name": "@saas-platform/scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Utility scripts for platform management",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "init-platform-user": "ts-node -r tsconfig-paths/register --transpile-only src/scripts/init-platform-user.ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@saas-platform/database": "workspace:*",
+    "@saas-platform/auth": "workspace:*",
+    "@mikro-orm/core": "^6.3.13",
+    "@mikro-orm/postgresql": "^6.3.13",
+    "dotenv": "^16.4.5",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.7.2"
+  }
+}

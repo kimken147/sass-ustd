@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
 import { User } from "@saas-platform/database";
@@ -31,6 +31,7 @@ export class AuthService extends BaseAuthService {
     em: EntityManager,
     jwtService: JwtService,
     passwordService: PasswordService,
+    @Inject("TokenBlacklistService")
     tokenBlacklist: TokenBlacklistService
   ) {
     super();
