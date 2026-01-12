@@ -586,6 +586,9 @@ importers:
 
   apps/tenant-api:
     dependencies:
+      '@mikro-orm/cli':
+        specifier: ^6.3.13
+        version: 6.6.1(pg@8.16.3)
       '@mikro-orm/core':
         specifier: ^6.3.13
         version: 6.6.1
