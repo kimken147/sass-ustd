@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Tenant, User, Agent, SystemWallet } from '@saas-platform/database';
+import { Tenant, PlatformUser, SystemWallet } from '@saas-platform/database';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { SystemWalletsModule } from './modules/system-wallets/system-wallets.module';
@@ -26,16 +26,16 @@ import { SitesModule } from './modules/sites/sites.module';
         user: configService.get('PLATFORM_DB_USER', 'postgres'),
         password: configService.get('PLATFORM_DB_PASSWORD', 'postgres'),
         
-        // 實體列表
-        entities: [Tenant, User, Agent, SystemWallet],
+        // 實體列表 - 只包含 Platform DB 的實體
+        entities: [Tenant, PlatformUser, SystemWallet],
         
         // 開發環境自動同步（生產環境應使用 migrations）
         debug: configService.get('NODE_ENV') !== 'production',
         
-        // 自動發現實體
+        // 禁用自動發現實體，明確指定實體列表
         discovery: {
           warnWhenNoEntities: true,
-          requireEntitiesArray: false,
+          requireEntitiesArray: true,
         },
         
         // 遷移配置

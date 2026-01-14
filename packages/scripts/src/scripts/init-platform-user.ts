@@ -14,15 +14,10 @@ import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import * as readline from "readline";
 import * as dotenv from "dotenv";
 import {
-  User,
+  PlatformUser,
   UserRole,
   UserStatus,
   Tenant,
-  Agent,
-  Customer,
-  CommissionPayout,
-  RevenueDistribution,
-  SystemFeeDistribution,
   SystemWallet,
 } from "@saas-platform/database";
 import { PasswordService } from "@saas-platform/auth";
@@ -256,14 +251,10 @@ async function main() {
         process.env.DB_NAME ||
         process.env.PLATFORM_DB_NAME ||
         "saas_platform",
+      // 只包含 Platform DB 的實體
       entities: [
         Tenant,
-        User,
-        Agent,
-        Customer,
-        CommissionPayout,
-        RevenueDistribution,
-        SystemFeeDistribution,
+        PlatformUser,
         SystemWallet,
       ],
       debug: false,
@@ -282,7 +273,7 @@ async function main() {
       queryConditions.push({ email: input.email.trim().toLowerCase(), tenant: null });
     }
     
-    const existingUser = await em.findOne(User, {
+    const existingUser = await em.findOne(PlatformUser, {
       $or: queryConditions,
     });
 
@@ -302,7 +293,7 @@ async function main() {
     const hashedPassword = await passwordService.hashPassword(input.password);
 
     // 創建用戶
-    const user = new User();
+    const user = new PlatformUser();
     user.username = input.username.trim();
     // 如果沒有提供 email，生成一個基於 username 的預設 email
     user.email = input.email && input.email.trim().length > 0
@@ -312,7 +303,7 @@ async function main() {
     user.name = input.name.trim();
     user.role = UserRole.PLATFORM_ADMIN;
     user.status = UserStatus.ACTIVE;
-    user.tenant = null; // Platform Admin 沒有 tenant
+    user.tenant = undefined; // Platform Admin 沒有 tenant
     // 如果有提供 email，設為已驗證；否則設為未驗證
     user.emailVerified = !!(input.email && input.email.trim().length > 0);
     if (user.emailVerified) {

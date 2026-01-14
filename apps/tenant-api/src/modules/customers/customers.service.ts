@@ -43,18 +43,15 @@ export class CustomersService {
 
   /**
    * 獲取會員列表
-   * @param tenantId 租戶 ID
    * @param query 查詢條件
    * @param agentId 可選的代理 ID（如果提供，則只查詢該代理旗下的會員）
    */
   async getCustomerList(
-    tenantId: number,
     query: CustomerListQueryDto,
     agentId?: number
   ): Promise<CustomerListResponseDto> {
     // 構建查詢條件
     const where: any = {
-      tenant: tenantId,
       deletedAt: null, // 只查詢未刪除的
     };
 
@@ -138,7 +135,6 @@ export class CustomersService {
         // 收割時間：需要從 RevenueDistribution 查詢
         // 先獲取在時間範圍內有收割記錄的會員 ID
         const harvestWhere: any = {
-          tenant: tenantId,
           deletedAt: null,
         };
         if (startDate) {
@@ -168,7 +164,7 @@ export class CustomersService {
 
     // 獲取每個會員的最近收割資訊
     const customerIds = customers.map((c) => c.id);
-    const recentHarvests = await this.getRecentHarvests(tenantId, customerIds);
+    const recentHarvests = await this.getRecentHarvests(customerIds);
 
     // 轉換為 DTO
     const customerDtos: CustomerResponseDto[] = customers.map((customer) => {
@@ -207,7 +203,7 @@ export class CustomersService {
     });
 
     // 計算統計數據（如果是代理查詢，需要傳入 agentId）
-    const stats = await this.calculateStats(tenantId, query, customers, agentId);
+    const stats = await this.calculateStats(query, customers, agentId);
 
     // 分頁
     const page = query.page || 1;
@@ -231,7 +227,6 @@ export class CustomersService {
    * 獲取最近收割資訊
    */
   private async getRecentHarvests(
-    tenantId: number,
     customerIds: number[]
   ): Promise<Map<number, RevenueDistribution>> {
     if (customerIds.length === 0) {
@@ -241,7 +236,6 @@ export class CustomersService {
     // 查詢每個會員的最新收割記錄
     const harvests = await this.revenueDistributionRepository.find(
       {
-        tenant: tenantId,
         customer: { $in: customerIds },
         deletedAt: null,
       },
@@ -265,13 +259,11 @@ export class CustomersService {
 
   /**
    * 計算統計數據
-   * @param tenantId 租戶 ID
    * @param query 查詢條件
    * @param customers 會員列表
    * @param agentId 可選的代理 ID（如果提供，則只統計該代理旗下的數據）
    */
   private async calculateStats(
-    tenantId: number,
     query: CustomerListQueryDto,
     customers: Customer[],
     agentId?: number
@@ -291,7 +283,6 @@ export class CustomersService {
 
     // 收割數量（從 RevenueDistribution 聚合）
     const harvestWhere: any = {
-      tenant: tenantId,
       deletedAt: null,
     };
 
@@ -327,7 +318,6 @@ export class CustomersService {
     // 系統費用（從 SystemFeeDistribution 聚合）
     // 注意：如果是代理查詢，系統費用不應包含在代理的統計中
     const systemFeeWhere: any = {
-      tenant: tenantId,
       deletedAt: null,
     };
     if (query.timeType === SharedTimeType.HARVEST_TIME) {
@@ -348,7 +338,6 @@ export class CustomersService {
 
     // 商戶代理（從 CommissionPayout 聚合代理的佣金）
     const commissionWhere: any = {
-      tenant: tenantId,
       deletedAt: null,
     };
 
@@ -391,7 +380,6 @@ export class CustomersService {
    * 收割會員（執行合約）- 批量處理已選擇的會員
    */
   async harvestCustomers(
-    tenantId: number,
     customerIds: number[]
   ): Promise<HarvestResponseDto> {
     const results: HarvestResultDto[] = [];
@@ -402,7 +390,6 @@ export class CustomersService {
     const customers = await this.customerRepository.find(
       {
         id: { $in: customerIds },
-        tenant: tenantId,
         deletedAt: null,
       },
       {
@@ -447,7 +434,7 @@ export class CustomersService {
         }
 
         // 調用 processInvestment 執行合約（收割）
-        const result = await this.contractsService.processInvestment(tenantId, {
+        const result = await this.contractsService.processInvestment({
           customerId: customer.id,
           amount: approvedAmount,
         });
@@ -482,11 +469,10 @@ export class CustomersService {
    * 一鍵收割（執行合約）- 處理所有符合條件的會員
    */
   async harvestAllCustomers(
-    tenantId: number,
     query: CustomerListQueryDto
   ): Promise<HarvestResponseDto> {
     // 先獲取符合條件的會員列表
-    const customerList = await this.getCustomerList(tenantId, query);
+    const customerList = await this.getCustomerList(query);
 
     // 提取所有會員 ID
     const customerIds = customerList.customers.map((c) => c.id);
@@ -500,6 +486,6 @@ export class CustomersService {
     }
 
     // 調用批量收割
-    return this.harvestCustomers(tenantId, customerIds);
+    return this.harvestCustomers(customerIds);
   }
 }

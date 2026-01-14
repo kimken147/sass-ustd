@@ -29,7 +29,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "../revenue-wallets/guards/tenant-admin.guard";
 import { AgentGuard } from "../customers/guards/agent.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { User, Agent, TenantConfig } from "@saas-platform/database";
+import { TenantUser, Agent, TenantConfig } from "@saas-platform/database";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityRepository } from "@mikro-orm/postgresql";
 
@@ -136,7 +136,7 @@ export class AgentsController {
     type: AgentResponseDto,
   })
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
-  async getMyAgent(@CurrentUser() user: User): Promise<AgentResponseDto> {
+  async getMyAgent(@CurrentUser() user: TenantUser): Promise<AgentResponseDto> {
     // 查找當前用戶對應的代理記錄
     const agent = await this.em.findOne(
       Agent,
@@ -161,7 +161,7 @@ export class AgentsController {
   })
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
   async updateMyWallet(
-    @CurrentUser() user: User,
+    @CurrentUser() user: TenantUser,
     @Body() dto: UpdateAgentWalletDto
   ): Promise<AgentResponseDto> {
     // 查找當前用戶對應的代理記錄
@@ -192,7 +192,7 @@ export class AgentsController {
     type: [AgentResponseDto],
   })
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
-  async getMySubAgents(@CurrentUser() user: User): Promise<AgentResponseDto[]> {
+  async getMySubAgents(@CurrentUser() user: TenantUser): Promise<AgentResponseDto[]> {
     // 查找當前用戶對應的代理記錄
     const agent = await this.em.findOne(
       Agent,
@@ -220,7 +220,7 @@ export class AgentsController {
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
   @ApiResponse({ status: 404, description: "下級代理不存在或無權限" })
   async updateMySubAgent(
-    @CurrentUser() user: User,
+    @CurrentUser() user: TenantUser,
     @Param("id", ParseIntPipe) subAgentId: number,
     @Body() dto: UpdateAgentDto
   ): Promise<AgentResponseDto> {
@@ -260,7 +260,7 @@ export class AgentsController {
   @ApiResponse({ status: 409, description: "帳號、Email 或代理碼已存在" })
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
   async createMySubAgent(
-    @CurrentUser() user: User,
+    @CurrentUser() user: TenantUser,
     @Body() dto: CreateAgentDto
   ): Promise<AgentResponseDto> {
     // 查找當前用戶對應的代理記錄

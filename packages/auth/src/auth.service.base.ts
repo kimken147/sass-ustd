@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { EntityManager } from "@mikro-orm/postgresql";
-import { User, UserStatus } from "@saas-platform/database";
+import { BaseUser, UserStatus } from "@saas-platform/database";
 import { JwtService, PasswordService, TokenBlacklistService } from "./index";
 import { AuthConfig } from "./auth-config.interface";
 
@@ -211,7 +211,7 @@ export abstract class BaseAuthService {
   /**
    * 驗證用戶（用於 Guard）
    */
-  async validateUser(userId: number): Promise<User | null> {
+  async validateUser(userId: number): Promise<BaseUser | null> {
     const query: any = {
       id: userId,
       role: { $in: this.authConfig.allowedRoles },

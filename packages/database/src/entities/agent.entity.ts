@@ -1,6 +1,6 @@
 import { Entity, Property, ManyToOne, Enum, Index, Unique } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
-import { User } from './user.entity';
+import { TenantUser } from './user-tenant.entity';
 
 export enum AgentStatus {
   ACTIVE = 'active',
@@ -55,9 +55,9 @@ export interface AgentStats {
 @Entity({ tableName: 'agents' })
 @Unique({ properties: ['code'] })
 export class Agent extends BaseEntity {
-  @ManyToOne(() => User)
+  @ManyToOne(() => TenantUser)
   @Index()
-  user!: User; // 關聯到 User 表
+  user!: TenantUser; // 關聯到 TenantUser 表（Tenant DB 專用）
 
   @Property()
   name!: string;

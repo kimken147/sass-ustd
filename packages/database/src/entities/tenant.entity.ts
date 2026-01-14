@@ -8,7 +8,7 @@ import {
   Collection,
 } from "@mikro-orm/core";
 import { BaseEntity } from "./base.entity";
-import { User } from "./user.entity";
+import { PlatformUser } from "./user-platform.entity";
 
 export enum TenantStatus {
   ACTIVE = "active",
@@ -151,6 +151,6 @@ export class Tenant extends BaseEntity {
   @Property({ nullable: true })
   customDomain?: string;
 
-  @OneToMany(() => User, (user) => user.tenant)
-  users = new Collection<User>(this);
+  @OneToMany(() => PlatformUser, (user) => user.tenant)
+  users = new Collection<PlatformUser>(this);
 }

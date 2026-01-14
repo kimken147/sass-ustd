@@ -2,8 +2,8 @@ import { defineConfig } from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { Migrator } from "@mikro-orm/migrations";
 import {
-  Tenant,
-  User,
+  TenantConfig,
+  TenantUser,
   Agent,
   Customer,
   CommissionPayout,
@@ -19,13 +19,14 @@ export default defineConfig({
   port: parseInt(process.env.TENANT_DB_PORT || "5432"),
   user: process.env.TENANT_DB_USER || "postgres",
   password: process.env.TENANT_DB_PASSWORD || "postgres",
-  // 注意：CLI 使用時需要設置 TENANT_ID 環境變數
-  dbName: `${process.env.TENANT_DB_NAME || "tenant"}_${process.env.TENANT_ID || "test_001"}`,
+  // 使用 TENANT_SLUG 環境變數（與 app.module.ts 保持一致）
+  dbName: `tenant_${process.env.TENANT_SLUG || "test001"}`,
 
   // 🔑 直接指定 Entity classes（類型安全）
+  // 注意：Tenant DB 使用 TenantConfig 和 TenantUser
   entities: [
-    Tenant,
-    User,
+    TenantConfig,
+    TenantUser,
     Agent,
     Customer,
     CommissionPayout,
@@ -46,6 +47,13 @@ export default defineConfig({
 
   // 開發設定
   debug: process.env.NODE_ENV === "development",
+
+  // Entity 發現配置（與 app.module.ts 保持一致）
+  discovery: {
+    warnWhenNoEntities: true,
+    requireEntitiesArray: true, // 要求明確指定 entities
+    disableDynamicFileAccess: true, // 禁用動態文件訪問
+  },
 
   // 擴展
   extensions: [Migrator],

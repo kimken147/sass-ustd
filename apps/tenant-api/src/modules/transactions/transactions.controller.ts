@@ -17,7 +17,7 @@ import { CommissionPayoutListResponseDto } from "./dto/commission-payout-list-re
 import { RevenueDistributionResponseDto } from "./dto/revenue-distribution-response.dto";
 import { Public } from "../auth/decorators/public.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { User } from "@saas-platform/database";
+import { TenantUser } from "@saas-platform/database";
 
 @ApiTags("交易明細")
 @Controller("transactions")
@@ -42,7 +42,7 @@ export class TransactionsController {
   })
   async getCommissionPayouts(
     @Query() query: QueryTransactionsDto,
-    @CurrentUser() user?: User,
+    @CurrentUser() user?: TenantUser,
     @Headers("x-tenant-id") tenantIdHeader?: string
   ): Promise<CommissionPayoutListResponseDto> {
     const tenantId =
@@ -67,7 +67,7 @@ export class TransactionsController {
   })
   async getRevenueDistributions(
     @Query() query: QueryTransactionsDto,
-    @CurrentUser() user?: User,
+    @CurrentUser() user?: TenantUser,
     @Headers("x-tenant-id") tenantIdHeader?: string
   ): Promise<RevenueDistributionResponseDto> {
     const tenantId =

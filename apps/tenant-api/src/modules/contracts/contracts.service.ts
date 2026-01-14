@@ -8,7 +8,7 @@ import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
 import {
   TenantConfig,
-  User,
+  TenantUser,
   UserRole,
   UserStatus,
   Customer,
@@ -44,8 +44,8 @@ export class ContractsService {
   constructor(
     @InjectRepository(TenantConfig)
     private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
-    @InjectRepository(User)
-    private readonly userRepository: EntityRepository<User>,
+    @InjectRepository(TenantUser)
+    private readonly userRepository: EntityRepository<TenantUser>,
     @InjectRepository(Customer)
     private readonly customerRepository: EntityRepository<Customer>,
     @InjectRepository(Agent)
@@ -136,7 +136,7 @@ export class ContractsService {
     );
 
     let isNewCustomer = false;
-    let user: User;
+    let user: TenantUser;
 
     if (customer) {
       // 會員已存在，使用現有的
@@ -178,7 +178,7 @@ export class ContractsService {
       // 創建新會員
       isNewCustomer = true;
 
-      // 創建 User（會員不需要登入，所以密碼自動生成隨機密碼）
+      // 創建 TenantUser（會員不需要登入，所以密碼自動生成隨機密碼）
       let username: string;
       let email: string;
       let name: string;

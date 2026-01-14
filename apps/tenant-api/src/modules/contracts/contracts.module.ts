@@ -3,7 +3,7 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { ConfigModule } from "@nestjs/config";
 import {
   TenantConfig,
-  User,
+  TenantUser,
   Customer,
   Agent,
   SystemFeeDistribution,
@@ -19,7 +19,7 @@ import { TronService } from "./services/tron.service";
   imports: [
     MikroOrmModule.forFeature([
       TenantConfig,
-      User,
+      TenantUser,
       Customer,
       Agent,
       SystemFeeDistribution,

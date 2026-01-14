@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, Inject } from "@nestjs/common";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
 import {
-  User,
+  TenantUser,
   UserRole,
   UserStatus,
   Agent,
@@ -29,7 +29,7 @@ import { AuthResponseDto } from "./dto/auth-response.dto";
  */
 @Injectable()
 export class AuthService extends BaseAuthService {
-  protected readonly userRepository: EntityRepository<User>;
+  protected readonly userRepository: EntityRepository<TenantUser>;
   protected readonly em: EntityManager;
   protected readonly jwtService: JwtService;
   protected readonly passwordService: PasswordService;
@@ -37,8 +37,8 @@ export class AuthService extends BaseAuthService {
   protected readonly authConfig = AUTH_CONFIGS.TENANT;
 
   constructor(
-    @InjectRepository(User)
-    userRepository: EntityRepository<User>,
+    @InjectRepository(TenantUser)
+    userRepository: EntityRepository<TenantUser>,
     em: EntityManager,
     jwtService: JwtService,
     passwordService: PasswordService,

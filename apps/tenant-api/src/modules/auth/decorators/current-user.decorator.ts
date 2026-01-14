@@ -1,17 +1,17 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { User } from '@saas-platform/database';
+import { TenantUser } from '@saas-platform/database';
 
 /**
  * 獲取當前登入用戶的裝飾器
  * 
  * 使用方式：
  * @Get('profile')
- * async getProfile(@CurrentUser() user: User) {
+ * async getProfile(@CurrentUser() user: TenantUser) {
  *   return user;
  * }
  */
 export const CurrentUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): User => {
+  (data: unknown, ctx: ExecutionContext): TenantUser => {
     const request = ctx.switchToHttp().getRequest();
     return request.user;
   },

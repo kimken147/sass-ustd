@@ -209,6 +209,6 @@ export const dataProvider: DataProvider = {
   },
 
   getApiUrl: () => {
-    return import.meta.env.VITE_TENANT_API_URL || "http://localhost:4000";
+    return import.meta.env.VITE_TENANT_API_URL || "http://localhost:3001";
   },
 };

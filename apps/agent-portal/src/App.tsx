@@ -21,7 +21,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
 // 初始化 API 客戶端
-const apiUrl = import.meta.env.VITE_TENANT_API_URL || "http://localhost:4000";
+const apiUrl = import.meta.env.VITE_TENANT_API_URL || "http://localhost:3001";
 createTenantApiClient(apiUrl);
 
 // 建立 QueryClient

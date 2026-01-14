@@ -1,7 +1,7 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { InjectRepository } from "@mikro-orm/nestjs";
 import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
-import { User } from "@saas-platform/database";
+import { PlatformUser } from "@saas-platform/database";
 import {
   JwtService,
   PasswordService,
@@ -18,7 +18,7 @@ import { AuthResponseDto } from "./dto/auth-response.dto";
  */
 @Injectable()
 export class AuthService extends BaseAuthService {
-  protected readonly userRepository: EntityRepository<User>;
+  protected readonly userRepository: EntityRepository<PlatformUser>;
   protected readonly em: EntityManager;
   protected readonly jwtService: JwtService;
   protected readonly passwordService: PasswordService;
@@ -26,8 +26,8 @@ export class AuthService extends BaseAuthService {
   protected readonly authConfig = AUTH_CONFIGS.PLATFORM;
 
   constructor(
-    @InjectRepository(User)
-    userRepository: EntityRepository<User>,
+    @InjectRepository(PlatformUser)
+    userRepository: EntityRepository<PlatformUser>,
     em: EntityManager,
     jwtService: JwtService,
     passwordService: PasswordService,

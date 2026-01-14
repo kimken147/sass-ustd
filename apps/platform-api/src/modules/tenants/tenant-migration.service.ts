@@ -7,7 +7,7 @@ import * as path from "path";
 import * as bcrypt from "bcrypt";
 import {
   TenantConfig,
-  User,
+  TenantUser,
   UserRole,
   UserStatus,
   Agent,
@@ -70,7 +70,7 @@ export class TenantMigrationService {
         // 租戶資料庫使用的 entities（使用 TenantConfig 取代 Tenant）
         entities: [
           TenantConfig,
-          User,
+          TenantUser,
           Agent,
           Customer,
           SystemFeeDistribution,
@@ -179,7 +179,7 @@ export class TenantMigrationService {
         // 租戶資料庫使用的 entities（使用 TenantConfig 取代 Tenant）
         entities: [
           TenantConfig,
-          User,
+          TenantUser,
           Agent,
           Customer,
           SystemFeeDistribution,

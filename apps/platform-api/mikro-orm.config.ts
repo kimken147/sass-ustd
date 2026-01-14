@@ -4,12 +4,7 @@ import { Migrator } from "@mikro-orm/migrations";
 import { SeedManager } from "@mikro-orm/seeder";
 import {
   Tenant,
-  User,
-  Agent,
-  Customer,
-  CommissionPayout,
-  RevenueDistribution,
-  SystemFeeDistribution,
+  PlatformUser,
   SystemWallet,
 } from "@saas-platform/database";
 
@@ -24,14 +19,10 @@ export default defineConfig({
   dbName: process.env.DB_NAME || "saas_platform",
 
   // 🔑 直接指定 Entity classes（類型安全）
+  // Platform DB 只包含 Tenant, PlatformUser, SystemWallet
   entities: [
     Tenant,
-    User,
-    Agent,
-    Customer,
-    CommissionPayout,
-    RevenueDistribution,
-    SystemFeeDistribution,
+    PlatformUser,
     SystemWallet,
   ],
 

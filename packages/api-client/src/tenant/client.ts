@@ -164,7 +164,7 @@ export class TenantApiClient {
 let tenantApiClientInstance: TenantApiClient | null = null;
 
 export function createTenantApiClient(
-  baseURL: string = import.meta.env.VITE_TENANT_API_URL || 'http://localhost:4000'
+  baseURL: string = import.meta.env.VITE_TENANT_API_URL || 'http://localhost:3001'
 ): TenantApiClient {
   if (!tenantApiClientInstance) {
     tenantApiClientInstance = new TenantApiClient({ baseURL });

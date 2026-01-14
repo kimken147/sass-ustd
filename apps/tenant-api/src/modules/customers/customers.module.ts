@@ -5,7 +5,7 @@ import {
   RevenueDistribution,
   CommissionPayout,
   SystemFeeDistribution,
-  Tenant,
+  TenantConfig,
   Agent,
 } from "@saas-platform/database";
 import { CustomersController } from "./customers.controller";
@@ -22,7 +22,7 @@ import { TenantAdminOrAgentGuard } from "./guards/tenant-admin-or-agent.guard";
       RevenueDistribution,
       CommissionPayout,
       SystemFeeDistribution,
-      Tenant,
+      TenantConfig,
       Agent,
     ]),
     ContractsModule,

@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/postgresql';
 import {
-  User,
+  TenantUser,
   UserRole,
   UserStatus,
   Agent,
@@ -29,8 +29,8 @@ import { UpdateAgentDto } from './dto/update-agent.dto';
 @Injectable()
 export class AgentsService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: EntityRepository<User>,
+    @InjectRepository(TenantUser)
+    private readonly userRepository: EntityRepository<TenantUser>,
     @InjectRepository(Agent)
     private readonly agentRepository: EntityRepository<Agent>,
     @InjectRepository(TenantConfig)
@@ -105,7 +105,7 @@ export class AgentsService {
 
   /**
    * 創建代理
-   * 1. 創建 User（role = AGENT）
+   * 1. 創建 TenantUser（role = AGENT）
    * 2. 創建 Agent
    * 3. 計算 level 和 path
    * 4. 設定分潤比率和錢包
@@ -181,7 +181,7 @@ export class AgentsService {
     // 獲取租戶的代理佣金率（baseRate）
     const baseRate = config.cryptoConfig.agentCommissionRate || 30.0;
 
-    // 創建 User
+    // 創建 TenantUser
     const hashedPassword = await this.passwordService.hashPassword(dto.password);
     const user = this.userRepository.create({
       username: dto.username,

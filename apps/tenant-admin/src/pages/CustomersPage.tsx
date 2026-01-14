@@ -110,7 +110,7 @@ export default function CustomersPage() {
   // 注意：CustomerListResponse 是特殊格式（包含 customers, stats, total 等），
   // 不符合標準的 { data: Array, total: number } 格式，所以需要使用 useCustom
   const { query, result } = useCustom<CustomerListResponse>({
-    url: `${apiUrl}/customers`,
+    url: `${apiUrl}/api/customers`,
     method: "get",
     config: {
       query: queryParams,
@@ -217,7 +217,7 @@ export default function CustomersPage() {
       timeType,
       authorizationStatus,
     };
-    
+
     if (startDate) {
       queryParamsObj.startDate = new Date(startDate).toISOString();
     }

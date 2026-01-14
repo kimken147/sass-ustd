@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule } from "@nestjs/jwt";
-import { User, Agent } from "@saas-platform/database";
+import { TenantUser, Agent } from "@saas-platform/database";
 import {
   JwtService,
   PasswordService,
@@ -18,7 +18,7 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([User, Agent]),
+    MikroOrmModule.forFeature([TenantUser, Agent]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

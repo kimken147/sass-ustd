@@ -17,7 +17,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "../revenue-wallets/guards/tenant-admin.guard";
 import { TenantAdminOrAgentGuard } from "./guards/tenant-admin-or-agent.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { User, UserRole, Agent } from "@saas-platform/database";
+import { TenantUser, UserRole, Agent } from "@saas-platform/database";
 
 @ApiTags("會員管理")
 @Controller("customers")
@@ -38,14 +38,10 @@ export class CustomersController {
   })
   @ApiResponse({ status: 403, description: "只有站長或代理可以訪問" })
   async getCustomers(
-    @CurrentUser() user: User,
+    @CurrentUser() user: TenantUser,
     @Query() query: CustomerListQueryDto
   ): Promise<CustomerListResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-
+    // 在新架構中，每個租戶有獨立的資料庫，不需要 tenantId
     // 如果是代理，需要查找對應的 Agent 記錄
     let agentId: number | undefined;
     if (user.role === UserRole.AGENT) {
@@ -53,7 +49,6 @@ export class CustomersController {
         Agent,
         {
           user: user.id,
-          tenant: tenantId,
         },
         {
           populate: ["user"],
@@ -64,7 +59,7 @@ export class CustomersController {
       }
     }
 
-    return this.customersService.getCustomerList(tenantId, query, agentId);
+    return this.customersService.getCustomerList(query, agentId);
   }
 
   @Post("harvest")
@@ -76,14 +71,11 @@ export class CustomersController {
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async harvestCustomers(
-    @CurrentUser() user: User,
+    @CurrentUser() user: TenantUser,
     @Body() dto: BatchHarvestDto
   ): Promise<HarvestResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    return this.customersService.harvestCustomers(tenantId, dto.customerIds);
+    // 在新架構中，每個租戶有獨立的資料庫，不需要 tenantId
+    return this.customersService.harvestCustomers(dto.customerIds);
   }
 
   @Post("harvest-all")
@@ -95,13 +87,10 @@ export class CustomersController {
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async harvestAllCustomers(
-    @CurrentUser() user: User,
+    @CurrentUser() user: TenantUser,
     @Query() query: CustomerListQueryDto
   ): Promise<HarvestResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    return this.customersService.harvestAllCustomers(tenantId, query);
+    // 在新架構中，每個租戶有獨立的資料庫，不需要 tenantId
+    return this.customersService.harvestAllCustomers(query);
   }
 }

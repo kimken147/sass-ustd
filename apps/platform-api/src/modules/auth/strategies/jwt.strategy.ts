@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtPayload } from '@saas-platform/auth';
 import { AuthService } from '../auth.service';
-import { User } from '@saas-platform/database';
+import { PlatformUser } from '@saas-platform/database';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(
     request: any,
     payload: JwtPayload,
-  ): Promise<User> {
+  ): Promise<PlatformUser> {
     // 驗證 token 類型
     if (payload.type !== 'access') {
       throw new UnauthorizedException('無效的 Token 類型');

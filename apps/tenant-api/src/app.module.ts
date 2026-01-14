@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import {
   TenantConfig,
-  User,
+  TenantUser,
   Agent,
   Customer,
   SystemFeeDistribution,
@@ -50,7 +50,7 @@ import { CustomersModule } from "./modules/customers/customers.module";
           // 實體列表（使用 TenantConfig 取代 Tenant）
           entities: [
             TenantConfig,
-            User,
+            TenantUser,
             Agent,
             Customer,
             SystemFeeDistribution,
@@ -64,7 +64,8 @@ import { CustomersModule } from "./modules/customers/customers.module";
           // 自動發現實體
           discovery: {
             warnWhenNoEntities: true,
-            requireEntitiesArray: false,
+            requireEntitiesArray: true, // 要求明確指定 entities，不自動發現
+            disableDynamicFileAccess: true, // 禁用動態文件訪問
           },
 
           // 遷移配置

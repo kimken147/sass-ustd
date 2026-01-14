@@ -22,7 +22,7 @@ import { AuthResponseDto } from "./dto/auth-response.dto";
 import { Public } from "./decorators/public.decorator";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
-import { User } from "@saas-platform/database";
+import { PlatformUser } from "@saas-platform/database";
 
 @ApiTags("認證")
 @Controller("auth")
@@ -68,7 +68,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: "未授權" })
   async logout(
     @Req() request: Request,
-    @CurrentUser() user: User,
+    @CurrentUser() user: PlatformUser,
     @Body() body?: { refreshToken?: string }
   ): Promise<{ message: string }> {
     // 從請求頭提取 access token
@@ -87,7 +87,7 @@ export class AuthController {
   @ApiOperation({ summary: "獲取當前用戶資訊" })
   @ApiResponse({ status: 200, description: "獲取成功" })
   @ApiResponse({ status: 401, description: "未授權" })
-  async getMe(@CurrentUser() user: User): Promise<{
+  async getMe(@CurrentUser() user: PlatformUser): Promise<{
     id: number;
     email: string;
     name: string;
