@@ -19,7 +19,6 @@ import {
   ApiBearerAuth,
 } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
-import { InjectEntityManager } from "@mikro-orm/nestjs";
 import { EntityManager } from "@mikro-orm/postgresql";
 import { AgentsService } from "./agents.service";
 import { CreateAgentDto } from "./dto/create-agent.dto";
@@ -40,7 +39,6 @@ export class AgentsController {
   constructor(
     private readonly agentsService: AgentsService,
     private readonly configService: ConfigService,
-    @InjectEntityManager("default")
     private readonly em: EntityManager
   ) {}
 

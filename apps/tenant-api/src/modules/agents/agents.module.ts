@@ -4,9 +4,10 @@ import { User, Agent, Tenant } from '@saas-platform/database';
 import { PasswordService } from '@saas-platform/auth';
 import { AgentsController } from './agents.controller';
 import { AgentsService } from './agents.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [MikroOrmModule.forFeature([User, Agent, Tenant])],
+  imports: [MikroOrmModule.forFeature([User, Agent, Tenant]), AuthModule],
   controllers: [AgentsController],
   providers: [
     AgentsService,

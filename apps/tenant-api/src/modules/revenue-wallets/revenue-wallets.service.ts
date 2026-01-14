@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/postgresql';
 import { Tenant, RevenueWallet } from '@saas-platform/database';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { CreateRevenueWalletDto } from './dto/create-revenue-wallet.dto';
 import { UpdateRevenueWalletDto } from './dto/update-revenue-wallet.dto';
 import { SetRevenueWalletsDto } from './dto/set-revenue-wallets.dto';
@@ -41,7 +41,7 @@ export class RevenueWalletsService {
 
     // 生成新的錢包列表（添加 UUID）
     const newWallets: RevenueWallet[] = dto.wallets.map((wallet) => ({
-      id: uuidv4(),
+      id: randomUUID(),
       name: wallet.name,
       address: wallet.address,
       chain: 'tron' as const,
@@ -90,7 +90,7 @@ export class RevenueWalletsService {
     }
 
     const newWallet: RevenueWallet = {
-      id: uuidv4(),
+      id: randomUUID(),
       name: dto.name,
       address: dto.address,
       chain: 'tron',

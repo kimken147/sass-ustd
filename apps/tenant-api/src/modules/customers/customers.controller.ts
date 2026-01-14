@@ -5,7 +5,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from "@nestjs/swagger";
-import { InjectEntityManager } from "@mikro-orm/nestjs";
 import { EntityManager } from "@mikro-orm/postgresql";
 import { CustomersService } from "./customers.service";
 import { CustomerListQueryDto } from "./dto/customer-list-query.dto";
@@ -26,7 +25,6 @@ import { User, UserRole, Agent } from "@saas-platform/database";
 export class CustomersController {
   constructor(
     private readonly customersService: CustomersService,
-    @InjectEntityManager("default")
     private readonly em: EntityManager
   ) {}
 
