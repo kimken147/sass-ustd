@@ -46,6 +46,15 @@ const createSiteSchema = z
     systemWallets: z
       .array(systemWalletSchema)
       .min(1, "至少需要添加一個系統費錢包"),
+    adminUsername: z
+      .string()
+      .min(3, "管理員帳號長度至少為 3 個字元")
+      .max(50, "管理員帳號長度不能超過 50 個字元"),
+    adminPassword: z
+      .string()
+      .min(6, "密碼長度至少為 6 個字元")
+      .max(100, "密碼長度不能超過 100 個字元"),
+    adminName: z.string().min(2, "管理員名稱長度至少為 2 個字元"),
   })
   .refine(
     (data) => {
@@ -103,6 +112,9 @@ export default function CreateSitePage() {
       authorizationWalletId: undefined,
       systemFeeRate: 10.0,
       systemWallets: [],
+      adminUsername: "",
+      adminPassword: "",
+      adminName: "",
     },
     refineCoreProps: {
       resource: "tenants",
@@ -159,6 +171,10 @@ export default function CreateSitePage() {
       customDomain: data.customDomain || undefined,
       systemWallets: systemWallets,
       systemFeeRate: data.systemFeeRate || 10.0,
+      // 管理員帳號資訊
+      adminUsername: data.adminUsername,
+      adminPassword: data.adminPassword,
+      adminName: data.adminName,
       // 如果選擇了授權錢包，設置到 cryptoConfig
       ...(data.authorizationWalletId && {
         cryptoConfig: {
@@ -458,6 +474,63 @@ export default function CreateSitePage() {
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* 管理員帳號區域 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>管理員帳號</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* 管理員帳號 */}
+              <FormField
+                control={control}
+                name="adminUsername"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>管理員帳號</FormLabel>
+                    <FormControl>
+                      <Input placeholder="請輸入管理員帳號" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* 管理員密碼 */}
+              <FormField
+                control={control}
+                name="adminPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>管理員密碼</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="請輸入管理員密碼"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* 管理員名稱 */}
+              <FormField
+                control={control}
+                name="adminName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>管理員名稱</FormLabel>
+                    <FormControl>
+                      <Input placeholder="請輸入管理員名稱" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 

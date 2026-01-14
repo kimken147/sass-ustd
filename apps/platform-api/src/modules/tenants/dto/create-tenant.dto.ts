@@ -139,4 +139,28 @@ export class CreateTenantDto {
   @ValidateNested({ each: true })
   @Type(() => SystemWalletAssignmentDto)
   systemWallets?: SystemWalletAssignmentDto[];
+
+  @ApiProperty({
+    description: "租戶管理員帳號",
+    example: "admin",
+  })
+  @IsString()
+  @MinLength(3, { message: "管理員帳號長度至少為 3 個字元" })
+  adminUsername!: string;
+
+  @ApiProperty({
+    description: "租戶管理員密碼",
+    example: "password123",
+  })
+  @IsString()
+  @MinLength(6, { message: "密碼長度至少為 6 個字元" })
+  adminPassword!: string;
+
+  @ApiProperty({
+    description: "租戶管理員名稱",
+    example: "管理員",
+  })
+  @IsString()
+  @MinLength(2, { message: "管理員名稱長度至少為 2 個字元" })
+  adminName!: string;
 }

@@ -6,6 +6,7 @@ import { EncryptionService } from "@saas-platform/auth";
 import { AuthModule } from "../auth/auth.module";
 import { TenantsService } from "./tenants.service";
 import { TenantsController } from "./tenants.controller";
+import { TenantMigrationService } from "./tenant-migration.service";
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { TenantsController } from "./tenants.controller";
     AuthModule, // 導入 AuthModule 以使用 JwtAuthGuard
   ],
   controllers: [TenantsController],
-  providers: [TenantsService, EncryptionService],
-  exports: [TenantsService],
+  providers: [TenantsService, EncryptionService, TenantMigrationService],
+  exports: [TenantsService, TenantMigrationService],
 })
 export class TenantsModule {}

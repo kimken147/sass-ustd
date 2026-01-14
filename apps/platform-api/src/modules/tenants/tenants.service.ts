@@ -20,6 +20,7 @@ import { EncryptionService } from "@saas-platform/auth";
 import { CreateTenantDto } from "./dto/create-tenant.dto";
 import { UpdateTenantDto } from "./dto/update-tenant.dto";
 import { TenantResponseDto } from "./dto/tenant-response.dto";
+import { TenantMigrationService } from "./tenant-migration.service";
 
 @Injectable()
 export class TenantsService {
@@ -30,7 +31,8 @@ export class TenantsService {
     private readonly systemWalletRepository: EntityRepository<SystemWallet>,
     private readonly em: EntityManager,
     private readonly configService: ConfigService,
-    private readonly encryptionService: EncryptionService
+    private readonly encryptionService: EncryptionService,
+    private readonly tenantMigrationService: TenantMigrationService
   ) {}
 
   /**
@@ -171,6 +173,20 @@ export class TenantsService {
       // 如果資料庫創建失敗，刪除已創建的租戶記錄
       await this.em.removeAndFlush(tenant);
       throw new BadRequestException(`創建租戶資料庫失敗: ${error.message}`);
+    }
+
+    // 創建管理員用戶
+    try {
+      await this.tenantMigrationService.createAdminUserForTenant(
+        tenant.slug,
+        tenant,
+        createTenantDto.adminUsername,
+        createTenantDto.adminPassword,
+        createTenantDto.adminName
+      );
+    } catch (error) {
+      // 如果創建管理員用戶失敗，記錄錯誤但不清除資料庫（可手動修復）
+      throw new BadRequestException(`創建管理員用戶失敗: ${error.message}`);
     }
 
     return TenantResponseDto.fromEntity(tenant);
@@ -394,13 +410,21 @@ export class TenantsService {
 
       // 創建資料庫
       await client.query(`CREATE DATABASE ${dbName}`);
-
-      // 注意：這裡不運行遷移，遷移應該在部署 tenant-api 時運行
-      // 或者可以通過 API 端點觸發遷移
     } catch (error) {
       throw new BadRequestException(`創建資料庫失敗: ${error.message}`);
     } finally {
       await client.end();
+    }
+
+    // 創建資料庫成功後，執行 migration 初始化資料庫結構
+    try {
+      await this.tenantMigrationService.runMigrationsForTenant(slug);
+    } catch (error) {
+      // 如果 migration 失敗，嘗試刪除已創建的資料庫（可選，根據需求決定）
+      // 這裡我們選擇讓 migration 失敗時也保留資料庫，方便後續手動修復
+      throw new BadRequestException(
+        `執行租戶資料庫 migration 失敗: ${error.message}`
+      );
     }
   }
 
