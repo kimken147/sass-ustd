@@ -1,12 +1,30 @@
-import { DataProvider } from "@refinedev/core";
+import { DataProvider, type HttpError } from "@refinedev/core";
 import { getTenantApiClient } from "@saas-platform/api-client";
+
+// 自定義 HttpError 類，符合 @refinedev/core 的 HttpError 接口
+class HttpErrorImpl extends Error implements HttpError {
+  statusCode: number;
+  errors?: Record<string, any>;
+
+  constructor(
+    message: string,
+    statusCode: number,
+    errors?: Record<string, any>
+  ) {
+    super(message);
+    this.name = "HttpError";
+    this.statusCode = statusCode;
+    this.errors = errors;
+  }
+}
 
 export const dataProvider: DataProvider = {
   getList: async ({ resource, pagination, filters, sorters }) => {
     const client = getTenantApiClient();
+    const { currentPage = 1, pageSize = 10 } = pagination ?? {};
 
     try {
-      const { currentPage = 1, pageSize = 10 } = pagination ?? {};
+      // 構建查詢參數
       const params: Record<string, any> = {
         page: currentPage,
         limit: pageSize,
@@ -37,25 +55,38 @@ export const dataProvider: DataProvider = {
         params,
       });
 
-      // 統一處理返回格式
-      if (resource === "customers" && response.customers) {
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      // TransformInterceptor 會將回應包裝為 { success: true, data: <原始回應>, timestamp: "..." }
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
+      // 有些 endpoints 會直接回傳陣列（例如 TransformInterceptor 包裝後的 data: []）
+      // 此時 responseData 會是 Array，而不是 { data: [...] }
+      if (Array.isArray(responseData)) {
         return {
-          data: response,
-          total: response.total || 0,
+          data: responseData,
+          total: responseData.length,
         };
       }
 
+      // customers 資源返回 { customers, total, stats, ... } 格式
+      if (resource === "customers" && responseData.customers) {
+        return {
+          data: responseData, // 返回完整響應，包含 customers, stats 等
+          total: responseData.total || 0,
+        };
+      }
+
+      // 標準格式：{ data: [...], total: ... }
       return {
-        data: response.data || [],
-        total:
-          response.total ||
-          response.count ||
-          (Array.isArray(response.data) ? response.data.length : 0),
+        data: responseData.data || responseData.items || [],
+        total: responseData.total || responseData.count || 0,
       };
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || `Failed to fetch ${resource}`
-      );
+      const errorMessage =
+        error.response?.data?.message || `Failed to fetch ${resource}`;
+      const statusCode = error.response?.status || 500;
+      throw new HttpErrorImpl(errorMessage, statusCode);
     }
   },
 
@@ -68,13 +99,18 @@ export const dataProvider: DataProvider = {
         url: `/api/${resource}/${id}`,
       });
 
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
       return {
-        data: response.data || response,
+        data: responseData,
       };
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || `Failed to fetch ${resource}/${id}`
-      );
+      const errorMessage =
+        error.response?.data?.message || `Failed to fetch ${resource}/${id}`;
+      const statusCode = error.response?.status || 500;
+      throw new HttpErrorImpl(errorMessage, statusCode);
     }
   },
 
@@ -88,13 +124,18 @@ export const dataProvider: DataProvider = {
         data: variables,
       });
 
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
       return {
-        data: response.data || response,
+        data: responseData,
       };
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || `Failed to create ${resource}`
-      );
+      const errorMessage =
+        error.response?.data?.message || `Failed to create ${resource}`;
+      const statusCode = error.response?.status || 500;
+      throw new HttpErrorImpl(errorMessage, statusCode);
     }
   },
 
@@ -108,13 +149,18 @@ export const dataProvider: DataProvider = {
         data: variables,
       });
 
+      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
+      const wrappedData = response.data || response;
+      const responseData = wrappedData.data || wrappedData;
+
       return {
-        data: response.data || response,
+        data: responseData,
       };
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || `Failed to update ${resource}/${id}`
-      );
+      const errorMessage =
+        error.response?.data?.message || `Failed to update ${resource}/${id}`;
+      const statusCode = error.response?.status || 500;
+      throw new HttpErrorImpl(errorMessage, statusCode);
     }
   },
 
@@ -132,9 +178,10 @@ export const dataProvider: DataProvider = {
         data: (response?.data || { id }) as any,
       };
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || `Failed to delete ${resource}/${id}`
-      );
+      const errorMessage =
+        error.response?.data?.message || `Failed to delete ${resource}/${id}`;
+      const statusCode = error.response?.status || 500;
+      throw new HttpErrorImpl(errorMessage, statusCode);
     }
   },
 
@@ -154,9 +201,10 @@ export const dataProvider: DataProvider = {
         data: response,
       };
     } catch (error: any) {
-      throw new Error(
-        error.response?.data?.message || `Failed to ${method} ${url}`
-      );
+      const errorMessage =
+        error.response?.data?.message || `Failed to ${method} ${url}`;
+      const statusCode = error.response?.status || 500;
+      throw new HttpErrorImpl(errorMessage, statusCode);
     }
   },
 
