@@ -16,10 +16,10 @@ import {
   TenantPlan,
   TenantStatus,
   TenantBranding,
-  TenantCryptoConfig,
   RevenueWallet,
 } from "@saas-platform/database";
 import { SystemWalletAssignmentDto } from "./system-wallet-assignment.dto";
+import { TenantCryptoConfigDto } from "./tenant-crypto-config.dto";
 
 export class CreateTenantDto {
   @ApiProperty({
@@ -41,12 +41,13 @@ export class CreateTenantDto {
   })
   slug!: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: "租戶聯絡電子郵件",
     example: "contact@abc-investment.com",
   })
+  @IsOptional()
   @IsEmail({}, { message: "請輸入有效的電子郵件地址" })
-  email!: string;
+  email?: string;
 
   @ApiPropertyOptional({
     description: "租戶計劃",
@@ -110,14 +111,12 @@ export class CreateTenantDto {
 
   @ApiPropertyOptional({
     description: "虛擬貨幣配置",
-    type: Object,
-    additionalProperties: true,
+    type: TenantCryptoConfigDto,
   })
-  @IsObject()
   @IsOptional()
   @ValidateNested()
-  @Type(() => Object)
-  cryptoConfig?: Partial<TenantCryptoConfig>;
+  @Type(() => TenantCryptoConfigDto)
+  cryptoConfig?: TenantCryptoConfigDto;
 
   @ApiPropertyOptional({
     description: "租戶分潤錢包組",

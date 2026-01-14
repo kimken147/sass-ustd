@@ -49,15 +49,17 @@ export class TenantsService {
       throw new ConflictException(`租戶 slug "${createTenantDto.slug}" 已存在`);
     }
 
-    // 檢查 email 是否已存在
-    const existingEmail = await this.tenantRepository.findOne({
-      email: createTenantDto.email,
-    });
+    // 檢查 email 是否已存在（僅當提供了 email 時）
+    if (createTenantDto.email) {
+      const existingEmail = await this.tenantRepository.findOne({
+        email: createTenantDto.email,
+      });
 
-    if (existingEmail) {
-      throw new ConflictException(
-        `電子郵件 "${createTenantDto.email}" 已被使用`
-      );
+      if (existingEmail) {
+        throw new ConflictException(
+          `電子郵件 "${createTenantDto.email}" 已被使用`
+        );
+      }
     }
 
     // 處理系統錢包指派（如果提供）

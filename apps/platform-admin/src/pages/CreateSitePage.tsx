@@ -36,9 +36,13 @@ const systemWalletSchema = z.object({
 const createSiteSchema = z
   .object({
     name: z.string().min(1, "請輸入站點名稱"),
-    email: z.string().email("請輸入有效的電子郵件地址"),
     customDomain: z.string().optional(),
     authorizationWalletId: z.number().optional(),
+    systemFeeRate: z
+      .number()
+      .min(0, "系統費率不能小於 0")
+      .max(100, "系統費率不能超過 100")
+      .default(10.0),
     systemWallets: z
       .array(systemWalletSchema)
       .min(1, "至少需要添加一個系統費錢包"),
@@ -95,9 +99,9 @@ export default function CreateSitePage() {
     resolver: zodResolver(createSiteSchema) as any,
     defaultValues: {
       name: "",
-      email: "",
       customDomain: "",
       authorizationWalletId: undefined,
+      systemFeeRate: 10.0,
       systemWallets: [],
     },
     refineCoreProps: {
@@ -143,13 +147,18 @@ export default function CreateSitePage() {
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
 
+    // 從 systemWallets 中只提取 walletId 和 percentage（後端會自動填充 name 和 address）
+    const systemWallets = data.systemWallets.map((wallet) => ({
+      walletId: wallet.walletId,
+      percentage: wallet.percentage,
+    }));
+
     const createData: any = {
       name: data.name,
       slug: slug,
-      email: data.email,
       customDomain: data.customDomain || undefined,
-      systemWallets: data.systemWallets,
-      systemFeeRate: 10.0, // 預設系統費率
+      systemWallets: systemWallets,
+      systemFeeRate: data.systemFeeRate || 10.0,
       // 如果選擇了授權錢包，設置到 cryptoConfig
       ...(data.authorizationWalletId && {
         cryptoConfig: {
@@ -214,18 +223,27 @@ export default function CreateSitePage() {
                 )}
               />
 
-              {/* 電子郵件 */}
+              {/* 系統費率 */}
               <FormField
                 control={control}
-                name="email"
-                render={({ field }) => (
+                name="systemFeeRate"
+                render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>電子郵件</FormLabel>
+                    <FormLabel>系統費率 (%)</FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="請輸入電子郵件"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="請輸入系統費率"
                         {...field}
+                        value={field.value || ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value ? parseFloat(e.target.value) : 0
+                          )
+                        }
                       />
                     </FormControl>
                     <FormMessage />

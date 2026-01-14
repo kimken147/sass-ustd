@@ -96,10 +96,10 @@ export class Tenant extends BaseEntity {
   @Index()
   slug!: string;
 
-  @Property()
+  @Property({ nullable: true })
   @Unique()
   @Index()
-  email!: string;
+  email?: string;
 
   // 🔑 自訂 URL（由總後台設定）
   @Property({ nullable: true })
