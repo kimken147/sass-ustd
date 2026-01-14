@@ -39,6 +39,15 @@ export const dataProvider: DataProvider = {
       const wrappedData = response.data || response;
       const responseData = wrappedData.data || wrappedData;
 
+      // 有些 endpoints 會直接回傳陣列（例如 TransformInterceptor 包裝後的 data: []）
+      // 此時 responseData 會是 Array，而不是 { data: [...] }
+      if (Array.isArray(responseData)) {
+        return {
+          data: responseData,
+          total: responseData.length,
+        };
+      }
+
       // 特殊處理 sites 資源：它返回 { totalStats, sites, total, page, limit, totalPages }
       if (resource === "sites" && responseData.sites) {
         return {

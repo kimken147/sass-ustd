@@ -4,6 +4,16 @@ export type { ButtonProps } from "./components/ui/button";
 export { Input } from "./components/ui/input";
 export type { InputProps } from "./components/ui/input";
 export { Label } from "./components/ui/label";
+export {
+  useFormField,
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+  FormField,
+} from "./components/ui/form";
 export { Checkbox } from "./components/ui/checkbox";
 export {
   Card,
