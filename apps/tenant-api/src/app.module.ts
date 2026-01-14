@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import {
-  Tenant,
+  TenantConfig,
   User,
   Agent,
   Customer,
@@ -29,15 +29,15 @@ import { CustomersModule } from "./modules/customers/customers.module";
     MikroOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const tenantId = configService.get("TENANT_ID");
-        const dbName = configService.get("TENANT_DB_NAME", "tenant");
+        // 使用 TENANT_SLUG 來識別租戶（資料庫名稱格式：tenant_{slug}）
+        const tenantSlug = configService.get<string>("TENANT_SLUG");
 
-        // 為每個租戶使用獨立的資料庫
-        // 方式 1: 資料庫名稱加上租戶 ID
-        const tenantDbName = `${dbName}_${tenantId}`;
+        if (!tenantSlug) {
+          throw new Error("TENANT_SLUG 環境變數未設定");
+        }
 
-        // 方式 2: 使用不同的資料庫連接字串（如果環境變數有提供）
-        // const tenantDbName = configService.get(`TENANT_${tenantId}_DB_NAME`);
+        // 資料庫名稱：tenant_{slug}
+        const tenantDbName = `tenant_${tenantSlug}`;
 
         return {
           driver: require("@mikro-orm/postgresql").PostgreSqlDriver,
@@ -47,9 +47,9 @@ import { CustomersModule } from "./modules/customers/customers.module";
           user: configService.get("TENANT_DB_USER", "postgres"),
           password: configService.get("TENANT_DB_PASSWORD", "postgres"),
 
-          // 實體列表
+          // 實體列表（使用 TenantConfig 取代 Tenant）
           entities: [
-            Tenant,
+            TenantConfig,
             User,
             Agent,
             Customer,

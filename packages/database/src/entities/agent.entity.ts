@@ -1,6 +1,5 @@
 import { Entity, Property, ManyToOne, Enum, Index, Unique } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
-import { Tenant } from './tenant.entity';
 import { User } from './user.entity';
 
 export enum AgentStatus {
@@ -47,13 +46,15 @@ export interface AgentStats {
   thisMonthCommission: number;
 }
 
+/**
+ * Agent Entity
+ * 
+ * 在獨立的 Tenant DB 中，不需要 tenant 關聯
+ * 每個租戶資料庫的 agents 表都只屬於該租戶
+ */
 @Entity({ tableName: 'agents' })
-@Unique({ properties: ['tenant', 'code'] })
+@Unique({ properties: ['code'] })
 export class Agent extends BaseEntity {
-  @ManyToOne(() => Tenant)
-  @Index()
-  tenant!: Tenant;
-
   @ManyToOne(() => User)
   @Index()
   user!: User; // 關聯到 User 表

@@ -1,43 +1,52 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/postgresql';
-import { Tenant, RevenueWallet } from '@saas-platform/database';
+import { TenantConfig, RevenueWallet } from '@saas-platform/database';
 import { randomUUID } from 'crypto';
 import { CreateRevenueWalletDto } from './dto/create-revenue-wallet.dto';
 import { UpdateRevenueWalletDto } from './dto/update-revenue-wallet.dto';
 import { SetRevenueWalletsDto } from './dto/set-revenue-wallets.dto';
 
+/**
+ * 分潤錢包服務
+ *
+ * 使用獨立的 Tenant DB，配置存放在 tenant_config 表（只有一筆記錄）
+ * 因此不需要 tenantId 參數
+ */
 @Injectable()
 export class RevenueWalletsService {
   constructor(
-    @InjectRepository(Tenant)
-    private readonly tenantRepository: EntityRepository<Tenant>,
+    @InjectRepository(TenantConfig)
+    private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
     private readonly em: EntityManager,
   ) {}
 
   /**
+   * 獲取租戶配置（只有一筆）
+   */
+  private async getTenantConfig(): Promise<TenantConfig> {
+    // TenantConfig 只有一筆記錄，id = 1
+    const config = await this.tenantConfigRepository.findOne({ id: 1 });
+    if (!config) {
+      throw new NotFoundException('租戶配置不存在，請先初始化');
+    }
+    return config;
+  }
+
+  /**
    * 獲取當前租戶的分潤錢包列表
    */
-  async getRevenueWallets(tenantId: number): Promise<RevenueWallet[]> {
-    const tenant = await this.tenantRepository.findOne({ id: tenantId });
-    if (!tenant) {
-      throw new NotFoundException('租戶不存在');
-    }
-    return tenant.revenueWallets || [];
+  async getRevenueWallets(): Promise<RevenueWallet[]> {
+    const config = await this.getTenantConfig();
+    return config.revenueWallets || [];
   }
 
   /**
    * 設置分潤錢包列表（替換所有）
    * 驗證：所有 isActive=true 的錢包 percentage 加總必須 = 100
    */
-  async setRevenueWallets(
-    tenantId: number,
-    dto: SetRevenueWalletsDto,
-  ): Promise<RevenueWallet[]> {
-    const tenant = await this.tenantRepository.findOne({ id: tenantId });
-    if (!tenant) {
-      throw new NotFoundException('租戶不存在');
-    }
+  async setRevenueWallets(dto: SetRevenueWalletsDto): Promise<RevenueWallet[]> {
+    const config = await this.getTenantConfig();
 
     // 生成新的錢包列表（添加 UUID）
     const newWallets: RevenueWallet[] = dto.wallets.map((wallet) => ({
@@ -71,23 +80,17 @@ export class RevenueWalletsService {
     }
 
     // 更新租戶的分潤錢包
-    tenant.revenueWallets = newWallets;
+    config.revenueWallets = newWallets;
     await this.em.flush();
 
-    return tenant.revenueWallets;
+    return config.revenueWallets;
   }
 
   /**
    * 添加單個分潤錢包
    */
-  async createRevenueWallet(
-    tenantId: number,
-    dto: CreateRevenueWalletDto,
-  ): Promise<RevenueWallet> {
-    const tenant = await this.tenantRepository.findOne({ id: tenantId });
-    if (!tenant) {
-      throw new NotFoundException('租戶不存在');
-    }
+  async createRevenueWallet(dto: CreateRevenueWalletDto): Promise<RevenueWallet> {
+    const config = await this.getTenantConfig();
 
     const newWallet: RevenueWallet = {
       id: randomUUID(),
@@ -103,7 +106,7 @@ export class RevenueWalletsService {
 
     // 如果新錢包是啟用的，需要驗證總和
     if (newWallet.isActive) {
-      const currentWallets = tenant.revenueWallets || [];
+      const currentWallets = config.revenueWallets || [];
       const activeWallets = [
         ...currentWallets.filter((w) => w.isActive),
         newWallet,
@@ -122,7 +125,7 @@ export class RevenueWalletsService {
     }
 
     // 添加到錢包列表
-    tenant.revenueWallets = [...(tenant.revenueWallets || []), newWallet];
+    config.revenueWallets = [...(config.revenueWallets || []), newWallet];
     await this.em.flush();
 
     return newWallet;
@@ -132,16 +135,12 @@ export class RevenueWalletsService {
    * 更新單個分潤錢包
    */
   async updateRevenueWallet(
-    tenantId: number,
     walletId: string,
     dto: UpdateRevenueWalletDto,
   ): Promise<RevenueWallet> {
-    const tenant = await this.tenantRepository.findOne({ id: tenantId });
-    if (!tenant) {
-      throw new NotFoundException('租戶不存在');
-    }
+    const config = await this.getTenantConfig();
 
-    const wallets = tenant.revenueWallets || [];
+    const wallets = config.revenueWallets || [];
     const walletIndex = wallets.findIndex((w) => w.id === walletId);
 
     if (walletIndex === -1) {
@@ -194,7 +193,7 @@ export class RevenueWalletsService {
 
     // 更新錢包
     wallets[walletIndex] = updatedWallet;
-    tenant.revenueWallets = wallets;
+    config.revenueWallets = wallets;
     await this.em.flush();
 
     return updatedWallet;
@@ -203,16 +202,10 @@ export class RevenueWalletsService {
   /**
    * 刪除單個分潤錢包
    */
-  async deleteRevenueWallet(
-    tenantId: number,
-    walletId: string,
-  ): Promise<void> {
-    const tenant = await this.tenantRepository.findOne({ id: tenantId });
-    if (!tenant) {
-      throw new NotFoundException('租戶不存在');
-    }
+  async deleteRevenueWallet(walletId: string): Promise<void> {
+    const config = await this.getTenantConfig();
 
-    const wallets = tenant.revenueWallets || [];
+    const wallets = config.revenueWallets || [];
     const walletIndex = wallets.findIndex((w) => w.id === walletId);
 
     if (walletIndex === -1) {
@@ -223,8 +216,9 @@ export class RevenueWalletsService {
 
     // 如果刪除的是啟用的錢包，需要驗證剩餘啟用錢包的總和
     if (wallet.isActive) {
-      const remainingActiveWallets = wallets
-        .filter((w, idx) => idx !== walletIndex && w.isActive);
+      const remainingActiveWallets = wallets.filter(
+        (w, idx) => idx !== walletIndex && w.isActive,
+      );
 
       if (remainingActiveWallets.length > 0) {
         const totalPercentage = remainingActiveWallets.reduce(
@@ -242,7 +236,7 @@ export class RevenueWalletsService {
 
     // 刪除錢包
     wallets.splice(walletIndex, 1);
-    tenant.revenueWallets = wallets;
+    config.revenueWallets = wallets;
     await this.em.flush();
   }
 }

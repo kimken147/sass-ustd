@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { EntityManager } from "@mikro-orm/postgresql";
-import { User, UserRole, UserStatus } from "@saas-platform/database";
+import { User, UserStatus } from "@saas-platform/database";
 import { JwtService, PasswordService, TokenBlacklistService } from "./index";
 import { AuthConfig } from "./auth-config.interface";
 
@@ -18,12 +18,30 @@ export abstract class BaseAuthService {
   protected abstract readonly authConfig: AuthConfig;
 
   /**
+   * 根據 tenantMode 配置添加租戶查詢條件
+   */
+  private applyTenantCondition(query: any): void {
+    switch (this.authConfig.tenantMode) {
+      case "required":
+        // Platform DB: 查詢有租戶關聯的用戶
+        query.tenant = { $ne: null };
+        break;
+      case "none":
+        // Platform DB: 查詢沒有租戶關聯的用戶（Platform Admin）
+        query.tenant = null;
+        break;
+      case "skip":
+        // Tenant DB: 不添加租戶條件（整個 DB 都是同一租戶）
+        break;
+    }
+  }
+
+  /**
    * 通用登入方法（protected，供子類調用）
    */
   protected async doLogin(
     username: string,
-    password: string,
-    tenantId?: number
+    password: string
   ): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -33,7 +51,6 @@ export abstract class BaseAuthService {
       email: string;
       name: string;
       role: string;
-      tenantId?: number;
     };
   }> {
     // 構建查詢條件
@@ -42,18 +59,8 @@ export abstract class BaseAuthService {
       role: { $in: this.authConfig.allowedRoles },
     };
 
-    // 如果需要租戶，添加租戶條件
-    if (this.authConfig.requireTenant) {
-      if (tenantId) {
-        query.tenant = tenantId;
-      } else {
-        // 如果要求租戶但沒提供，查詢所有租戶的用戶
-        query.tenant = { $ne: null };
-      }
-    } else {
-      // Platform Admin 沒有租戶
-      query.tenant = null;
-    }
+    // 根據 tenantMode 添加租戶條件
+    this.applyTenantCondition(query);
 
     // 查找用戶
     const user = await this.userRepository.findOne(query);
@@ -97,7 +104,6 @@ export abstract class BaseAuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-        tenantId: user.tenant?.id,
       },
     };
   }
@@ -114,7 +120,6 @@ export abstract class BaseAuthService {
       email: string;
       name: string;
       role: string;
-      tenantId?: number;
     };
   }> {
     // 驗證 refresh token
@@ -137,11 +142,8 @@ export abstract class BaseAuthService {
       role: { $in: this.authConfig.allowedRoles },
     };
 
-    if (this.authConfig.requireTenant) {
-      query.tenant = { $ne: null };
-    } else {
-      query.tenant = null;
-    }
+    // 根據 tenantMode 添加租戶條件
+    this.applyTenantCondition(query);
 
     const user = await this.userRepository.findOne(query);
 
@@ -165,7 +167,6 @@ export abstract class BaseAuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-        tenantId: user.tenant?.id,
       },
     };
   }
@@ -217,11 +218,8 @@ export abstract class BaseAuthService {
       status: UserStatus.ACTIVE,
     };
 
-    if (this.authConfig.requireTenant) {
-      query.tenant = { $ne: null };
-    } else {
-      query.tenant = null;
-    }
+    // 根據 tenantMode 添加租戶條件
+    this.applyTenantCondition(query);
 
     return await this.userRepository.findOne(query);
   }

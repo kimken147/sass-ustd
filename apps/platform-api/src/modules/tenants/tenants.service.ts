@@ -344,6 +344,14 @@ export class TenantsService {
     this.em.assign(tenant, updateData);
     await this.em.flush();
 
+    // 同步配置到 Tenant DB
+    try {
+      await this.tenantMigrationService.syncTenantConfig(tenant.slug, tenant);
+    } catch (error) {
+      // 記錄錯誤但不中斷（配置同步失敗不應該影響 Platform DB 的更新）
+      console.error(`同步租戶配置失敗: ${error.message}`);
+    }
+
     return TenantResponseDto.fromEntity(tenant);
   }
 

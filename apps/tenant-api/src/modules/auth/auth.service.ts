@@ -20,6 +20,10 @@ import { AuthResponseDto } from "./dto/auth-response.dto";
 
 /**
  * Tenant API 認證服務
+ *
+ * 使用獨立的 Tenant DB，整個資料庫都屬於同一租戶
+ * 因此不需要 tenant_id 來區分用戶
+ *
  * 允許 TENANT_ADMIN, AGENT, CUSTOMER 角色登入
  * 支援代理登入（使用代理碼）
  */
@@ -51,13 +55,10 @@ export class AuthService extends BaseAuthService {
 
   /**
    * 租戶用戶登入（Tenant Admin, Agent, Customer）
+   * 不需要 tenantId 參數，因為整個 DB 都是同一租戶
    */
-  async login(loginDto: LoginDto, tenantId?: number): Promise<AuthResponseDto> {
-    const result = await this.doLogin(
-      loginDto.username,
-      loginDto.password,
-      tenantId
-    );
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
+    const result = await this.doLogin(loginDto.username, loginDto.password);
     return {
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
@@ -74,17 +75,16 @@ export class AuthService extends BaseAuthService {
   /**
    * 代理登入（使用 username）
    * 這是 tenant-api 特有的功能
+   * 不需要 tenantId，因為整個 DB 都是同一租戶
    */
   async agentLogin(
     username: string,
-    password: string,
-    tenantId: number
+    password: string
   ): Promise<AuthResponseDto> {
-    // 先查找用戶（必須是 AGENT 角色）
+    // 查找用戶（必須是 AGENT 角色）
     const user = await this.userRepository.findOne({
       username,
       role: UserRole.AGENT,
-      tenant: tenantId,
       status: UserStatus.ACTIVE,
     });
 
@@ -103,17 +103,10 @@ export class AuthService extends BaseAuthService {
     }
 
     // 查找對應的代理記錄
-    const agent = await this.em.findOne(
-      Agent,
-      {
-        user: user.id,
-        tenant: tenantId,
-        status: AgentStatus.ACTIVE,
-      },
-      {
-        populate: ["tenant"],
-      }
-    );
+    const agent = await this.em.findOne(Agent, {
+      user: user.id,
+      status: AgentStatus.ACTIVE,
+    });
 
     if (!agent) {
       throw new UnauthorizedException("代理記錄不存在或已被停用");
@@ -139,7 +132,6 @@ export class AuthService extends BaseAuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-        tenantId: user.tenant?.id,
         agentId: agent.id, // 額外返回代理 ID
       },
     };
@@ -159,7 +151,6 @@ export class AuthService extends BaseAuthService {
         email: result.user.email,
         name: result.user.name,
         role: result.user.role,
-        tenantId: result.user.tenantId,
       },
     };
   }

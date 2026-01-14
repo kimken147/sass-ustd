@@ -29,8 +29,16 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "../revenue-wallets/guards/tenant-admin.guard";
 import { AgentGuard } from "../customers/guards/agent.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { User, Agent, UserRole } from "@saas-platform/database";
+import { User, Agent, TenantConfig } from "@saas-platform/database";
+import { InjectRepository } from "@mikro-orm/nestjs";
+import { EntityRepository } from "@mikro-orm/postgresql";
 
+/**
+ * 代理管理控制器
+ *
+ * 使用獨立的 Tenant DB，整個資料庫都屬於同一租戶
+ * 因此不需要 tenantId 參數
+ */
 @ApiTags("代理管理")
 @Controller("agents")
 @UseGuards(JwtAuthGuard, TenantAdminGuard)
@@ -39,7 +47,9 @@ export class AgentsController {
   constructor(
     private readonly agentsService: AgentsService,
     private readonly configService: ConfigService,
-    private readonly em: EntityManager
+    private readonly em: EntityManager,
+    @InjectRepository(TenantConfig)
+    private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
   ) {}
 
   @Get()
@@ -50,13 +60,9 @@ export class AgentsController {
     type: [AgentResponseDto],
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async getAgents(@CurrentUser() user: User): Promise<AgentResponseDto[]> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    const agents = await this.agentsService.getAgents(tenantId);
-    return agents.map((agent) => this.mapAgentToDto(agent));
+  async getAgents(): Promise<AgentResponseDto[]> {
+    const agents = await this.agentsService.getAgents();
+    return Promise.all(agents.map((agent) => this.mapAgentToDto(agent)));
   }
 
   @Get(":id")
@@ -69,14 +75,9 @@ export class AgentsController {
   @ApiResponse({ status: 404, description: "代理不存在" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async getAgent(
-    @CurrentUser() user: User,
     @Param("id", ParseIntPipe) agentId: number
   ): Promise<AgentResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    const agent = await this.agentsService.getAgent(tenantId, agentId);
+    const agent = await this.agentsService.getAgent(agentId);
     return this.mapAgentToDto(agent);
   }
 
@@ -90,15 +91,8 @@ export class AgentsController {
   @ApiResponse({ status: 400, description: "分潤比率總和不等於 100%" })
   @ApiResponse({ status: 409, description: "帳號、Email 或代理碼已存在" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async createAgent(
-    @CurrentUser() user: User,
-    @Body() dto: CreateAgentDto
-  ): Promise<AgentResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    const agent = await this.agentsService.createAgent(tenantId, dto);
+  async createAgent(@Body() dto: CreateAgentDto): Promise<AgentResponseDto> {
+    const agent = await this.agentsService.createAgent(dto);
     return this.mapAgentToDto(agent);
   }
 
@@ -113,15 +107,10 @@ export class AgentsController {
   @ApiResponse({ status: 400, description: "分潤比率總和不等於 100%" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async updateAgent(
-    @CurrentUser() user: User,
     @Param("id", ParseIntPipe) agentId: number,
     @Body() dto: UpdateAgentDto
   ): Promise<AgentResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    const agent = await this.agentsService.updateAgent(tenantId, agentId, dto);
+    const agent = await this.agentsService.updateAgent(agentId, dto);
     return this.mapAgentToDto(agent);
   }
 
@@ -132,15 +121,8 @@ export class AgentsController {
   @ApiResponse({ status: 404, description: "代理不存在" })
   @ApiResponse({ status: 400, description: "存在下級代理，無法刪除" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async deleteAgent(
-    @CurrentUser() user: User,
-    @Param("id", ParseIntPipe) agentId: number
-  ): Promise<void> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    return this.agentsService.deleteAgent(tenantId, agentId);
+  async deleteAgent(@Param("id", ParseIntPipe) agentId: number): Promise<void> {
+    return this.agentsService.deleteAgent(agentId);
   }
 
   // ========== 代理自己的 API ==========
@@ -155,21 +137,11 @@ export class AgentsController {
   })
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
   async getMyAgent(@CurrentUser() user: User): Promise<AgentResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-
     // 查找當前用戶對應的代理記錄
     const agent = await this.em.findOne(
       Agent,
-      {
-        user: user.id,
-        tenant: tenantId,
-      },
-      {
-        populate: ["user", "parentAgent", "tenant"],
-      }
+      { user: user.id },
+      { populate: ["user", "parentAgent"] }
     );
 
     if (!agent) {
@@ -192,21 +164,11 @@ export class AgentsController {
     @CurrentUser() user: User,
     @Body() dto: UpdateAgentWalletDto
   ): Promise<AgentResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-
     // 查找當前用戶對應的代理記錄
     const agent = await this.em.findOne(
       Agent,
-      {
-        user: user.id,
-        tenant: tenantId,
-      },
-      {
-        populate: ["user", "parentAgent", "tenant"],
-      }
+      { user: user.id },
+      { populate: ["user", "parentAgent"] }
     );
 
     if (!agent) {
@@ -214,7 +176,7 @@ export class AgentsController {
     }
 
     // 使用現有的 updateAgent 方法，但只更新錢包地址
-    const updatedAgent = await this.agentsService.updateAgent(tenantId, agent.id, {
+    const updatedAgent = await this.agentsService.updateAgent(agent.id, {
       walletAddress: dto.walletAddress,
     });
 
@@ -231,21 +193,11 @@ export class AgentsController {
   })
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
   async getMySubAgents(@CurrentUser() user: User): Promise<AgentResponseDto[]> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-
     // 查找當前用戶對應的代理記錄
     const agent = await this.em.findOne(
       Agent,
-      {
-        user: user.id,
-        tenant: tenantId,
-      },
-      {
-        populate: ["user", "parentAgent", "tenant"],
-      }
+      { user: user.id },
+      { populate: ["user", "parentAgent"] }
     );
 
     if (!agent) {
@@ -253,8 +205,8 @@ export class AgentsController {
     }
 
     // 獲取下級代理列表
-    const subAgents = await this.agentsService.getSubAgents(tenantId, agent.id);
-    return subAgents.map((subAgent) => this.mapAgentToDto(subAgent));
+    const subAgents = await this.agentsService.getSubAgents(agent.id);
+    return Promise.all(subAgents.map((subAgent) => this.mapAgentToDto(subAgent)));
   }
 
   @Patch("me/subordinates/:id")
@@ -272,21 +224,11 @@ export class AgentsController {
     @Param("id", ParseIntPipe) subAgentId: number,
     @Body() dto: UpdateAgentDto
   ): Promise<AgentResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-
     // 查找當前用戶對應的代理記錄
     const currentAgent = await this.em.findOne(
       Agent,
-      {
-        user: user.id,
-        tenant: tenantId,
-      },
-      {
-        populate: ["user", "parentAgent", "tenant"],
-      }
+      { user: user.id },
+      { populate: ["user", "parentAgent"] }
     );
 
     if (!currentAgent) {
@@ -294,10 +236,7 @@ export class AgentsController {
     }
 
     // 驗證要編輯的代理是否是當前代理的下級
-    const subAgents = await this.agentsService.getSubAgents(
-      tenantId,
-      currentAgent.id
-    );
+    const subAgents = await this.agentsService.getSubAgents(currentAgent.id);
     const targetSubAgent = subAgents.find((a) => a.id === subAgentId);
 
     if (!targetSubAgent) {
@@ -305,11 +244,7 @@ export class AgentsController {
     }
 
     // 更新下級代理
-    const updatedAgent = await this.agentsService.updateAgent(
-      tenantId,
-      subAgentId,
-      dto
-    );
+    const updatedAgent = await this.agentsService.updateAgent(subAgentId, dto);
     return this.mapAgentToDto(updatedAgent);
   }
 
@@ -328,21 +263,11 @@ export class AgentsController {
     @CurrentUser() user: User,
     @Body() dto: CreateAgentDto
   ): Promise<AgentResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-
     // 查找當前用戶對應的代理記錄
     const currentAgent = await this.em.findOne(
       Agent,
-      {
-        user: user.id,
-        tenant: tenantId,
-      },
-      {
-        populate: ["user", "parentAgent", "tenant"],
-      }
+      { user: user.id },
+      { populate: ["user", "parentAgent"] }
     );
 
     if (!currentAgent) {
@@ -355,16 +280,16 @@ export class AgentsController {
       parentAgentId: currentAgent.id,
     };
 
-    const agent = await this.agentsService.createAgent(tenantId, createDto);
+    const agent = await this.agentsService.createAgent(createDto);
     return this.mapAgentToDto(agent);
   }
 
   /**
    * 將 Agent 實體轉換為 DTO
    */
-  private mapAgentToDto(agent: Agent): AgentResponseDto {
+  private async mapAgentToDto(agent: Agent): Promise<AgentResponseDto> {
     // 生成推薦連結
-    const referralLink = this.generateReferralLink(agent);
+    const referralLink = await this.generateReferralLink(agent);
 
     return {
       id: agent.id,
@@ -389,19 +314,20 @@ export class AgentsController {
   /**
    * 生成代理推薦連結
    */
-  private generateReferralLink(agent: Agent): string {
-    // 優先使用租戶的自訂 URL
-    const tenant = agent.tenant;
+  private async generateReferralLink(agent: Agent): Promise<string> {
+    // 獲取租戶配置
+    const config = await this.tenantConfigRepository.findOne({ id: 1 });
+    
     let baseUrl: string;
 
-    if (tenant?.customUrl) {
+    if (config?.customUrl) {
       // 如果有自訂 URL，使用它（可能包含協議）
-      baseUrl = tenant.customUrl.startsWith("http")
-        ? tenant.customUrl
-        : `https://${tenant.customUrl}`;
-    } else if (tenant?.customDomain) {
+      baseUrl = config.customUrl.startsWith("http")
+        ? config.customUrl
+        : `https://${config.customUrl}`;
+    } else if (config?.customDomain) {
       // 如果有自訂域名，使用它
-      baseUrl = `https://${tenant.customDomain}`;
+      baseUrl = `https://${config.customDomain}`;
     } else {
       // 否則使用環境變數中的前端 URL
       baseUrl =

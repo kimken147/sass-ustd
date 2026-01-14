@@ -1,5 +1,6 @@
 export * from './base.entity';
 export * from './tenant.entity';
+export * from './tenant-config.entity';
 export * from './user.entity';
 export * from './agent.entity';
 export * from './customer.entity';

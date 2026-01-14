@@ -24,9 +24,13 @@ import { RevenueWalletResponseDto } from "./dto/revenue-wallet-response.dto";
 import { RevenueWalletListResponseDto } from "./dto/list-response.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "./guards/tenant-admin.guard";
-import { CurrentUser } from "../auth/decorators/current-user.decorator";
-import { User } from "@saas-platform/database";
 
+/**
+ * 分潤錢包管理控制器
+ *
+ * 使用獨立的 Tenant DB，配置存放在 tenant_config 表
+ * 因此不需要 tenantId 參數
+ */
 @ApiTags("分潤錢包管理")
 @Controller("revenue-wallets")
 @UseGuards(JwtAuthGuard, TenantAdminGuard)
@@ -42,14 +46,8 @@ export class RevenueWalletsController {
     type: RevenueWalletListResponseDto,
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async getRevenueWallets(
-    @CurrentUser() user: User
-  ): Promise<RevenueWalletListResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    const wallets = await this.revenueWalletsService.getRevenueWallets(tenantId);
+  async getRevenueWallets(): Promise<RevenueWalletListResponseDto> {
+    const wallets = await this.revenueWalletsService.getRevenueWallets();
     return {
       data: wallets,
       total: wallets.length,
@@ -67,14 +65,9 @@ export class RevenueWalletsController {
   @ApiResponse({ status: 400, description: "分潤比例總和不等於 100%" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async setRevenueWallets(
-    @CurrentUser() user: User,
     @Body() dto: SetRevenueWalletsDto
   ): Promise<RevenueWalletResponseDto[]> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    return this.revenueWalletsService.setRevenueWallets(tenantId, dto);
+    return this.revenueWalletsService.setRevenueWallets(dto);
   }
 
   @Post()
@@ -87,14 +80,9 @@ export class RevenueWalletsController {
   @ApiResponse({ status: 400, description: "分潤比例總和超過 100%" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async createRevenueWallet(
-    @CurrentUser() user: User,
     @Body() dto: CreateRevenueWalletDto
   ): Promise<RevenueWalletResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    return this.revenueWalletsService.createRevenueWallet(tenantId, dto);
+    return this.revenueWalletsService.createRevenueWallet(dto);
   }
 
   @Patch(":id")
@@ -108,19 +96,10 @@ export class RevenueWalletsController {
   @ApiResponse({ status: 400, description: "分潤比例總和不等於 100%" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
   async updateRevenueWallet(
-    @CurrentUser() user: User,
     @Param("id") walletId: string,
     @Body() dto: UpdateRevenueWalletDto
   ): Promise<RevenueWalletResponseDto> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    return this.revenueWalletsService.updateRevenueWallet(
-      tenantId,
-      walletId,
-      dto
-    );
+    return this.revenueWalletsService.updateRevenueWallet(walletId, dto);
   }
 
   @Delete(":id")
@@ -130,14 +109,7 @@ export class RevenueWalletsController {
   @ApiResponse({ status: 404, description: "錢包不存在" })
   @ApiResponse({ status: 400, description: "刪除後分潤比例總和不等於 100%" })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async deleteRevenueWallet(
-    @CurrentUser() user: User,
-    @Param("id") walletId: string
-  ): Promise<void> {
-    const tenantId = user.tenant?.id;
-    if (!tenantId) {
-      throw new Error("用戶未關聯租戶");
-    }
-    return this.revenueWalletsService.deleteRevenueWallet(tenantId, walletId);
+  async deleteRevenueWallet(@Param("id") walletId: string): Promise<void> {
+    return this.revenueWalletsService.deleteRevenueWallet(walletId);
   }
 }

@@ -24,15 +24,17 @@ import { Public } from "./decorators/public.decorator";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import { User } from "@saas-platform/database";
-import { ConfigService } from "@nestjs/config";
 
+/**
+ * Tenant API 認證控制器
+ *
+ * 使用獨立的 Tenant DB，整個資料庫都屬於同一租戶
+ * 因此不需要 tenant_id 來區分用戶
+ */
 @ApiTags("認證")
 @Controller("auth")
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post("login")
@@ -45,9 +47,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: "帳號或密碼錯誤" })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
-    // 從環境變數獲取租戶 ID（tenant-api 通常每個實例對應一個租戶）
-    const tenantId = this.configService.get<number>("TENANT_ID");
-    return this.authService.login(loginDto, tenantId);
+    // 不需要 tenantId，因為整個 DB 都是同一租戶
+    return this.authService.login(loginDto);
   }
 
   @Public()
@@ -63,15 +64,10 @@ export class AuthController {
   async agentLogin(
     @Body() agentLoginDto: AgentLoginDto,
   ): Promise<AuthResponseDto> {
-    // 從環境變數獲取租戶 ID
-    const tenantId = this.configService.get<number>("TENANT_ID");
-    if (!tenantId) {
-      throw new Error("TENANT_ID 環境變數未設定");
-    }
+    // 不需要 tenantId，因為整個 DB 都是同一租戶
     return this.authService.agentLogin(
       agentLoginDto.username,
       agentLoginDto.password,
-      tenantId,
     );
   }
 
@@ -124,14 +120,12 @@ export class AuthController {
     email: string;
     name: string;
     role: string;
-    tenantId?: number;
   }> {
     return {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
-      tenantId: user.tenant?.id,
     };
   }
 }

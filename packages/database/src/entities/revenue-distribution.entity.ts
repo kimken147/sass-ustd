@@ -1,6 +1,5 @@
 import { Entity, Property, ManyToOne, Enum, Index } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
-import { Tenant } from './tenant.entity';
 import { Customer } from './customer.entity';
 
 export enum RevenueDistributionStatus {
@@ -24,12 +23,14 @@ export interface WalletDistribution {
   isFirstPayout?: boolean; // 是否為首次分潤（用於驗證）
 }
 
+/**
+ * RevenueDistribution Entity
+ * 
+ * 在獨立的 Tenant DB 中，不需要 tenant 關聯
+ * 每個租戶資料庫的 revenue_distributions 表都只屬於該租戶
+ */
 @Entity({ tableName: 'revenue_distributions' })
 export class RevenueDistribution extends BaseEntity {
-  @ManyToOne(() => Tenant)
-  @Index()
-  tenant!: Tenant;
-
   @ManyToOne(() => Customer)
   @Index()
   customer!: Customer; // 來源客戶

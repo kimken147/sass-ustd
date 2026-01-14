@@ -1,6 +1,5 @@
 import { Entity, Property, ManyToOne, Enum, Index } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
-import { Tenant } from './tenant.entity';
 import { Agent } from './agent.entity';
 import { Customer } from './customer.entity';
 
@@ -16,12 +15,14 @@ export enum CommissionPayoutType {
   FROM_DOWNLINE = 'from_downline', // 從下級收到的佣金
 }
 
+/**
+ * CommissionPayout Entity
+ * 
+ * 在獨立的 Tenant DB 中，不需要 tenant 關聯
+ * 每個租戶資料庫的 commission_payouts 表都只屬於該租戶
+ */
 @Entity({ tableName: 'commission_payouts' })
 export class CommissionPayout extends BaseEntity {
-  @ManyToOne(() => Tenant)
-  @Index()
-  tenant!: Tenant;
-
   @ManyToOne(() => Agent)
   @Index()
   agent!: Agent; // 收款代理商

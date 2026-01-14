@@ -1,6 +1,5 @@
 import { Entity, Property, ManyToOne, Enum, Index } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
-import { Tenant } from './tenant.entity';
 import { Customer } from './customer.entity';
 
 export enum SystemFeeDistributionStatus {
@@ -10,12 +9,14 @@ export enum SystemFeeDistributionStatus {
   FAILED = 'failed',
 }
 
+/**
+ * SystemFeeDistribution Entity
+ * 
+ * 在獨立的 Tenant DB 中，不需要 tenant 關聯
+ * 每個租戶資料庫的 system_fee_distributions 表都只屬於該租戶
+ */
 @Entity({ tableName: 'system_fee_distributions' })
 export class SystemFeeDistribution extends BaseEntity {
-  @ManyToOne(() => Tenant)
-  @Index()
-  tenant!: Tenant; // 來自哪個站
-
   @ManyToOne(() => Customer)
   @Index()
   customer!: Customer; // 來源客戶

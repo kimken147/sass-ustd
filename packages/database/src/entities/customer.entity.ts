@@ -1,6 +1,5 @@
 import { Entity, Property, ManyToOne, Enum, Index } from '@mikro-orm/core';
 import { BaseEntity } from './base.entity';
-import { Tenant } from './tenant.entity';
 import { User } from './user.entity';
 import { Agent } from './agent.entity';
 
@@ -33,12 +32,14 @@ export interface CustomerInvestmentStats {
   lastInvestmentAt?: Date;
 }
 
+/**
+ * Customer Entity
+ * 
+ * 在獨立的 Tenant DB 中，不需要 tenant 關聯
+ * 每個租戶資料庫的 customers 表都只屬於該租戶
+ */
 @Entity({ tableName: 'customers' })
 export class Customer extends BaseEntity {
-  @ManyToOne(() => Tenant)
-  @Index()
-  tenant!: Tenant;
-
   @ManyToOne(() => User)
   @Index()
   user!: User;

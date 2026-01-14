@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { ConfigModule } from "@nestjs/config";
 import {
-  Tenant,
+  TenantConfig,
   User,
   Customer,
   Agent,
@@ -18,7 +18,7 @@ import { TronService } from "./services/tron.service";
 @Module({
   imports: [
     MikroOrmModule.forFeature([
-      Tenant,
+      TenantConfig,
       User,
       Customer,
       Agent,
