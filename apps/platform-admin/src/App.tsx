@@ -7,14 +7,18 @@ import routerProvider, {
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useTranslation } from "react-i18next";
 import { authProvider } from "./providers/authProvider";
 import { dataProvider } from "./providers/dataProvider";
+import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
+import { Toaster } from "./components/refine-ui/notification/toaster";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateSitePage from "./pages/CreateSitePage";
 import WalletsPage from "./pages/WalletsPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createPlatformApiClient } from "@saas-platform/api-client";
+import "./i18n";
 
 // 初始化 API 客戶端
 const apiUrl = import.meta.env.VITE_PLATFORM_API_URL || "http://localhost:3000";
@@ -31,6 +35,22 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const { i18n, t } = useTranslation();
+
+  const i18nProvider = {
+    translate: (key: string, params?: any, defaultMessage?: string) => {
+      const result = t(key, { ...params, defaultValue: defaultMessage || key });
+      return result as string;
+    },
+    changeLocale: (lang: string) => {
+      i18n.changeLanguage(lang);
+      return Promise.resolve();
+    },
+    getLocale: () => {
+      return i18n.language;
+    },
+  };
+
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
@@ -38,6 +58,8 @@ function App() {
           dataProvider={dataProvider}
           authProvider={authProvider}
           routerProvider={routerProvider}
+          notificationProvider={useNotificationProvider()}
+          i18nProvider={i18nProvider}
           resources={[
             {
               name: "sites",
@@ -62,10 +84,6 @@ function App() {
                   </svg>
                 ),
               },
-            },
-            {
-              name: "system-wallets",
-              list: "/system-wallets",
             },
             {
               name: "wallets",
@@ -148,6 +166,7 @@ function App() {
           <UnsavedChangesNotifier />
           <DocumentTitleHandler />
         </Refine>
+        <Toaster />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </BrowserRouter>

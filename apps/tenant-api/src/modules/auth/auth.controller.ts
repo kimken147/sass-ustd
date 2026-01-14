@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   HttpCode,
   HttpStatus,
@@ -112,7 +113,7 @@ export class AuthController {
     return { message: "登出成功" };
   }
 
-  @Post("me")
+  @Get("me")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: "獲取當前用戶資訊" })

@@ -26,6 +26,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../../ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../ui/tooltip";
 import { Button } from "../../ui/button";
 import { ChevronRight, ListIcon } from "lucide-react";
 import { cn } from "../../../lib/utils";
@@ -52,7 +58,7 @@ export function Sidebar() {
           {
             "px-3": open,
             "px-1": !open,
-          },
+          }
         )}
       >
         {menuItems.map((item: TreeMenuItem) => (
@@ -112,7 +118,7 @@ function SidebarItemGroup({ item, selectedKey }: MenuItemProps) {
             "opacity-100": open,
             "pointer-events-none": !open,
             "pointer-events-auto": open,
-          },
+          }
         )}
       >
         {getDisplayName(item)}
@@ -144,7 +150,7 @@ function SidebarItemCollapsible({ item, selectedKey }: MenuItemProps) {
         "text-muted-foreground",
         "transition-transform",
         "duration-200",
-        "group-data-[state=open]:rotate-90",
+        "group-data-[state=open]:rotate-90"
       )}
     />
   );
@@ -223,7 +229,7 @@ function SidebarHeader() {
         "flex-row",
         "items-center",
         "justify-between",
-        "overflow-hidden",
+        "overflow-hidden"
       )}
     >
       <div
@@ -240,7 +246,7 @@ function SidebarHeader() {
           {
             "pl-3": !open,
             "pl-5": open,
-          },
+          }
         )}
       >
         <div>{title.icon}</div>
@@ -253,16 +259,17 @@ function SidebarHeader() {
             {
               "opacity-0": !open,
               "opacity-100": open,
-            },
+            }
           )}
         >
           {title.text}
         </h2>
       </div>
 
+      {/* 只在 sidebar 展開時或移動端顯示 trigger */}
       <ShadcnSidebarTrigger
         className={cn("text-muted-foreground", "mr-1.5", {
-          "opacity-0": !open,
+          "opacity-0": !open && !isMobile,
           "opacity-100": open || isMobile,
           "pointer-events-auto": open || isMobile,
           "pointer-events-none": !open && !isMobile,
@@ -312,6 +319,8 @@ function SidebarButton({
   ...props
 }: SidebarButtonProps) {
   const Link = useLink();
+  const { open, isMobile } = useShadcnSidebar();
+  const displayName = getDisplayName(item);
 
   const buttonContent = (
     <>
@@ -325,16 +334,16 @@ function SidebarButton({
           "font-normal": !isSelected,
           "font-semibold": isSelected,
           "text-sidebar-primary-foreground": isSelected,
-          "text-foreground": !isSelected,
+          "text-sidebar-foreground": !isSelected,
         })}
       >
-        {getDisplayName(item)}
+        {displayName}
       </span>
       {rightIcon}
     </>
   );
 
-  return (
+  const button = (
     <Button
       asChild={!!(asLink && item.route)}
       variant="ghost"
@@ -347,7 +356,7 @@ function SidebarButton({
           "text-sidebar-primary-foreground": isSelected,
           "hover:text-sidebar-primary-foreground": isSelected,
         },
-        className,
+        className
       )}
       onClick={onClick}
       {...props}
@@ -361,6 +370,22 @@ function SidebarButton({
       )}
     </Button>
   );
+
+  // 當 sidebar 縮小時且不是移動端時，顯示 tooltip
+  if (!open && !isMobile) {
+    return (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent side="right" align="center">
+            {displayName}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return button;
 }
 
 Sidebar.displayName = "Sidebar";

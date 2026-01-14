@@ -36,7 +36,11 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       className={cn(
         "rounded-full",
         "border-sidebar-border",
-        "bg-transparent",
+        "bg-sidebar",
+        "text-sidebar-foreground",
+        "hover:bg-sidebar-accent",
+        "hover:text-sidebar-accent-foreground",
+        "hover:border-sidebar-accent",
         className,
         "h-10",
         "w-10"
@@ -50,6 +54,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
           "scale-100",
           "transition-all",
           "duration-200",
+          "text-sidebar-foreground",
           {
             "-rotate-90 scale-0": theme === "dark" || theme === "system",
           }
@@ -64,6 +69,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
           "scale-0",
           "transition-all",
           "duration-200",
+          "text-sidebar-foreground",
           {
             "rotate-0 scale-100": theme === "dark",
             "rotate-90 scale-0": theme === "light" || theme === "system",
@@ -79,6 +85,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
           "scale-0",
           "transition-all",
           "duration-200",
+          "text-sidebar-foreground",
           {
             "scale-100": theme === "system",
             "scale-0": theme === "light" || theme === "dark",

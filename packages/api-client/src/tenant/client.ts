@@ -107,25 +107,29 @@ export class TenantApiClient {
   }
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await this.client.post<AuthResponse>(
-      '/api/auth/login',
-      credentials
-    );
-    const data = response.data;
-    this.setAccessToken(data.accessToken);
-    this.setRefreshToken(data.refreshToken);
-    return data;
+    const response = await this.client.post<{
+      success: boolean;
+      data: AuthResponse;
+      timestamp: string;
+    }>('/api/auth/login', credentials);
+    // TransformInterceptor 會包裝響應為 { success, data, timestamp }
+    const authData = response.data.data;
+    this.setAccessToken(authData.accessToken);
+    this.setRefreshToken(authData.refreshToken);
+    return authData;
   }
 
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    const response = await this.client.post<AuthResponse>(
-      '/api/auth/refresh',
-      { refreshToken }
-    );
-    const data = response.data;
-    this.setAccessToken(data.accessToken);
-    this.setRefreshToken(data.refreshToken);
-    return data;
+    const response = await this.client.post<{
+      success: boolean;
+      data: AuthResponse;
+      timestamp: string;
+    }>('/api/auth/refresh', { refreshToken });
+    // TransformInterceptor 會包裝響應為 { success, data, timestamp }
+    const authData = response.data.data;
+    this.setAccessToken(authData.accessToken);
+    this.setRefreshToken(authData.refreshToken);
+    return authData;
   }
 
   async logout(refreshToken?: string): Promise<void> {
@@ -140,8 +144,13 @@ export class TenantApiClient {
   }
 
   async getMe(): Promise<UserInfo> {
-    const response = await this.client.post<UserInfo>('/api/auth/me', {});
-    return response.data;
+    const response = await this.client.get<{
+      success: boolean;
+      data: UserInfo;
+      timestamp: string;
+    }>('/api/auth/me');
+    // TransformInterceptor 會包裝響應為 { success, data, timestamp }
+    return response.data.data;
   }
 
   // 通用請求方法

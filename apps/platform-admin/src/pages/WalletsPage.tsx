@@ -284,14 +284,16 @@ export default function WalletsPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">狀態</label>
               <Select
-                value={filters.status}
-                onValueChange={(value) => handleFilterChange("status", value)}
+                value={filters.status || "all"}
+                onValueChange={(value) =>
+                  handleFilterChange("status", value === "all" ? "" : value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="請選擇狀態" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
+                  <SelectItem value="all">全部</SelectItem>
                   <SelectItem value="active">啟用</SelectItem>
                   <SelectItem value="inactive">停用</SelectItem>
                   <SelectItem value="suspended">暫停</SelectItem>
@@ -303,14 +305,16 @@ export default function WalletsPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">類型</label>
               <Select
-                value={filters.type}
-                onValueChange={(value) => handleFilterChange("type", value)}
+                value={filters.type || "all"}
+                onValueChange={(value) =>
+                  handleFilterChange("type", value === "all" ? "" : value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="請選擇類型" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
+                  <SelectItem value="all">全部</SelectItem>
                   <SelectItem value={SystemWalletType.CONTRACT_EXECUTION}>
                     授權
                   </SelectItem>

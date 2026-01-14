@@ -9,6 +9,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { authProvider } from "./providers/authProvider";
 import { dataProvider } from "./providers/dataProvider";
+import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
+import { Toaster } from "./components/refine-ui/notification/toaster";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
@@ -43,6 +45,7 @@ function App() {
           dataProvider={dataProvider}
           authProvider={authProvider}
           routerProvider={routerProvider}
+          notificationProvider={useNotificationProvider()}
           resources={[
             {
               name: "dashboard",
@@ -259,6 +262,7 @@ function App() {
           <UnsavedChangesNotifier />
           <DocumentTitleHandler />
         </Refine>
+        <Toaster />
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </BrowserRouter>
