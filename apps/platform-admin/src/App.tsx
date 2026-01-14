@@ -16,6 +16,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateSitePage from "./pages/CreateSitePage";
 import WalletsPage from "./pages/WalletsPage";
+import CreateWalletPage from "./pages/CreateWalletPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createPlatformApiClient } from "@saas-platform/api-client";
 import "./i18n";
@@ -151,6 +152,7 @@ function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="/sites/create" element={<CreateSitePage />} />
                 <Route path="/wallets" element={<WalletsPage />} />
+                <Route path="/wallets/create" element={<CreateWalletPage />} />
               </Route>
             </Route>
             <Route

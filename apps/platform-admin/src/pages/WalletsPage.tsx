@@ -1,13 +1,6 @@
 import { useState, useMemo } from "react";
-import {
-  useList,
-  useCreate,
-  type CrudFilter,
-  useNotification,
-} from "@refinedev/core";
-import { useForm } from "@refinedev/react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useList, type CrudFilter } from "@refinedev/core";
+import { useNavigate } from "react-router";
 import { ListView } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
@@ -19,17 +12,9 @@ import {
   SelectValue,
 } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormControl,
-  FormMessage,
-} from "@saas-platform/ui";
-import { Search, Calendar, Plus, Trash2 } from "lucide-react";
+import { Search, Calendar, Plus } from "lucide-react";
 import { SystemWallet, SystemWalletType } from "@saas-platform/shared-types";
 import { formatDateTimeLocalized } from "@saas-platform/utils";
-import { useFieldArray } from "react-hook-form";
 
 // 類型映射
 const typeMap: Record<string, string> = {
@@ -37,36 +22,8 @@ const typeMap: Record<string, string> = {
   [SystemWalletType.REVENUE_DISTRIBUTION]: "收款",
 };
 
-// Zod 驗證 schema
-const newWalletSchema = z.object({
-  type: z
-    .string()
-    .min(1, "請選擇錢包類型")
-    .refine(
-      (val) =>
-        val === SystemWalletType.CONTRACT_EXECUTION ||
-        val === SystemWalletType.REVENUE_DISTRIBUTION,
-      "請選擇有效的錢包類型"
-    ),
-  name: z.string().min(1, "請輸入錢包名稱"),
-  address: z
-    .string()
-    .min(1, "請輸入錢包地址")
-    .min(34, "錢包地址長度至少需要 34 個字符")
-    .regex(
-      /^T[A-Za-z0-9]{33}$/,
-      "請輸入有效的 TRON 錢包地址（以 T 開頭，共 34 個字符）"
-    ),
-});
-
-const newWalletsFormSchema = z.object({
-  wallets: z.array(newWalletSchema).min(1, "至少需要添加一個錢包"),
-});
-
-type NewWalletsFormData = z.infer<typeof newWalletsFormSchema>;
-
 export default function WalletsPage() {
-  const { open } = useNotification();
+  const navigate = useNavigate();
 
   // 篩選狀態
   const [filters, setFilters] = useState({
@@ -75,9 +32,6 @@ export default function WalletsPage() {
     status: "",
     createdAt: "",
   });
-
-  // 是否處於新增模式
-  const [isAddingMode, setIsAddingMode] = useState(false);
 
   // 構建查詢參數
   const queryParams = useMemo(() => {
@@ -106,34 +60,6 @@ export default function WalletsPage() {
   const isError = walletsQuery.query.isError;
   const error = walletsQuery.query.error;
 
-  // 批量創建錢包（使用 useCreate 循環調用，因為 useCreateMany 可能不可用）
-  const createMutation = useCreate();
-  const { mutate: createWallet, mutation } = createMutation;
-  const isCreating = mutation?.isPending || false;
-
-  // 使用 Refine 的 useForm hook
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-    reset,
-    ...formProps
-  } = useForm<NewWalletsFormData>({
-    resolver: zodResolver(newWalletsFormSchema) as any,
-    defaultValues: {
-      wallets: [],
-    },
-  });
-
-  // 使用 useFieldArray 管理動態錢包列表
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "wallets",
-  });
-
-  // 注意：錢包「分配比例」不在此頁配置（在建立站台時配置）
-
   // 處理篩選變更
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({
@@ -155,106 +81,16 @@ export default function WalletsPage() {
     return "-";
   };
 
-  // 添加新的空錢包表單
-  const handleAddNewWallet = () => {
-    setIsAddingMode(true);
-    append({
-      type: "",
-      name: "",
-      address: "",
-    });
-  };
-
-  // 移除新增的錢包表單
-  const handleRemoveNewWallet = (index: number) => {
-    remove(index);
-    if (fields.length === 1) {
-      setIsAddingMode(false);
-      reset();
-    }
-  };
-
-  // 提交新增的錢包
-  const onSubmit = async (data: any) => {
-    // 構建創建數據
-    const createDataArray = data.wallets.map((wallet: any) => ({
-      name: wallet.name,
-      address: wallet.address,
-      type: wallet.type,
-      chain: "tron" as const,
-      status: "active" as const,
-    }));
-
-    // 逐個創建錢包（因為 useCreateMany 可能不可用）
-    let successCount = 0;
-    let errorCount = 0;
-    const errors: string[] = [];
-
-    const createNext = (index: number) => {
-      if (index >= createDataArray.length) {
-        // 所有錢包創建完成
-        if (errorCount === 0) {
-          // 全部成功
-          reset();
-          setIsAddingMode(false);
-          walletsQuery.query.refetch();
-          open?.({
-            type: "success",
-            message: "創建成功",
-            description: `成功創建 ${successCount} 個錢包`,
-          });
-        } else {
-          // 有部分失敗 - 使用 notification 顯示錯誤
-          open?.({
-            type: "error",
-            message: "創建錢包失敗",
-            description: `成功創建 ${successCount} 個錢包，失敗 ${errorCount} 個。\n錯誤：${errors.join("\n")}`,
-          });
-          walletsQuery.query.refetch();
-        }
-        return;
-      }
-
-      createWallet(
-        {
-          resource: "system-wallets",
-          values: createDataArray[index],
-        },
-        {
-          onSuccess: () => {
-            successCount++;
-            createNext(index + 1);
-          },
-          onError: (error: any) => {
-            errorCount++;
-            errors.push(
-              `${createDataArray[index].name}: ${error?.message || "創建失敗"}`
-            );
-            createNext(index + 1);
-          },
-        }
-      );
-    };
-
-    // 開始創建第一個
-    createNext(0);
-  };
-
-  // 取消新增
-  const handleCancelNewWallets = () => {
-    reset();
-    setIsAddingMode(false);
+  // 導航到創建頁面
+  const handleCreateWallet = () => {
+    navigate("/wallets/create");
   };
 
   return (
     <ListView>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-bold">錢包列表</h2>
-        <Button
-          onClick={handleAddNewWallet}
-          disabled={isCreating}
-          variant={isAddingMode ? "outline" : "default"}
-        >
+        <Button onClick={handleCreateWallet}>
           <Plus className="w-4 h-4 mr-2" />
           新增錢包
         </Button>
@@ -367,195 +203,50 @@ export default function WalletsPage() {
       )}
 
       {/* 錢包列表表格 */}
-      {!isLoading && (wallets.length > 0 || fields.length > 0) && (
-        <Form
-          {...({
-            control,
-            handleSubmit,
-            formState: { errors },
-            ...formProps,
-          } as any)}
-        >
-          <form onSubmit={handleSubmit(onSubmit as any) as any}>
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-4 font-medium">類型</th>
-                        <th className="text-left p-4 font-medium">錢包名稱</th>
-                        <th className="text-left p-4 font-medium">地址</th>
-                        <th className="text-left p-4 font-medium">分配比例%</th>
-                        <th className="text-left p-4 font-medium">建立時間</th>
-                        {isAddingMode && (
-                          <th className="text-left p-4 font-medium">操作</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* 現有錢包列表 */}
-                      {wallets.map((wallet) => {
-                        return (
-                          <tr
-                            key={wallet.id}
-                            className="border-b hover:bg-muted/50"
-                          >
-                            <td className="p-4">
-                              {typeMap[wallet.type] || wallet.type}
-                            </td>
-                            <td className="p-4">{wallet.name}</td>
-                            <td className="p-4 font-mono text-sm">
-                              {wallet.address}
-                            </td>
-                            <td className="p-4">{getPercentage(wallet)}</td>
-                            <td className="p-4">
-                              {formatDateTimeLocalized(wallet.createdAt)}
-                            </td>
-                            {isAddingMode && <td className="p-4"></td>}
-                          </tr>
-                        );
-                      })}
-
-                      {/* 新增錢包表單行 */}
-                      {fields.map((field, index: number) => {
-                        return (
-                          <tr key={field.id} className="border-b bg-muted/30">
-                            <td className="p-4">
-                              <FormField
-                                control={control}
-                                name={`wallets.${index}.type`}
-                                render={({ field: formField }) => (
-                                  <FormItem>
-                                    <Select
-                                      value={formField.value || ""}
-                                      onValueChange={formField.onChange}
-                                    >
-                                      <FormControl>
-                                        <SelectTrigger className="w-[120px]">
-                                          <SelectValue placeholder="請選擇類型" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        <SelectItem
-                                          value={
-                                            SystemWalletType.CONTRACT_EXECUTION
-                                          }
-                                        >
-                                          授權
-                                        </SelectItem>
-                                        <SelectItem
-                                          value={
-                                            SystemWalletType.REVENUE_DISTRIBUTION
-                                          }
-                                        >
-                                          收款
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </td>
-                            <td className="p-4">
-                              <FormField
-                                control={control}
-                                name={`wallets.${index}.name`}
-                                render={({ field: formField }) => (
-                                  <FormItem>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="請輸入錢包名稱"
-                                        {...formField}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </td>
-                            <td className="p-4">
-                              <FormField
-                                control={control}
-                                name={`wallets.${index}.address`}
-                                render={({ field: formField }) => (
-                                  <FormItem>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="請輸入錢包地址"
-                                        {...formField}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </td>
-                            <td className="p-4">
-                              <span className="text-muted-foreground">-</span>
-                            </td>
-                            <td className="p-4">
-                              <span className="text-muted-foreground">-</span>
-                            </td>
-                            <td className="p-4">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveNewWallet(index)}
-                              >
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 新增錢包時的總比例和操作按鈕 */}
-            {isAddingMode && fields.length > 0 && (
-              <Card className="mt-4">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {/* 顯示表單驗證錯誤 */}
-                      {errors.wallets && (
-                        <span className="text-sm font-medium text-destructive">
-                          {typeof errors.wallets === "object" &&
-                          "message" in errors.wallets
-                            ? String(errors.wallets.message)
-                            : "表單驗證失敗，請檢查輸入"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCancelNewWallets}
-                        disabled={isCreating}
+      {!isLoading && wallets.length > 0 && (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-4 font-medium">類型</th>
+                    <th className="text-left p-4 font-medium">錢包名稱</th>
+                    <th className="text-left p-4 font-medium">地址</th>
+                    <th className="text-left p-4 font-medium">分配比例%</th>
+                    <th className="text-left p-4 font-medium">建立時間</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wallets.map((wallet) => {
+                    return (
+                      <tr
+                        key={wallet.id}
+                        className="border-b hover:bg-muted/50"
                       >
-                        取消
-                      </Button>
-                      <Button type="submit" disabled={isCreating}>
-                        {isCreating ? "建立中..." : "完成"}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </form>
-        </Form>
+                        <td className="p-4">
+                          {typeMap[wallet.type] || wallet.type}
+                        </td>
+                        <td className="p-4">{wallet.name}</td>
+                        <td className="p-4 font-mono text-sm">
+                          {wallet.address}
+                        </td>
+                        <td className="p-4">{getPercentage(wallet)}</td>
+                        <td className="p-4">
+                          {formatDateTimeLocalized(wallet.createdAt)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* 空狀態 */}
-      {!isLoading && wallets.length === 0 && fields.length === 0 && (
+      {!isLoading && wallets.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             暫無錢包數據
