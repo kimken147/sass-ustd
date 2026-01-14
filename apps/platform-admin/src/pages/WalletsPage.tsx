@@ -1,5 +1,10 @@
 import { useState, useMemo } from "react";
-import { useList, useCreate, type CrudFilter } from "@refinedev/core";
+import {
+  useList,
+  useCreate,
+  type CrudFilter,
+  useNotification,
+} from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -61,6 +66,8 @@ const newWalletsFormSchema = z.object({
 type NewWalletsFormData = z.infer<typeof newWalletsFormSchema>;
 
 export default function WalletsPage() {
+  const { open } = useNotification();
+
   // 篩選狀態
   const [filters, setFilters] = useState({
     name: "",
@@ -191,12 +198,18 @@ export default function WalletsPage() {
           reset();
           setIsAddingMode(false);
           walletsQuery.query.refetch();
+          open?.({
+            type: "success",
+            message: "創建成功",
+            description: `成功創建 ${successCount} 個錢包`,
+          });
         } else {
-          // 有部分失敗 - 這裡保留 alert，因為是批量操作的結果提示
-          // 可以考慮使用 toast 通知替代
-          alert(
-            `成功創建 ${successCount} 個錢包，失敗 ${errorCount} 個。\n錯誤：${errors.join("\n")}`
-          );
+          // 有部分失敗 - 使用 notification 顯示錯誤
+          open?.({
+            type: "error",
+            message: "創建錢包失敗",
+            description: `成功創建 ${successCount} 個錢包，失敗 ${errorCount} 個。\n錯誤：${errors.join("\n")}`,
+          });
           walletsQuery.query.refetch();
         }
         return;
