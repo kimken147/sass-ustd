@@ -26,7 +26,7 @@ import { User, UserRole, Agent } from "@saas-platform/database";
 export class CustomersController {
   constructor(
     private readonly customersService: CustomersService,
-    @InjectEntityManager()
+    @InjectEntityManager("default")
     private readonly em: EntityManager
   ) {}
 

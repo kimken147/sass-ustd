@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useUpdate, useGetOne, useNavigation } from "@refinedev/core";
+import { useUpdate, useOne, useNavigation } from "@refinedev/core";
 import { CreateView, CreateViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
@@ -36,7 +36,7 @@ export default function EditAgentPage() {
   const isUpdating = mutation.isPending || false;
 
   // 獲取代理詳情
-  const { data: agentData, isLoading } = useGetOne<Agent>({
+  const { data: agentData, isLoading } = useOne<Agent>({
     resource: "agents",
     id: id || "",
     queryOptions: {

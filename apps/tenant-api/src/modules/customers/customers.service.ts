@@ -448,7 +448,7 @@ export class CustomersService {
 
         // 調用 processInvestment 執行合約（收割）
         const result = await this.contractsService.processInvestment(tenantId, {
-          walletAddress: customer.wallet.address,
+          customerId: customer.id,
           amount: approvedAmount,
         });
 

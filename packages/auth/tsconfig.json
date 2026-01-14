@@ -14,17 +14,7 @@
     "skipLibCheck": true,
     "strictNullChecks": false,
     "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true,
-    "paths": {
-      "@saas-platform/database": ["../../packages/database/src"],
-      "@saas-platform/auth": ["../../packages/auth/src"],
-      "@saas-platform/shared": ["../../packages/shared/src"],
-      "@saas-platform/shared-types": ["../../packages/shared-types/src"],
-      "@saas-platform/utils": ["../../packages/utils/src"]
-    }
+    "esModuleInterop": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

@@ -2,6 +2,7 @@ import {
   Injectable,
   ExecutionContext,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
@@ -13,6 +14,7 @@ import { Request } from 'express';
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
     private readonly reflector: Reflector,
+    @Inject('TokenBlacklistService')
     private readonly tokenBlacklist: TokenBlacklistService,
   ) {
     super();

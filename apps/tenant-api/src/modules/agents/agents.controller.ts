@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseIntPipe,
+  NotFoundException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -39,7 +40,7 @@ export class AgentsController {
   constructor(
     private readonly agentsService: AgentsService,
     private readonly configService: ConfigService,
-    @InjectEntityManager()
+    @InjectEntityManager("default")
     private readonly em: EntityManager
   ) {}
 

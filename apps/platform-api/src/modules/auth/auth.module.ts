@@ -69,6 +69,13 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
     JwtStrategy,
     JwtAuthGuard,
   ],
-  exports: [AuthService, JwtAuthGuard],
+  exports: [
+    AuthService,
+    JwtAuthGuard,
+    {
+      provide: "TokenBlacklistService",
+      useFactory: () => new InMemoryTokenBlacklistService(true),
+    },
+  ],
 })
 export class AuthModule {}
