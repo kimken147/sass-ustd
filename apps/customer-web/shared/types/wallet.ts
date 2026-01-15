@@ -1,3 +1,5 @@
+import { AppError } from '../lib/errors';
+
 export type WalletType = 'tronlink' | 'imtoken' | 'tokenpocket';
 
 export interface WalletConfig {
