@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useList, useDelete, useNavigation } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
@@ -253,9 +253,8 @@ export default function AgentsPage() {
     const indentWidth = depth * 24; // 每層縮排 24px
 
     return (
-      <>
+      <React.Fragment key={node.id}>
         <tr
-          key={node.id}
           className="border-b hover:bg-muted/50"
           style={{
             backgroundColor: depth % 2 === 0 ? undefined : "rgba(0,0,0,0.02)",
@@ -325,19 +324,17 @@ export default function AgentsPage() {
           </td>
         </tr>
         {/* 遞迴渲染子節點 */}
-        {hasChildren && isExpanded && (
-          <>
-            {node.children.map((child) => renderTreeNode(child, depth + 1))}
-          </>
-        )}
-      </>
+        {hasChildren && isExpanded &&
+          node.children.map((child) => renderTreeNode(child, depth + 1))
+        }
+      </React.Fragment>
     );
   };
 
   return (
     <ListView>
       <div className="flex items-center justify-between mb-4">
-        <ListViewHeader title="代理列表" />
+        <ListViewHeader title="代理列表" canCreate={false} />
         <Button onClick={handleAddNew} disabled={isLoading}>
           <Plus className="w-4 h-4 mr-2" />
           新增代理

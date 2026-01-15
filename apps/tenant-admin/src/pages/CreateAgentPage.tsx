@@ -1,9 +1,20 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useCreate, useList, useNavigation } from "@refinedev/core";
+import { useForm } from "@refinedev/react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { CreateView, CreateViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
-import { Label } from "@saas-platform/ui";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription,
+} from "@saas-platform/ui";
 import {
   Select,
   SelectContent,
@@ -19,34 +30,47 @@ interface Agent {
   level: number;
 }
 
-interface CreateAgentFormData {
-  name: string;
-  username: string;
-  email: string;
-  password: string;
-  parentAgentId?: number;
-  uplineRate: string;
-  walletAddress: string;
-  notes?: string;
-}
+// Zod 驗證 schema
+const agentFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "請輸入代理名稱")
+    .min(2, "代理名稱至少需要 2 個字符"),
+  username: z
+    .string()
+    .min(1, "請輸入帳號")
+    .min(3, "帳號至少需要 3 個字符"),
+  email: z
+    .string()
+    .email("請輸入有效的 Email 格式")
+    .optional()
+    .or(z.literal("")),
+  password: z
+    .string()
+    .min(1, "請輸入密碼")
+    .min(6, "密碼至少需要 6 個字符"),
+  parentAgentId: z.string().optional(),
+  uplineRate: z
+    .number()
+    .min(0, "分潤比例不能小於 0")
+    .max(100, "分潤比例不能超過 100"),
+  walletAddress: z
+    .string()
+    .min(1, "請輸入錢包地址")
+    .min(34, "錢包地址長度至少需要 34 個字符")
+    .regex(
+      /^T[A-Za-z0-9]{33}$/,
+      "請輸入有效的 TRON 錢包地址（以 T 開頭，共 34 個字符）"
+    ),
+});
+
+type AgentFormData = z.infer<typeof agentFormSchema>;
 
 export default function CreateAgentPage() {
   const { list } = useNavigation();
   const createMutation = useCreate();
   const { mutate: createAgent, mutation } = createMutation;
   const isCreating = mutation.isPending || false;
-
-  // 表單狀態
-  const [formData, setFormData] = useState<CreateAgentFormData>({
-    name: "",
-    username: "",
-    email: "",
-    password: "",
-    parentAgentId: undefined,
-    uplineRate: "",
-    walletAddress: "",
-    notes: "",
-  });
 
   // 獲取代理列表（用於選擇上級代理）
   const agentsQuery = useList<Agent>({
@@ -56,54 +80,42 @@ export default function CreateAgentPage() {
 
   const agents = agentsQuery.result?.data || [];
 
-  // 處理表單輸入變更
-  const handleInputChange = (
-    field: keyof CreateAgentFormData,
-    value: any
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  // 使用 Refine 的 useForm hook 進行表單管理
+  const form = useForm<AgentFormData>({
+    resolver: zodResolver(agentFormSchema) as any,
+    defaultValues: {
+      name: "",
+      username: "",
+      email: "",
+      password: "",
+      parentAgentId: "none",
+      uplineRate: 0,
+      walletAddress: "",
+    },
+  });
+
+  const { control, handleSubmit } = form;
 
   // 提交表單
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // 驗證必填字段
-    if (!formData.name || !formData.username || !formData.walletAddress) {
-      alert("請填寫所有必填字段");
-      return;
-    }
-
-    if (!formData.email || !formData.password) {
-      alert("新增代理需要填寫 Email 和密碼");
-      return;
-    }
-
-    if (!formData.uplineRate) {
-      alert("請填寫上級比率");
-      return;
-    }
-
-    const uplineRate = parseFloat(formData.uplineRate);
-    if (isNaN(uplineRate) || uplineRate < 0 || uplineRate > 100) {
-      alert("上級比率必須在 0-100 之間");
-      return;
-    }
-
+  const onSubmit = (data: AgentFormData) => {
     // 構建創建代理的數據
     const createData: any = {
-      name: formData.name,
-      username: formData.username,
-      email: formData.email,
-      password: formData.password,
-      parentAgentId: formData.parentAgentId || undefined,
-      uplineRate: uplineRate,
-      walletAddress: formData.walletAddress,
-      notes: formData.notes || undefined,
+      name: data.name,
+      username: data.username,
+      password: data.password,
+      uplineRate: data.uplineRate,
+      walletAddress: data.walletAddress,
     };
+
+    // 只有當 email 有值時才添加
+    if (data.email) {
+      createData.email = data.email;
+    }
+
+    // 只有當選擇了上級代理時才添加
+    if (data.parentAgentId && data.parentAgentId !== "none") {
+      createData.parentAgentId = parseInt(data.parentAgentId);
+    }
 
     createAgent(
       {
@@ -134,149 +146,192 @@ export default function CreateAgentPage() {
     <CreateView>
       <CreateViewHeader title="新增代理" />
 
-      <form onSubmit={handleSubmit}>
-        <Card>
-          <CardContent className="space-y-4 pt-6">
-            {/* 代理名稱 */}
-            <div className="space-y-2">
-              <Label htmlFor="name">
-                代理名稱 <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="name"
-                placeholder="請輸入代理名稱"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                required
+      <Form {...(form as any)}>
+        <form onSubmit={handleSubmit(onSubmit as any) as any}>
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              {/* 代理名稱 */}
+              <FormField
+                control={control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      代理名稱 <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="請輸入代理名稱" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            {/* 帳號 */}
-            <div className="space-y-2">
-              <Label htmlFor="username">
-                帳號 <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="username"
-                placeholder="請輸入帳號"
-                value={formData.username}
-                onChange={(e) => handleInputChange("username", e.target.value)}
-                required
+              {/* 帳號 */}
+              <FormField
+                control={control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      帳號 <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="請輸入帳號" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="請輸入 Email"
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                required
+              {/* Email */}
+              <FormField
+                control={control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="請輸入 Email（選填）"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            {/* 密碼 */}
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                密碼 <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="請輸入密碼"
-                value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                required
+              {/* 密碼 */}
+              <FormField
+                control={control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      密碼 <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="請輸入密碼"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            {/* 地址（錢包地址） */}
-            <div className="space-y-2">
-              <Label htmlFor="walletAddress">
-                地址 <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="walletAddress"
-                placeholder="請輸入錢包地址"
-                value={formData.walletAddress}
-                onChange={(e) =>
-                  handleInputChange("walletAddress", e.target.value)
-                }
-                required
+              {/* 地址（錢包地址） */}
+              <FormField
+                control={control}
+                name="walletAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      地址 <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="請輸入 TRON 錢包地址（以 T 開頭）"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            {/* 上級代理 */}
-            <div className="space-y-2">
-              <Label htmlFor="parentAgentId">上級代理</Label>
-              <Select
-                value={formData.parentAgentId?.toString() || undefined}
-                onValueChange={(value) =>
-                  handleInputChange(
-                    "parentAgentId",
-                    value ? parseInt(value) : undefined
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="請選擇上級代理" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">無（預設上級為站長）</SelectItem>
-                  {agents.map((agent: Agent) => (
-                    <SelectItem key={agent.id} value={agent.id.toString()}>
-                      {agent.name} (層級: {agent.level})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* 上級代理 */}
+              <FormField
+                control={control}
+                name="parentAgentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>上級代理</FormLabel>
+                    <Select
+                      value={field.value || "none"}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="請選擇上級代理" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          無（預設上級為站長）
+                        </SelectItem>
+                        {agents.map((agent: Agent) => (
+                          <SelectItem
+                            key={agent.id}
+                            value={agent.id.toString()}
+                          >
+                            {agent.name} (層級: {agent.level})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* 分潤（上級比率） */}
-            <div className="space-y-2">
-              <Label htmlFor="uplineRate">
-                分潤 <span className="text-destructive">*</span>
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="uplineRate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="請輸入比例"
-                  value={formData.uplineRate}
-                  onChange={(e) =>
-                    handleInputChange("uplineRate", e.target.value)
-                  }
-                  className="flex-1"
-                  required
-                />
-                <span className="text-muted-foreground">%</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              {/* 分潤（上級比率） */}
+              <FormField
+                control={control}
+                name="uplineRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      分潤 <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="請輸入比例"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value ? parseFloat(e.target.value) : 0
+                            )
+                          }
+                          className="flex-1"
+                        />
+                      </FormControl>
+                      <span className="text-muted-foreground">%</span>
+                    </div>
+                    <FormDescription>分潤比例範圍：0 - 100</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
 
-        {/* 操作按鈕 */}
-        <div className="flex justify-end gap-4 mt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isCreating}
-          >
-            取消
-          </Button>
-          <Button type="submit" disabled={isCreating}>
-            {isCreating ? "建立中..." : "完成"}
-          </Button>
-        </div>
-      </form>
+          {/* 操作按鈕 */}
+          <div className="flex justify-end gap-4 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isCreating}
+            >
+              取消
+            </Button>
+            <Button type="submit" disabled={isCreating}>
+              {isCreating ? "建立中..." : "完成"}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </CreateView>
   );
 }
