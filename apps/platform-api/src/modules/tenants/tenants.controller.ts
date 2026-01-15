@@ -23,6 +23,7 @@ import { CreateTenantDto } from "./dto/create-tenant.dto";
 import { UpdateTenantDto } from "./dto/update-tenant.dto";
 import { TenantResponseDto } from "./dto/tenant-response.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { Public } from "../auth/decorators/public.decorator";
 
 @ApiTags("租戶管理")
 @Controller("tenants")
@@ -84,6 +85,30 @@ export class TenantsController {
   @ApiResponse({ status: 404, description: "租戶不存在" })
   async findBySlug(@Param("slug") slug: string): Promise<TenantResponseDto> {
     return this.tenantsService.findBySlug(slug);
+  }
+
+  @Get("by-domain/:domain")
+  @ApiOperation({ summary: "Get tenant by custom domain" })
+  @ApiParam({
+    name: "domain",
+    description: "Tenant custom domain",
+    type: String,
+    example: "tenant-a.example.com",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Tenant found",
+    type: TenantResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Tenant not found",
+  })
+  @Public()
+  async findByDomain(
+    @Param("domain") domain: string,
+  ): Promise<TenantResponseDto> {
+    return this.tenantsService.findByCustomDomain(domain);
   }
 
   @Patch(":id")

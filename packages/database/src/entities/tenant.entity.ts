@@ -149,6 +149,8 @@ export class Tenant extends BaseEntity {
   };
 
   @Property({ nullable: true })
+  @Unique()
+  @Index()
   customDomain?: string;
 
   @OneToMany(() => PlatformUser, (user) => user.tenant)

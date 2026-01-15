@@ -64,6 +64,18 @@ export class TenantsService {
       }
     }
 
+    // Check if customDomain already exists
+    if (createTenantDto.customDomain) {
+      const existingByDomain = await this.tenantRepository.findOne({
+        customDomain: createTenantDto.customDomain,
+      });
+      if (existingByDomain) {
+        throw new BadRequestException(
+          `Tenant with domain ${createTenantDto.customDomain} already exists`,
+        );
+      }
+    }
+
     // 處理系統錢包指派（如果提供）
     let systemWalletsWithDetails: SystemWalletAssignment[] | undefined;
     if (
@@ -227,6 +239,23 @@ export class TenantsService {
   }
 
   /**
+   * 根據 customDomain 查詢租戶
+   */
+  async findByCustomDomain(domain: string): Promise<TenantResponseDto> {
+    const tenant = await this.tenantRepository.findOne({
+      customDomain: domain,
+    });
+
+    if (!tenant) {
+      throw new NotFoundException(
+        `Tenant with domain ${domain} not found`,
+      );
+    }
+
+    return TenantResponseDto.fromEntity(tenant);
+  }
+
+  /**
    * 更新租戶
    */
   async update(
@@ -259,6 +288,18 @@ export class TenantsService {
       if (existing) {
         throw new ConflictException(
           `電子郵件 "${updateTenantDto.email}" 已被使用`
+        );
+      }
+    }
+
+    // Check if customDomain is being updated and conflicts with another tenant
+    if (updateTenantDto.customDomain && updateTenantDto.customDomain !== tenant.customDomain) {
+      const existingByDomain = await this.tenantRepository.findOne({
+        customDomain: updateTenantDto.customDomain,
+      });
+      if (existingByDomain && existingByDomain.id !== id) {
+        throw new BadRequestException(
+          `Tenant with domain ${updateTenantDto.customDomain} already exists`,
         );
       }
     }
