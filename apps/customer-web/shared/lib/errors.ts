@@ -1,3 +1,11 @@
+/**
+ * Error codes for application-specific errors
+ *
+ * @example
+ * ```ts
+ * throw new AppError(ErrorCode.WALLET_NOT_FOUND, errorMessages[ErrorCode.WALLET_NOT_FOUND]);
+ * ```
+ */
 export enum ErrorCode {
   // Wallet related
   WALLET_NOT_FOUND = 'WALLET_NOT_FOUND',
@@ -17,17 +25,55 @@ export enum ErrorCode {
   TENANT_NOT_FOUND = 'TENANT_NOT_FOUND',
 }
 
+/**
+ * Custom application error class with error code and optional original error
+ *
+ * @example
+ * ```ts
+ * try {
+ *   // some operation
+ * } catch (error) {
+ *   throw new AppError(ErrorCode.API_ERROR, errorMessages[ErrorCode.API_ERROR], error);
+ * }
+ * ```
+ */
 export class AppError extends Error {
   constructor(
     public code: ErrorCode,
     public message: string,
     public originalError?: unknown,
   ) {
-    super(message);
+    super(message, { cause: originalError });
     this.name = 'AppError';
+    // Maintains proper prototype chain for instanceof checks
+    Object.setPrototypeOf(this, AppError.prototype);
   }
 }
 
+/**
+ * Type guard to check if an error is an AppError instance
+ *
+ * @param error - The error to check
+ * @returns True if the error is an AppError
+ *
+ * @example
+ * ```ts
+ * try {
+ *   // some operation
+ * } catch (error) {
+ *   if (isAppError(error)) {
+ *     console.log(error.code); // TypeScript knows error is AppError
+ *   }
+ * }
+ * ```
+ */
+export function isAppError(error: unknown): error is AppError {
+  return error instanceof AppError;
+}
+
+/**
+ * User-friendly error messages for each error code
+ */
 export const errorMessages: Record<ErrorCode, string> = {
   [ErrorCode.WALLET_NOT_FOUND]: '請在錢包 App 中開啟此頁面',
   [ErrorCode.WALLET_NOT_CONNECTED]: '請先連接錢包',
