@@ -193,7 +193,6 @@ function App() {
           ]}
           options={{
             syncWithLocation: true,
-            warnWhenUnsavedChanges: true,
             // 設置應用標題和圖標（用於 Sidebar Header）
             title: {
               text: "代理商後台",
@@ -233,8 +232,14 @@ function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="/wallet" element={<WalletPage />} />
                 <Route path="/sub-agents" element={<SubAgentsPage />} />
-                <Route path="/sub-agents/create" element={<CreateSubAgentPage />} />
-                <Route path="/sub-agents/edit/:id" element={<EditSubAgentPage />} />
+                <Route
+                  path="/sub-agents/create"
+                  element={<CreateSubAgentPage />}
+                />
+                <Route
+                  path="/sub-agents/edit/:id"
+                  element={<EditSubAgentPage />}
+                />
                 {/* 其他路由將在後續添加 */}
               </Route>
             </Route>

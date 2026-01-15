@@ -1,9 +1,21 @@
 import { useState, useMemo } from "react";
 import { useList, useCreate, useUpdate, useDelete } from "@refinedev/core";
+import { useForm } from "@refinedev/react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription,
+} from "@saas-platform/ui";
 import { Calendar, Search, Plus, Pencil, Trash2 } from "lucide-react";
 import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
 
@@ -23,14 +35,28 @@ interface RevenueWallet {
   description?: string;
 }
 
-// 新增/編輯錢包表單數據類型
-interface WalletFormData {
-  id?: string;
-  name: string;
-  address: string;
-  percentage: string;
-  description?: string;
-}
+// Zod 驗證 schema
+const walletFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "請輸入錢包名稱")
+    .min(2, "錢包名稱至少需要 2 個字符"),
+  address: z
+    .string()
+    .min(1, "請輸入錢包地址")
+    .min(34, "錢包地址長度至少需要 34 個字符")
+    .regex(
+      /^T[A-Za-z0-9]{33}$/,
+      "請輸入有效的 TRON 錢包地址（以 T 開頭，共 34 個字符）"
+    ),
+  percentage: z
+    .number()
+    .min(0.01, "分配比例必須大於 0")
+    .max(100, "分配比例不能超過 100"),
+  description: z.string().optional(),
+});
+
+type WalletFormData = z.infer<typeof walletFormSchema>;
 
 export default function WalletsPage() {
   // 篩選狀態
@@ -42,12 +68,6 @@ export default function WalletsPage() {
   // 編輯狀態
   const [editingWalletId, setEditingWalletId] = useState<string | null>(null);
   const [isAddingMode, setIsAddingMode] = useState(false);
-  const [walletForm, setWalletForm] = useState<WalletFormData>({
-    name: "",
-    address: "",
-    percentage: "",
-    description: "",
-  });
 
   // 構建查詢參數（用於名稱篩選）
   const queryParams = useMemo(() => {
@@ -82,6 +102,24 @@ export default function WalletsPage() {
   // 刪除錢包 - 使用官方 useDelete hook
   const deleteMutation = useDelete();
   const { mutate: deleteWallet } = deleteMutation;
+
+  // 使用 Refine 的 useForm hook 進行表單管理
+  const form = useForm<WalletFormData>({
+    resolver: zodResolver(walletFormSchema) as any,
+    defaultValues: {
+      name: "",
+      address: "",
+      percentage: 0,
+      description: "",
+    },
+  });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+  } = form;
 
   // 篩選後的錢包列表
   const filteredWallets = useMemo(() => {
@@ -138,10 +176,10 @@ export default function WalletsPage() {
   const handleAddNew = () => {
     setIsAddingMode(true);
     setEditingWalletId(null);
-    setWalletForm({
+    reset({
       name: "",
       address: "",
-      percentage: "",
+      percentage: 0,
       description: "",
     });
   };
@@ -150,51 +188,36 @@ export default function WalletsPage() {
   const handleEdit = (wallet: RevenueWallet) => {
     setEditingWalletId(wallet.id);
     setIsAddingMode(false);
-    setWalletForm({
-      id: wallet.id,
-      name: wallet.name,
-      address: wallet.address,
-      percentage: wallet.percentage.toString(),
-      description: wallet.description || "",
-    });
+    setValue("name", wallet.name);
+    setValue("address", wallet.address);
+    setValue("percentage", wallet.percentage);
+    setValue("description", wallet.description || "");
   };
 
   // 處理取消編輯
   const handleCancel = () => {
     setIsAddingMode(false);
     setEditingWalletId(null);
-    setWalletForm({
+    reset({
       name: "",
       address: "",
-      percentage: "",
+      percentage: 0,
       description: "",
     });
   };
 
   // 處理提交表單
-  const handleSubmit = () => {
-    // 驗證必填字段
-    if (!walletForm.name || !walletForm.address || !walletForm.percentage) {
-      alert("請填寫所有必填字段");
-      return;
-    }
-
-    const percentage = parseFloat(walletForm.percentage);
-    if (isNaN(percentage) || percentage <= 0 || percentage > 100) {
-      alert("分配比例必須在 0-100 之間");
-      return;
-    }
-
+  const onSubmit = (data: WalletFormData) => {
     if (isAddingMode || !editingWalletId) {
       // 新增錢包
       createWallet(
         {
           resource: "revenue-wallets",
           values: {
-            name: walletForm.name,
-            address: walletForm.address,
-            percentage: percentage,
-            description: walletForm.description || undefined,
+            name: data.name,
+            address: data.address,
+            percentage: data.percentage,
+            description: data.description || undefined,
             isActive: true,
           },
         },
@@ -217,10 +240,10 @@ export default function WalletsPage() {
           resource: "revenue-wallets",
           id: editingWalletId,
           values: {
-            name: walletForm.name,
-            address: walletForm.address,
-            percentage: percentage,
-            description: walletForm.description || undefined,
+            name: data.name,
+            address: data.address,
+            percentage: data.percentage,
+            description: data.description || undefined,
           },
         },
         {
@@ -268,7 +291,7 @@ export default function WalletsPage() {
         <ListViewHeader title="錢包列表" />
         <Button onClick={handleAddNew} disabled={isLoading || isAddingMode}>
           <Plus className="w-4 h-4 mr-2" />
-          修改
+          新增
         </Button>
       </div>
 
@@ -342,64 +365,120 @@ export default function WalletsPage() {
                 <CardTitle>新增錢包</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">錢包名稱 *</label>
-                    <Input
-                      placeholder="請輸入錢包名稱"
-                      value={walletForm.name}
-                      onChange={(e) =>
-                        setWalletForm({ ...walletForm, name: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">地址 *</label>
-                    <Input
-                      placeholder="請輸入錢包地址"
-                      value={walletForm.address}
-                      onChange={(e) =>
-                        setWalletForm({
-                          ...walletForm,
-                          address: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">分配比例% *</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      placeholder="請輸入比例"
-                      value={walletForm.percentage}
-                      onChange={(e) =>
-                        setWalletForm({
-                          ...walletForm,
-                          percentage: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={
-                        createMutationState.isPending ||
+                <Form {...(form as any)}>
+                  <form
+                    onSubmit={handleSubmit(onSubmit as any) as any}
+                    className="space-y-4"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* 錢包名稱 */}
+                      <FormField
+                        control={control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>錢包名稱 *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="請輸入錢包名稱" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* 地址 */}
+                      <FormField
+                        control={control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>地址 *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="請輸入錢包地址（以 T 開頭）"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* 分配比例 */}
+                      <FormField
+                        control={control}
+                        name="percentage"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>分配比例% *</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                placeholder="請輸入比例"
+                                {...field}
+                                value={field.value || ""}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value
+                                      ? parseFloat(e.target.value)
+                                      : 0
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              分配比例範圍：0.01 - 100
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* 描述 */}
+                      <FormField
+                        control={control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>描述</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="請輸入描述（選填）"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCancel}
+                      >
+                        取消
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={
+                          createMutationState.isPending ||
+                          updateMutationState.isPending
+                        }
+                      >
+                        {createMutationState.isPending ||
                         updateMutationState.isPending
-                      }
-                    >
-                      {createMutationState.isPending ||
-                      updateMutationState.isPending
-                        ? "處理中..."
-                        : "確定"}
-                    </Button>
-                    <Button variant="outline" onClick={handleCancel}>
-                      取消
-                    </Button>
-                  </div>
-                </div>
+                          ? "處理中..."
+                          : "確定"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           )}
@@ -429,81 +508,125 @@ export default function WalletsPage() {
                           >
                             {isEditing ? (
                               <>
-                                <td className="p-4">
-                                  <Input
-                                    placeholder="錢包名稱"
-                                    value={walletForm.name}
-                                    onChange={(e) =>
-                                      setWalletForm({
-                                        ...walletForm,
-                                        name: e.target.value,
-                                      })
-                                    }
-                                  />
-                                </td>
-                                <td className="p-4">
-                                  <Input
-                                    placeholder="地址"
-                                    value={walletForm.address}
-                                    onChange={(e) =>
-                                      setWalletForm({
-                                        ...walletForm,
-                                        address: e.target.value,
-                                      })
-                                    }
-                                  />
-                                </td>
-                                <td className="p-4">
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    placeholder="比例%"
-                                    value={walletForm.percentage}
-                                    onChange={(e) =>
-                                      setWalletForm({
-                                        ...walletForm,
-                                        percentage: e.target.value,
-                                      })
-                                    }
-                                  />
-                                </td>
-                                <td className="p-4">
-                                  {wallet.verifiedAt
-                                    ? formatDateTime(wallet.verifiedAt)
-                                    : "-"}
-                                </td>
-                                <td className="p-4">
-                                  <span
-                                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                      wallet.isActive
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-gray-100 text-gray-800"
-                                    }`}
-                                  >
-                                    {wallet.isActive ? "啟用" : "停用"}
-                                  </span>
-                                </td>
-                                <td className="p-4">
-                                  <div className="flex gap-2">
-                                    <Button
-                                      size="sm"
-                                      onClick={handleSubmit}
-                                      disabled={
-                                        createMutationState.isPending ||
-                                        updateMutationState.isPending
+                                <td colSpan={6} className="p-4">
+                                  <Form {...(form as any)}>
+                                    <form
+                                      onSubmit={
+                                        handleSubmit(onSubmit as any) as any
                                       }
+                                      className="space-y-4"
                                     >
-                                      確定
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancel}
-                                    >
-                                      取消
-                                    </Button>
-                                  </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* 錢包名稱 */}
+                                        <FormField
+                                          control={control}
+                                          name="name"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>錢包名稱 *</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  placeholder="請輸入錢包名稱"
+                                                  {...field}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+
+                                        {/* 地址 */}
+                                        <FormField
+                                          control={control}
+                                          name="address"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>地址 *</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  placeholder="請輸入錢包地址（以 T 開頭）"
+                                                  {...field}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+
+                                        {/* 分配比例 */}
+                                        <FormField
+                                          control={control}
+                                          name="percentage"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>分配比例% *</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  min="0"
+                                                  max="100"
+                                                  step="0.01"
+                                                  placeholder="請輸入比例"
+                                                  {...field}
+                                                  value={field.value || ""}
+                                                  onChange={(e) =>
+                                                    field.onChange(
+                                                      e.target.value
+                                                        ? parseFloat(
+                                                            e.target.value
+                                                          )
+                                                        : 0
+                                                    )
+                                                  }
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+
+                                        {/* 描述 */}
+                                        <FormField
+                                          control={control}
+                                          name="description"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>描述</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  placeholder="請輸入描述（選填）"
+                                                  {...field}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+
+                                      <div className="flex justify-end gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          onClick={handleCancel}
+                                        >
+                                          取消
+                                        </Button>
+                                        <Button
+                                          type="submit"
+                                          disabled={
+                                            createMutationState.isPending ||
+                                            updateMutationState.isPending
+                                          }
+                                        >
+                                          {createMutationState.isPending ||
+                                          updateMutationState.isPending
+                                            ? "處理中..."
+                                            : "確定"}
+                                        </Button>
+                                      </div>
+                                    </form>
+                                  </Form>
                                 </td>
                               </>
                             ) : (

@@ -121,14 +121,16 @@ export default function CustomersPage() {
     query.refetch();
   };
 
-  const customerListData = result.data as CustomerListResponse | undefined;
+  // 從包裝的響應格式中提取實際數據
+  // TransformInterceptor 將數據包裝為 { success, data, timestamp }
+  const customerListData = (result.data as any)?.data as CustomerListResponse | undefined;
   const isLoading = query.isLoading;
   const isError = query.isError;
   const error = query.error;
 
   // 處理全選/取消全選
   const handleSelectAll = (checked: boolean | "indeterminate") => {
-    if (checked === true && customerListData) {
+    if (checked === true && customerListData?.customers) {
       setSelectedIds(new Set(customerListData.customers.map((c) => c.id)));
     } else {
       setSelectedIds(new Set());
@@ -197,7 +199,7 @@ export default function CustomersPage() {
 
   // 處理一鍵收割（全部會員）
   const handleHarvestAll = () => {
-    if (!customerListData || customerListData.customers.length === 0) {
+    if (!customerListData || !customerListData.customers || customerListData.customers.length === 0) {
       alert("沒有可收割的會員");
       return;
     }
@@ -454,6 +456,7 @@ export default function CustomersPage() {
                   disabled={
                     harvestAllMutation.isPending ||
                     !customerListData ||
+                    !customerListData.customers ||
                     customerListData.customers.length === 0
                   }
                 >
@@ -481,8 +484,8 @@ export default function CustomersPage() {
                     <th className="p-4 text-left">
                       <Checkbox
                         checked={
-                          customerListData.customers.length > 0 &&
-                          selectedIds.size === customerListData.customers.length
+                          (customerListData.customers?.length ?? 0) > 0 &&
+                          selectedIds.size === (customerListData.customers?.length ?? 0)
                         }
                         onCheckedChange={handleSelectAll}
                       />
@@ -512,7 +515,7 @@ export default function CustomersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {customerListData.customers.map((customer: CustomerItem) => (
+                  {customerListData.customers?.map((customer: CustomerItem) => (
                     <tr
                       key={customer.id}
                       className="border-b hover:bg-muted/50"

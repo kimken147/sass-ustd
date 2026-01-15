@@ -118,7 +118,9 @@ export default function DashboardPage() {
     customerQuery.refetch();
   };
 
-  const customerData = customerResult.data as CustomerListResponse | undefined;
+  // 從包裝的響應格式中提取實際數據
+  // TransformInterceptor 將數據包裝為 { success, data, timestamp }
+  const customerData = (customerResult.data as any)?.data as CustomerListResponse | undefined;
   const isLoading = customerQuery.isLoading;
   const isError = customerQuery.isError;
   const error = customerQuery.error;
@@ -298,7 +300,7 @@ export default function DashboardPage() {
             <div className="text-center py-8 text-muted-foreground">
               載入中...
             </div>
-          ) : customerData && customerData.customers.length > 0 ? (
+          ) : customerData && customerData.customers && customerData.customers.length > 0 ? (
             <>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -325,7 +327,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {customerData.customers.map((customer: CustomerItem) => (
+                    {customerData.customers?.map((customer: CustomerItem) => (
                       <tr
                         key={customer.id}
                         className="border-b hover:bg-muted/50"
