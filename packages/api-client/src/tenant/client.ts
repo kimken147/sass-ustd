@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 
 export interface TenantApiConfig {
   baseURL: string;
@@ -46,7 +46,7 @@ export class TenantApiClient {
       baseURL: config.baseURL,
       timeout: config.timeout || 10000,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -79,31 +79,31 @@ export class TenantApiClient {
   setAccessToken(token: string | null) {
     this.accessToken = token;
     if (token) {
-      localStorage.setItem('tenant_access_token', token);
+      localStorage.setItem("tenant_access_token", token);
     } else {
-      localStorage.removeItem('tenant_access_token');
+      localStorage.removeItem("tenant_access_token");
     }
   }
 
   getAccessToken(): string | null {
     if (!this.accessToken) {
-      this.accessToken = localStorage.getItem('tenant_access_token');
+      this.accessToken = localStorage.getItem("tenant_access_token");
     }
     return this.accessToken;
   }
 
   clearToken() {
     this.accessToken = null;
-    localStorage.removeItem('tenant_access_token');
-    localStorage.removeItem('tenant_refresh_token');
+    localStorage.removeItem("tenant_access_token");
+    localStorage.removeItem("tenant_refresh_token");
   }
 
   setRefreshToken(token: string) {
-    localStorage.setItem('tenant_refresh_token', token);
+    localStorage.setItem("tenant_refresh_token", token);
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem('tenant_refresh_token');
+    return localStorage.getItem("tenant_refresh_token");
   }
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {
@@ -111,7 +111,7 @@ export class TenantApiClient {
       success: boolean;
       data: AuthResponse;
       timestamp: string;
-    }>('/api/auth/login', credentials);
+    }>("/api/auth/login", credentials);
     // TransformInterceptor 會包裝響應為 { success, data, timestamp }
     const authData = response.data.data;
     this.setAccessToken(authData.accessToken);
@@ -124,7 +124,7 @@ export class TenantApiClient {
       success: boolean;
       data: AuthResponse;
       timestamp: string;
-    }>('/api/auth/agent/login', credentials);
+    }>("/api/auth/agent/login", credentials);
     // TransformInterceptor 會包裝響應為 { success, data, timestamp }
     const authData = response.data.data;
     this.setAccessToken(authData.accessToken);
@@ -137,7 +137,7 @@ export class TenantApiClient {
       success: boolean;
       data: AuthResponse;
       timestamp: string;
-    }>('/api/auth/refresh', { refreshToken });
+    }>("/api/auth/refresh", { refreshToken });
     // TransformInterceptor 會包裝響應為 { success, data, timestamp }
     const authData = response.data.data;
     this.setAccessToken(authData.accessToken);
@@ -147,10 +147,10 @@ export class TenantApiClient {
 
   async logout(refreshToken?: string): Promise<void> {
     try {
-      await this.client.post('/api/auth/logout', { refreshToken });
+      await this.client.post("/api/auth/logout", { refreshToken });
     } catch (error) {
       // 即使登出失敗也清除本地 token
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       this.clearToken();
     }
@@ -161,7 +161,7 @@ export class TenantApiClient {
       success: boolean;
       data: UserInfo;
       timestamp: string;
-    }>('/api/auth/me');
+    }>("/api/auth/me");
     // TransformInterceptor 會包裝響應為 { success, data, timestamp }
     return response.data.data;
   }
@@ -177,12 +177,13 @@ export class TenantApiClient {
 let tenantApiClientInstance: TenantApiClient | null = null;
 
 export function createTenantApiClient(
-  baseURL: string = import.meta.env.VITE_TENANT_API_URL || 'http://localhost:3001'
+  baseURL: string = import.meta.env.VITE_TENANT_API_URL ||
+    "http://localhost:3001"
 ): TenantApiClient {
   if (!tenantApiClientInstance) {
     tenantApiClientInstance = new TenantApiClient({ baseURL });
     // 從 localStorage 恢復 token
-    const savedToken = localStorage.getItem('tenant_access_token');
+    const savedToken = localStorage.getItem("tenant_access_token");
     if (savedToken) {
       tenantApiClientInstance.setAccessToken(savedToken);
     }
