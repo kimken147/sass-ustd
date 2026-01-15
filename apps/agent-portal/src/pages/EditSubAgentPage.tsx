@@ -42,7 +42,9 @@ export default function EditSubAgentPage() {
       method: "get",
     });
 
-  const subAgents = (subAgentsResult.data as Agent[]) || [];
+  // 從 API 響應中提取實際數據（API 返回 { success, data, timestamp } 格式）
+  const subAgentsData = (subAgentsResult.data as any)?.data as Agent[] | undefined;
+  const subAgents = subAgentsData || [];
   const agent = subAgents.find((a) => a.id === parseInt(id || "0"));
 
   // 表單狀態

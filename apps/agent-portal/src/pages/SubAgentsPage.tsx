@@ -3,12 +3,7 @@ import { useCustom, useNavigation } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@saas-platform/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
 import {
   Calendar,
   Search,
@@ -102,17 +97,21 @@ export default function SubAgentsPage() {
   });
 
   // 獲取下級代理列表
-  const { query: subAgentsQuery, result: subAgentsResult } =
-    useCustom<Agent[]>({
-      url: "/api/agents/me/subordinates",
-      method: "get",
-      config: {
-        query: queryParams,
-      },
-    });
+  const { query: subAgentsQuery, result: subAgentsResult } = useCustom<Agent[]>({
+    url: "/api/agents/me/subordinates",
+    method: "get",
+    config: {
+      query: queryParams,
+    },
+  });
 
-  const agents = (subAgentsResult.data as Agent[]) || [];
-  const myAgent = (myAgentResult.data as Agent) || null;
+  // 從 API 響應中提取實際數據（API 返回 { success, data, timestamp } 格式）
+  // TransformInterceptor 將數據包裝為 { success, data, timestamp }
+  const myAgentData = (myAgentResult.data as any)?.data as Agent | undefined;
+  const subAgentsData = (subAgentsResult.data as any)?.data as Agent[] | undefined;
+  
+  const agents = subAgentsData || [];
+  const myAgent = myAgentData || null;
   const isLoading = subAgentsQuery.isLoading || myAgentQuery.isLoading;
   const isError = subAgentsQuery.isError || myAgentQuery.isError;
   const error = subAgentsQuery.error || myAgentQuery.error;
@@ -239,7 +238,7 @@ export default function SubAgentsPage() {
   };
 
   // 遞迴渲染樹狀節點
-  const renderTreeNode = (node: TreeNode, depth: number = 0) => {
+  const renderTreeNode = (node: TreeNode, depth: number = 0): JSX.Element => {
     const hasChildren = node.children.length > 0;
     const isExpanded = expandedIds.has(node.id);
     const indentWidth = depth * 24; // 每層縮排 24px
@@ -314,9 +313,7 @@ export default function SubAgentsPage() {
         </tr>
         {/* 遞迴渲染子節點 */}
         {hasChildren && isExpanded && (
-          <>
-            {node.children.map((child) => renderTreeNode(child, depth + 1))}
-          </>
+          <>{node.children.map((child) => renderTreeNode(child, depth + 1))}</>
         )}
       </>
     );
@@ -406,9 +403,7 @@ export default function SubAgentsPage() {
                         <th className="text-left p-4 font-medium">名稱</th>
                         <th className="text-left p-4 font-medium">帳號</th>
                         <th className="text-left p-4 font-medium">錢包</th>
-                        <th className="text-left p-4 font-medium">
-                          分配比例%
-                        </th>
+                        <th className="text-left p-4 font-medium">分配比例%</th>
                         <th className="text-left p-4 font-medium">建立時間</th>
                         <th className="text-left p-4 font-medium">操作</th>
                       </tr>
