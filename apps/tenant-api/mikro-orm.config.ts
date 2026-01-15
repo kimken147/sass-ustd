@@ -1,6 +1,8 @@
 import { defineConfig } from "@mikro-orm/core";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { Migrator } from "@mikro-orm/migrations";
+import { config } from "dotenv";
+import { resolve } from "path";
 import {
   TenantConfig,
   TenantUser,
@@ -10,6 +12,11 @@ import {
   RevenueDistribution,
   SystemFeeDistribution,
 } from "@saas-platform/database";
+
+// 🔑 載入 .env 文件（MikroORM CLI 不會自動載入）
+// 優先順序：當前目錄 > 專案根目錄
+config({ path: resolve(__dirname, ".env") });
+config({ path: resolve(__dirname, "../../.env") });
 
 export default defineConfig({
   driver: PostgreSqlDriver,

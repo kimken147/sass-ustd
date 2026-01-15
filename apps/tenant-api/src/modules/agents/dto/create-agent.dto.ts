@@ -32,9 +32,11 @@ export class CreateAgentDto {
   @ApiProperty({
     description: "Email",
     example: "agent@example.com",
+    required: false,
   })
   @IsEmail({}, { message: "無效的 Email 格式" })
-  email!: string;
+  @IsOptional()
+  email?: string;
 
   @ApiProperty({
     description: "密碼",

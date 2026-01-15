@@ -37,9 +37,9 @@ export abstract class BaseUser extends BaseEntity {
   @Index()
   username!: string; // 登入帳號（在租戶內唯一，Platform Admin 全局唯一）
 
-  @Property()
+  @Property({ nullable: true })
   @Index()
-  email!: string;
+  email?: string;
 
   @Property({ hidden: true })
   password!: string; // bcrypt hashed

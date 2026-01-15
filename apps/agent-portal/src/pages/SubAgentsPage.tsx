@@ -97,19 +97,23 @@ export default function SubAgentsPage() {
   });
 
   // 獲取下級代理列表
-  const { query: subAgentsQuery, result: subAgentsResult } = useCustom<Agent[]>({
-    url: "/api/agents/me/subordinates",
-    method: "get",
-    config: {
-      query: queryParams,
-    },
-  });
+  const { query: subAgentsQuery, result: subAgentsResult } = useCustom<Agent[]>(
+    {
+      url: "/api/agents/me/subordinates",
+      method: "get",
+      config: {
+        query: queryParams,
+      },
+    }
+  );
 
   // 從 API 響應中提取實際數據（API 返回 { success, data, timestamp } 格式）
   // TransformInterceptor 將數據包裝為 { success, data, timestamp }
   const myAgentData = (myAgentResult.data as any)?.data as Agent | undefined;
-  const subAgentsData = (subAgentsResult.data as any)?.data as Agent[] | undefined;
-  
+  const subAgentsData = (subAgentsResult.data as any)?.data as
+    | Agent[]
+    | undefined;
+
   const agents = subAgentsData || [];
   const myAgent = myAgentData || null;
   const isLoading = subAgentsQuery.isLoading || myAgentQuery.isLoading;
@@ -322,7 +326,7 @@ export default function SubAgentsPage() {
   return (
     <ListView>
       <div className="flex items-center justify-between mb-4">
-        <ListViewHeader title="下級列表" />
+        <ListViewHeader title="下級列表" canCreate={false} />
         <Button onClick={handleAddNew}>
           <Plus className="w-4 h-4 mr-2" />
           新增下級

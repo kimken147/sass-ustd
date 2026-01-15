@@ -49,9 +49,15 @@ export const dataProvider: DataProvider = {
         });
       }
 
+      // 特殊處理 sub-agents 資源：使用正確的 API 端點
+      let url = `/api/${resource}`;
+      if (resource === "sub-agents") {
+        url = "/api/agents/me/subordinates";
+      }
+
       const response = await client.request({
         method: "GET",
-        url: `/api/${resource}`,
+        url,
         params,
       });
 
@@ -96,9 +102,15 @@ export const dataProvider: DataProvider = {
     const client = getTenantApiClient();
 
     try {
+      // 特殊處理 sub-agents 資源：使用正確的 API 端點
+      let url = `/api/${resource}/${id}`;
+      if (resource === "sub-agents") {
+        url = `/api/agents/me/subordinates/${id}`;
+      }
+
       const response = await client.request({
         method: "GET",
-        url: `/api/${resource}/${id}`,
+        url,
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
@@ -120,9 +132,15 @@ export const dataProvider: DataProvider = {
     const client = getTenantApiClient();
 
     try {
+      // 特殊處理 sub-agents 資源：使用正確的 API 端點
+      let url = `/api/${resource}`;
+      if (resource === "sub-agents") {
+        url = "/api/agents/me/subordinates";
+      }
+
       const response = await client.request({
         method: "POST",
-        url: `/api/${resource}`,
+        url,
         data: variables,
       });
 
@@ -145,9 +163,15 @@ export const dataProvider: DataProvider = {
     const client = getTenantApiClient();
 
     try {
+      // 特殊處理 sub-agents 資源：使用正確的 API 端點
+      let url = `/api/${resource}/${id}`;
+      if (resource === "sub-agents") {
+        url = `/api/agents/me/subordinates/${id}`;
+      }
+
       const response = await client.request({
         method: "PATCH",
-        url: `/api/${resource}/${id}`,
+        url,
         data: variables,
       });
 

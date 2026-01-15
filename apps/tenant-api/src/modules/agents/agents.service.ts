@@ -133,12 +133,14 @@ export class AgentsService {
       throw new ConflictException('該帳號已存在');
     }
 
-    // 檢查 email 是否已存在
-    const existingEmail = await this.userRepository.findOne({
-      email: dto.email,
-    });
-    if (existingEmail) {
-      throw new ConflictException('該 Email 已存在');
+    // 檢查 email 是否已存在（只有當 email 有值時才檢查）
+    if (dto.email) {
+      const existingEmail = await this.userRepository.findOne({
+        email: dto.email,
+      });
+      if (existingEmail) {
+        throw new ConflictException('該 Email 已存在');
+      }
     }
 
     // 自動生成唯一的代理碼（邀請碼）
@@ -188,7 +190,7 @@ export class AgentsService {
     const hashedPassword = await this.passwordService.hashPassword(dto.password);
     const user = this.userRepository.create({
       username: dto.username,
-      email: dto.email,
+      email: dto.email, // email 是可選的，可以是 undefined
       password: hashedPassword,
       name: dto.name,
       role: UserRole.AGENT,
