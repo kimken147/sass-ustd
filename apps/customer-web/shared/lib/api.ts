@@ -1,8 +1,8 @@
 import { TenantInfo } from '@/shared/types';
 import { AppError, ErrorCode } from './errors';
 
-const PLATFORM_API_URL = process.env.NEXT_PUBLIC_PLATFORM_API_URL || process.env.PLATFORM_API_URL || 'http://localhost:3000';
-const TENANT_API_URL = process.env.NEXT_PUBLIC_TENANT_API_URL || process.env.TENANT_API_URL || 'http://localhost:3001';
+const PLATFORM_API_URL = process.env.NEXT_PUBLIC_PLATFORM_API_URL || 'http://localhost:3000';
+const TENANT_API_URL = process.env.NEXT_PUBLIC_TENANT_API_URL || 'http://localhost:3001';
 
 export async function getTenantByDomain(domain: string): Promise<TenantInfo | null> {
   try {
@@ -34,7 +34,13 @@ export interface RegisterCustomerParams {
   referralCode?: string;
 }
 
-export async function registerCustomer(params: RegisterCustomerParams): Promise<any> {
+export interface RegisterCustomerResponse {
+  success: boolean;
+  customerId?: string;
+  message?: string;
+}
+
+export async function registerCustomer(params: RegisterCustomerParams): Promise<RegisterCustomerResponse> {
   try {
     const response = await fetch(`${TENANT_API_URL}/contracts/execute`, {
       method: 'POST',
