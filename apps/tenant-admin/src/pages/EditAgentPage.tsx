@@ -36,7 +36,7 @@ export default function EditAgentPage() {
   const isUpdating = mutation.isPending || false;
 
   // 獲取代理詳情
-  const { data: agentData, isLoading } = useOne<Agent>({
+  const { query, result: agent } = useOne<Agent>({
     resource: "agents",
     id: id || "",
     queryOptions: {
@@ -44,7 +44,7 @@ export default function EditAgentPage() {
     },
   });
 
-  const agent = agentData?.data;
+  const isLoading = query.isLoading;
 
   // 表單狀態
   const [formData, setFormData] = useState<EditAgentFormData>({

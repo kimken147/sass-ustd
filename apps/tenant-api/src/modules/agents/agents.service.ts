@@ -51,13 +51,16 @@ export class AgentsService {
   }
 
   /**
-   * 獲取代理列表
+   * 獲取代理列表（排除站長，只顯示 level > 0 的代理）
    */
   async getAgents(): Promise<Agent[]> {
-    return this.agentRepository.findAll({
-      populate: ['user', 'parentAgent'],
-      orderBy: { level: 'ASC', createdAt: 'DESC' },
-    });
+    return this.agentRepository.find(
+      { level: { $gt: 0 } },
+      {
+        populate: ['user', 'parentAgent'],
+        orderBy: { level: 'ASC', createdAt: 'DESC' },
+      },
+    );
   }
 
   /**

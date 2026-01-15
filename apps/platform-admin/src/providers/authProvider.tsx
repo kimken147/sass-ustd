@@ -89,7 +89,9 @@ export const authProvider: AuthProvider = {
   },
 
   onError: async (error) => {
-    if (error?.status === 401) {
+    // 檢查 status（標準格式）或 statusCode（HttpError 格式）
+    const statusCode = error?.status || error?.statusCode;
+    if (statusCode === 401) {
       const client = getPlatformApiClient();
       client.clearToken();
       return {

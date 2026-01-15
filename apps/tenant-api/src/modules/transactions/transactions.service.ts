@@ -19,7 +19,6 @@ export class TransactionsService {
    * 獲取代理佣金分配列表
    */
   async getCommissionPayouts(
-    tenantId: number,
     query: QueryTransactionsDto
   ): Promise<CommissionPayoutListResponseDto> {
     const page = query.page || 1;
@@ -34,8 +33,8 @@ export class TransactionsService {
       startDate = today.toISOString();
     }
 
-    // 構建查詢條件
-    const where: any = { tenant: tenantId };
+    // 構建查詢條件（租戶資料庫已隔離，不需要 tenant 條件）
+    const where: any = {};
 
     if (startDate || query.endDate) {
       const dateFilter: any = {};
@@ -102,7 +101,6 @@ export class TransactionsService {
    * 獲取租戶收入分配列表
    */
   async getRevenueDistributions(
-    tenantId: number,
     query: QueryTransactionsDto
   ): Promise<RevenueDistributionResponseDto> {
     const page = query.page || 1;
@@ -117,8 +115,8 @@ export class TransactionsService {
       startDate = today.toISOString();
     }
 
-    // 構建查詢條件
-    const where: any = { tenant: tenantId };
+    // 構建查詢條件（租戶資料庫已隔離，不需要 tenant 條件）
+    const where: any = {};
 
     if (startDate || query.endDate) {
       const dateFilter: any = {};

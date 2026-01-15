@@ -51,13 +51,11 @@ export const dataProvider: DataProvider = {
         params,
       });
 
-      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
-      // TransformInterceptor 會將回應包裝為 { success: true, data: <原始回應>, timestamp: "..." }
-      const wrappedData = response.data || response;
-      const responseData = wrappedData.data || wrappedData;
+      // client.request 返回 axios response.data，即 { success, data, timestamp }
+      // 需要取出 data 屬性作為實際數據
+      const responseData = response.data || response;
 
-      // 有些 endpoints 會直接回傳陣列（例如 TransformInterceptor 包裝後的 data: []）
-      // 此時 responseData 會是 Array，而不是 { data: [...] }
+      // 有些 endpoints 會直接回傳陣列
       if (Array.isArray(responseData)) {
         return {
           data: responseData,
@@ -77,9 +75,9 @@ export const dataProvider: DataProvider = {
         };
       }
 
-      // 標準格式：{ data: [...], total: ... }
+      // 標準格式：{ data: [...], total: ... } 或直接是數組
       return {
-        data: responseData.data || responseData.items || [],
+        data: responseData.data || responseData.items || responseData,
         total: responseData.total || responseData.count || 0,
       };
     } catch (error: any) {
@@ -99,9 +97,9 @@ export const dataProvider: DataProvider = {
         url: `/api/${resource}/${id}`,
       });
 
-      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
-      const wrappedData = response.data || response;
-      const responseData = wrappedData.data || wrappedData;
+      // client.request 返回 axios response.data，即 { success, data, timestamp }
+      // 需要取出 data 屬性作為實際數據
+      const responseData = response.data || response;
 
       return {
         data: responseData,
@@ -124,9 +122,9 @@ export const dataProvider: DataProvider = {
         data: variables,
       });
 
-      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
-      const wrappedData = response.data || response;
-      const responseData = wrappedData.data || wrappedData;
+      // client.request 返回 axios response.data，即 { success, data, timestamp }
+      // 需要取出 data 屬性作為實際數據
+      const responseData = response.data || response;
 
       return {
         data: responseData,
@@ -149,9 +147,9 @@ export const dataProvider: DataProvider = {
         data: variables,
       });
 
-      // 處理標準的 API 回應格式（經過 TransformInterceptor 包裝）
-      const wrappedData = response.data || response;
-      const responseData = wrappedData.data || wrappedData;
+      // client.request 返回 axios response.data，即 { success, data, timestamp }
+      // 需要取出 data 屬性作為實際數據
+      const responseData = response.data || response;
 
       return {
         data: responseData,

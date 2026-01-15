@@ -39,12 +39,12 @@ export default function WalletPage() {
 
   // 獲取當前代理信息 - 使用標準 useOne hook
   // 通過 resource="agents" 和 id="me" 來訪問 /api/agents/me
-  const { data: agentData, isLoading, isError, refetch } = useOne<AgentInfo>({
+  const { query, result: agentInfo } = useOne<AgentInfo>({
     resource: "agents",
     id: "me",
   });
 
-  const agentInfo = agentData?.data;
+  const { isLoading, isError, refetch } = query;
 
   // 更新錢包地址 - 使用標準 useUpdate hook
   // 通過 resource="agents" 和 id="me/wallet" 來訪問 /api/agents/me/wallet
