@@ -119,6 +119,19 @@ export class TenantApiClient {
     return authData;
   }
 
+  async agentLogin(credentials: LoginRequest): Promise<AuthResponse> {
+    const response = await this.client.post<{
+      success: boolean;
+      data: AuthResponse;
+      timestamp: string;
+    }>('/api/auth/agent/login', credentials);
+    // TransformInterceptor 會包裝響應為 { success, data, timestamp }
+    const authData = response.data.data;
+    this.setAccessToken(authData.accessToken);
+    this.setRefreshToken(authData.refreshToken);
+    return authData;
+  }
+
   async refreshToken(refreshToken: string): Promise<AuthResponse> {
     const response = await this.client.post<{
       success: boolean;

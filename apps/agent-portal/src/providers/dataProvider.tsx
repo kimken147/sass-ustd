@@ -67,11 +67,15 @@ export const dataProvider: DataProvider = {
         };
       }
 
-      // customers 資源返回 { customers, total, stats, ... } 格式
+      // 特殊處理 customers 資源：它返回 { customers, total, stats, ... } 格式
       if (resource === "customers" && responseData.customers) {
         return {
-          data: responseData, // 返回完整響應，包含 customers, stats 等
+          data: responseData.customers,
           total: responseData.total || 0,
+          // 保留額外的 stats 信息在 meta 中
+          meta: {
+            stats: responseData.stats,
+          },
         };
       }
 

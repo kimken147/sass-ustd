@@ -6,19 +6,7 @@ export const authProvider: AuthProvider = {
     try {
       const client = getTenantApiClient();
       // 使用 agent 登入端點
-      const response = await client.request({
-        method: 'POST',
-        url: '/api/auth/agent/login',
-        data: { username, password },
-      });
-
-      // 設置 token
-      if (response.accessToken) {
-        client.setAccessToken(response.accessToken);
-      }
-      if (response.refreshToken) {
-        client.setRefreshToken(response.refreshToken);
-      }
+      const response = await client.agentLogin({ username, password });
 
       return {
         success: true,
