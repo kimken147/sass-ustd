@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useList, type CrudFilter } from "@refinedev/core";
 import {
   ListView,
@@ -67,6 +67,11 @@ function StatsCard({
 }
 
 export default function DashboardPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "站點列表 - 平台管理後台";
+  }, []);
+
   // 篩選器狀態
   const [startTime, setStartTime] = useState<string>(getTodayStartLocal());
   const [endTime, setEndTime] = useState<string>("");

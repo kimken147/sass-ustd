@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useCustom, useCustomMutation, useApiUrl } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
@@ -67,6 +67,11 @@ function StatsCard({
 }
 
 export default function CustomersPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "會員管理 - 租戶管理後台";
+  }, []);
+
   // 篩選器狀態
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");

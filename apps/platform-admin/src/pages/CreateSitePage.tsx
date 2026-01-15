@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useList, useNavigation } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -73,6 +74,11 @@ const createSiteSchema = z
 type CreateSiteFormData = z.infer<typeof createSiteSchema>;
 
 export default function CreateSitePage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "創建站點 - 平台管理後台";
+  }, []);
+
   const { list } = useNavigation();
 
   // 獲取系統錢包列表（用於授權錢包和系統費錢包）

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLogin } from "@refinedev/core";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
@@ -13,6 +13,11 @@ import {
 import { Lock, User, Shield, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "登入 - 平台管理後台";
+  }, []);
+
   const { mutate: login, isPending } = useLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

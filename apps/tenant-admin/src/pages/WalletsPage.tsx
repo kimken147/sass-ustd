@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useList, useCreate, useUpdate, useDelete } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,6 +59,11 @@ const walletFormSchema = z.object({
 type WalletFormData = z.infer<typeof walletFormSchema>;
 
 export default function WalletsPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "收款錢包 - 租戶管理後台";
+  }, []);
+
   // 篩選狀態
   const [filters, setFilters] = useState({
     name: "",

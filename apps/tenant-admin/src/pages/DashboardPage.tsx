@@ -1,7 +1,12 @@
+import { useEffect } from "react";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
 
 export default function DashboardPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "儀表板 - 租戶管理後台";
+  }, []);
   return (
     <ListView>
       <ListViewHeader title="儀表板" />

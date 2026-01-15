@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useCreate, useNotification } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,6 +70,11 @@ const createWalletSchema = z
 type CreateWalletFormData = z.infer<typeof createWalletSchema>;
 
 export default function CreateWalletPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "創建錢包 - 平台管理後台";
+  }, []);
+
   const navigate = useNavigate();
   const { open } = useNotification();
 

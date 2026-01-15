@@ -29,6 +29,11 @@ interface EditAgentFormData {
 }
 
 export default function EditAgentPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "編輯代理 - 租戶管理後台";
+  }, []);
+
   const { id } = useParams<{ id: string }>();
   const { list } = useNavigation();
   const updateMutation = useUpdate();

@@ -31,6 +31,11 @@ interface EditSubAgentFormData {
 }
 
 export default function EditSubAgentPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "編輯下級代理 - 代理商後台";
+  }, []);
+
   const { id } = useParams<{ id: string }>();
   const { list } = useNavigation();
   const [isUpdating, setIsUpdating] = useState(false);

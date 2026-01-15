@@ -14,6 +14,11 @@ import {
 import { Lock, User, Users, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "登入 - 代理商後台";
+  }, []);
+
   const { mutate: login, isPending } = useLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useList, type CrudFilter } from "@refinedev/core";
 import { useNavigate } from "react-router";
 import { ListView } from "@saas-platform/ui";
@@ -23,6 +23,11 @@ const typeMap: Record<string, string> = {
 };
 
 export default function WalletsPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "錢包管理 - 平台管理後台";
+  }, []);
+
   const navigate = useNavigate();
 
   // 篩選狀態

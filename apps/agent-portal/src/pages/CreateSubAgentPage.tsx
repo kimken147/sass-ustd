@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useCreate, useNavigation } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,6 +40,11 @@ const subAgentFormSchema = z.object({
 type SubAgentFormData = z.infer<typeof subAgentFormSchema>;
 
 export default function CreateSubAgentPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "創建下級代理 - 代理商後台";
+  }, []);
+
   const { list } = useNavigation();
   const createMutation = useCreate();
   const { mutate: createSubAgent, mutation } = createMutation;

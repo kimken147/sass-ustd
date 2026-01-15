@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useList, type CrudFilter } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
@@ -16,6 +16,11 @@ import {
 } from "@saas-platform/utils";
 
 export default function CommissionPayoutPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "代理分潤列表 - 租戶管理後台";
+  }, []);
+
   // 篩選器狀態
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");

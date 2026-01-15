@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useCustom, useNavigation } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
@@ -67,6 +67,11 @@ interface TreeNode extends Agent {
 }
 
 export default function SubAgentsPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "下級代理 - 代理商後台";
+  }, []);
+
   const { create, edit } = useNavigation();
 
   // 篩選狀態

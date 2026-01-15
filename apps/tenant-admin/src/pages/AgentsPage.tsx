@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useList, useDelete, useNavigation } from "@refinedev/core";
 import { ListView, ListViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
@@ -68,6 +68,11 @@ interface TreeNode extends Agent {
 
 
 export default function AgentsPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "代理管理 - 租戶管理後台";
+  }, []);
+
   // 篩選狀態
   const [filters, setFilters] = useState({
     name: "",

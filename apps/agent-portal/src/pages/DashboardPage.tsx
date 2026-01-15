@@ -67,6 +67,11 @@ function StatsCard({
 }
 
 export default function DashboardPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "總覽 - 代理商後台";
+  }, []);
+
   // 篩選器狀態
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");

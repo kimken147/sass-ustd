@@ -33,6 +33,11 @@ interface AgentInfo {
 }
 
 export default function WalletPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "收款錢包 - 代理商後台";
+  }, []);
+
   const [walletAddress, setWalletAddress] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useCreate, useList, useNavigation } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,6 +67,11 @@ const agentFormSchema = z.object({
 type AgentFormData = z.infer<typeof agentFormSchema>;
 
 export default function CreateAgentPage() {
+  // 設置頁面標題
+  useEffect(() => {
+    document.title = "創建代理 - 租戶管理後台";
+  }, []);
+
   const { list } = useNavigation();
   const createMutation = useCreate();
   const { mutate: createAgent, mutation } = createMutation;
