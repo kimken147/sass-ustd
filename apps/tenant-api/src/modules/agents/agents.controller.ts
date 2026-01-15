@@ -41,7 +41,7 @@ import { EntityRepository } from "@mikro-orm/postgresql";
  */
 @ApiTags("代理管理")
 @Controller("agents")
-@UseGuards(JwtAuthGuard, TenantAdminGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class AgentsController {
   constructor(
@@ -52,7 +52,10 @@ export class AgentsController {
     private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
   ) {}
 
+  // ========== 站長管理 API ==========
+
   @Get()
+  @UseGuards(TenantAdminGuard)
   @ApiOperation({ summary: "獲取代理列表" })
   @ApiResponse({
     status: 200,
@@ -65,23 +68,8 @@ export class AgentsController {
     return Promise.all(agents.map((agent) => this.mapAgentToDto(agent)));
   }
 
-  @Get(":id")
-  @ApiOperation({ summary: "獲取單個代理詳情" })
-  @ApiResponse({
-    status: 200,
-    description: "獲取成功",
-    type: AgentResponseDto,
-  })
-  @ApiResponse({ status: 404, description: "代理不存在" })
-  @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async getAgent(
-    @Param("id", ParseIntPipe) agentId: number
-  ): Promise<AgentResponseDto> {
-    const agent = await this.agentsService.getAgent(agentId);
-    return this.mapAgentToDto(agent);
-  }
-
   @Post()
+  @UseGuards(TenantAdminGuard)
   @ApiOperation({ summary: "創建代理" })
   @ApiResponse({
     status: 201,
@@ -96,39 +84,11 @@ export class AgentsController {
     return this.mapAgentToDto(agent);
   }
 
-  @Patch(":id")
-  @ApiOperation({ summary: "更新代理" })
-  @ApiResponse({
-    status: 200,
-    description: "更新成功",
-    type: AgentResponseDto,
-  })
-  @ApiResponse({ status: 404, description: "代理不存在" })
-  @ApiResponse({ status: 400, description: "分潤比率總和不等於 100%" })
-  @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async updateAgent(
-    @Param("id", ParseIntPipe) agentId: number,
-    @Body() dto: UpdateAgentDto
-  ): Promise<AgentResponseDto> {
-    const agent = await this.agentsService.updateAgent(agentId, dto);
-    return this.mapAgentToDto(agent);
-  }
-
-  @Delete(":id")
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: "刪除代理（軟刪除）" })
-  @ApiResponse({ status: 204, description: "刪除成功" })
-  @ApiResponse({ status: 404, description: "代理不存在" })
-  @ApiResponse({ status: 400, description: "存在下級代理，無法刪除" })
-  @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async deleteAgent(@Param("id", ParseIntPipe) agentId: number): Promise<void> {
-    return this.agentsService.deleteAgent(agentId);
-  }
-
   // ========== 代理自己的 API ==========
+  // 注意：具體路由必須在動態路由之前定義
 
   @Get("me")
-  @UseGuards(JwtAuthGuard, AgentGuard)
+  @UseGuards(AgentGuard)
   @ApiOperation({ summary: "獲取當前代理信息" })
   @ApiResponse({
     status: 200,
@@ -152,7 +112,7 @@ export class AgentsController {
   }
 
   @Patch("me/wallet")
-  @UseGuards(JwtAuthGuard, AgentGuard)
+  @UseGuards(AgentGuard)
   @ApiOperation({ summary: "更新當前代理的收款錢包" })
   @ApiResponse({
     status: 200,
@@ -184,7 +144,7 @@ export class AgentsController {
   }
 
   @Get("me/subordinates")
-  @UseGuards(JwtAuthGuard, AgentGuard)
+  @UseGuards(AgentGuard)
   @ApiOperation({ summary: "獲取當前代理的下級代理列表" })
   @ApiResponse({
     status: 200,
@@ -209,8 +169,44 @@ export class AgentsController {
     return Promise.all(subAgents.map((subAgent) => this.mapAgentToDto(subAgent)));
   }
 
+  @Post("me/subordinates")
+  @UseGuards(AgentGuard)
+  @ApiOperation({ summary: "創建當前代理的下級代理" })
+  @ApiResponse({
+    status: 201,
+    description: "創建成功",
+    type: AgentResponseDto,
+  })
+  @ApiResponse({ status: 400, description: "分潤比率總和不等於 100%" })
+  @ApiResponse({ status: 409, description: "帳號、Email 或代理碼已存在" })
+  @ApiResponse({ status: 403, description: "只有代理可以訪問" })
+  async createMySubAgent(
+    @CurrentUser() user: TenantUser,
+    @Body() dto: CreateAgentDto
+  ): Promise<AgentResponseDto> {
+    // 查找當前用戶對應的代理記錄
+    const currentAgent = await this.em.findOne(
+      Agent,
+      { user: user.id },
+      { populate: ["user", "parentAgent"] }
+    );
+
+    if (!currentAgent) {
+      throw new Error("代理記錄不存在");
+    }
+
+    // 自動設置 parentAgentId 為當前代理的 ID
+    const createDto = {
+      ...dto,
+      parentAgentId: currentAgent.id,
+    };
+
+    const agent = await this.agentsService.createAgent(createDto);
+    return this.mapAgentToDto(agent);
+  }
+
   @Patch("me/subordinates/:id")
-  @UseGuards(JwtAuthGuard, AgentGuard)
+  @UseGuards(AgentGuard)
   @ApiOperation({ summary: "編輯當前代理的下級代理" })
   @ApiResponse({
     status: 200,
@@ -248,40 +244,55 @@ export class AgentsController {
     return this.mapAgentToDto(updatedAgent);
   }
 
-  @Post("me/subordinates")
-  @UseGuards(JwtAuthGuard, AgentGuard)
-  @ApiOperation({ summary: "創建當前代理的下級代理" })
+  // ========== 站長管理 API（動態路由）==========
+  // 注意：動態路由必須在所有具體路由之後定義
+
+  @Get(":id")
+  @UseGuards(TenantAdminGuard)
+  @ApiOperation({ summary: "獲取單個代理詳情" })
   @ApiResponse({
-    status: 201,
-    description: "創建成功",
+    status: 200,
+    description: "獲取成功",
     type: AgentResponseDto,
   })
-  @ApiResponse({ status: 400, description: "分潤比率總和不等於 100%" })
-  @ApiResponse({ status: 409, description: "帳號、Email 或代理碼已存在" })
-  @ApiResponse({ status: 403, description: "只有代理可以訪問" })
-  async createMySubAgent(
-    @CurrentUser() user: TenantUser,
-    @Body() dto: CreateAgentDto
+  @ApiResponse({ status: 404, description: "代理不存在" })
+  @ApiResponse({ status: 403, description: "只有站長可以訪問" })
+  async getAgent(
+    @Param("id", ParseIntPipe) agentId: number
   ): Promise<AgentResponseDto> {
-    // 查找當前用戶對應的代理記錄
-    const currentAgent = await this.em.findOne(
-      Agent,
-      { user: user.id },
-      { populate: ["user", "parentAgent"] }
-    );
-
-    if (!currentAgent) {
-      throw new Error("代理記錄不存在");
-    }
-
-    // 自動設置 parentAgentId 為當前代理的 ID
-    const createDto = {
-      ...dto,
-      parentAgentId: currentAgent.id,
-    };
-
-    const agent = await this.agentsService.createAgent(createDto);
+    const agent = await this.agentsService.getAgent(agentId);
     return this.mapAgentToDto(agent);
+  }
+
+  @Patch(":id")
+  @UseGuards(TenantAdminGuard)
+  @ApiOperation({ summary: "更新代理" })
+  @ApiResponse({
+    status: 200,
+    description: "更新成功",
+    type: AgentResponseDto,
+  })
+  @ApiResponse({ status: 404, description: "代理不存在" })
+  @ApiResponse({ status: 400, description: "分潤比率總和不等於 100%" })
+  @ApiResponse({ status: 403, description: "只有站長可以訪問" })
+  async updateAgent(
+    @Param("id", ParseIntPipe) agentId: number,
+    @Body() dto: UpdateAgentDto
+  ): Promise<AgentResponseDto> {
+    const agent = await this.agentsService.updateAgent(agentId, dto);
+    return this.mapAgentToDto(agent);
+  }
+
+  @Delete(":id")
+  @UseGuards(TenantAdminGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "刪除代理（軟刪除）" })
+  @ApiResponse({ status: 204, description: "刪除成功" })
+  @ApiResponse({ status: 404, description: "代理不存在" })
+  @ApiResponse({ status: 400, description: "存在下級代理，無法刪除" })
+  @ApiResponse({ status: 403, description: "只有站長可以訪問" })
+  async deleteAgent(@Param("id", ParseIntPipe) agentId: number): Promise<void> {
+    return this.agentsService.deleteAgent(agentId);
   }
 
   /**
