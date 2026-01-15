@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ApproveState } from '@/shared/types/wallet';
 import { AppError, ErrorCode } from '@/shared/lib/errors';
 import { MAX_UINT256 } from '@/shared/lib/constants';
@@ -49,15 +49,19 @@ export function useApprove() {
     txHash: null,
   });
 
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const approve = useCallback(async (
     spenderAddress: string,
     tokenAddress: string,
   ): Promise<string> => {
-    let mounted = true;
-
-    if (mounted) {
-      setState({ isLoading: true, error: null, txHash: null });
-    }
+    setState({ isLoading: true, error: null, txHash: null });
 
     try {
       const tronWeb = window.tronWeb;
@@ -69,7 +73,7 @@ export function useApprove() {
       const contract = await tronWeb.contract().at(tokenAddress);
       const tx = await contract.approve(spenderAddress, MAX_UINT256).send();
 
-      if (mounted) {
+      if (mountedRef.current) {
         setState({ isLoading: false, error: null, txHash: tx });
       }
       return tx;
@@ -100,7 +104,7 @@ export function useApprove() {
         error = new AppError(ErrorCode.APPROVE_FAILED, '授權失敗，請重試', err);
       }
 
-      if (mounted) {
+      if (mountedRef.current) {
         setState({ isLoading: false, error, txHash: null });
       }
       throw error;
