@@ -31,28 +31,24 @@ export interface SystemWalletAssignment {
 }
 
 /**
- * 租戶虛擬貨幣配置（從 Platform DB 同步）
+ * 租户虚拟货币配置（从 Platform DB 同步）
  */
 export interface TenantCryptoConfig {
   supportedChains: string[]; // ['tron']
   supportedTokens: string[]; // ['USDT', 'TRX']
 
-  // 合約地址
-  investmentContractAddress: string; // 投資合約地址
+  // 合约地址
+  investmentContractAddress: string; // 投资合约地址
   usdtTokenAddress: string; // USDT Token 地址
 
-  // 🔑 執行合約的錢包（用於調用 transferFrom）
+  // 执行合约的钱包（用于调用 transferFrom）
   executionWalletId?: number;
   executionWalletAddress?: string;
   executionWalletPrivateKey?: string; // 已加密
 
-  // 投資限制
+  // 投资限制
   minInvestment: number;
   maxInvestment: number;
-
-  // 費率設置（投資金額 100% 分配）
-  tenantRevenueRate: number; // 租戶收入比例 (%)
-  agentCommissionRate: number; // 代理佣金總比例 (%)
 }
 
 /**
@@ -104,7 +100,7 @@ export class TenantConfig {
   systemFeeRate: number = 10.0;
 
   /**
-   * 虛擬貨幣配置
+   * 虚拟货币配置
    */
   @Property({ type: "json" })
   cryptoConfig: TenantCryptoConfig = {
@@ -114,8 +110,6 @@ export class TenantConfig {
     usdtTokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
     minInvestment: 100,
     maxInvestment: 100000,
-    tenantRevenueRate: 60.0,
-    agentCommissionRate: 30.0,
   };
 
   /**

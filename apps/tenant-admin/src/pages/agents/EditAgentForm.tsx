@@ -43,7 +43,7 @@ export default function EditAgentForm({
     notes: agent.notes || "",
   });
 
-  // 當 agent 改變時更新表單數據
+  // 当 agent 改变时更新表单数据
   useEffect(() => {
     setFormData({
       name: agent.name,
@@ -58,9 +58,9 @@ export default function EditAgentForm({
   const isUpdating = mutation.isPending || false;
 
   const handleSubmit = () => {
-    // 驗證必填字段
+    // 验证必填字段
     if (!formData.name || !formData.walletAddress) {
-      alert("請填寫所有必填字段");
+      alert("请填写所有必填字段");
       return;
     }
 
@@ -73,7 +73,7 @@ export default function EditAgentForm({
     if (formData.uplineRate) {
       const uplineRate = parseFloat(formData.uplineRate);
       if (isNaN(uplineRate) || uplineRate < 0 || uplineRate > 100) {
-        alert("上級比率必須在 0-100 之間");
+        alert("上级比率必须在 0-100 之间");
         return;
       }
       updateData.uplineRate = uplineRate;
@@ -91,10 +91,10 @@ export default function EditAgentForm({
         },
         onError: (error: any) => {
           alert(
-            `更新失敗：${
+            `更新失败：${
               error?.response?.data?.message ||
               error?.message ||
-              "未知錯誤"
+              "未知错误"
             }`
           );
         },
@@ -105,14 +105,14 @@ export default function EditAgentForm({
   return (
     <Card className="mb-4">
       <CardHeader>
-        <CardTitle>編輯代理</CardTitle>
+        <CardTitle>编辑代理</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">代理名稱 *</label>
+            <label className="text-sm font-medium">代理名称 *</label>
             <Input
-              placeholder="請輸入代理名稱"
+              placeholder="请输入代理名称"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -120,24 +120,24 @@ export default function EditAgentForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">帳號</label>
+            <label className="text-sm font-medium">账号</label>
             <Input
-              placeholder="帳號"
+              placeholder="账号"
               value={agent.username}
               disabled
               className="bg-muted"
             />
             <p className="text-xs text-muted-foreground">
-              帳號無法修改
+              账号无法修改
             </p>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">上級比率%</label>
+            <label className="text-sm font-medium">上级比率%</label>
             <Input
               type="number"
               min="0"
               max="100"
-              placeholder="請輸入上級比率（0-100）"
+              placeholder="请输入上级比率（0-100）"
               value={formData.uplineRate}
               onChange={(e) =>
                 setFormData({ ...formData, uplineRate: e.target.value })
@@ -145,9 +145,9 @@ export default function EditAgentForm({
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium">錢包地址 *</label>
+            <label className="text-sm font-medium">钱包地址 *</label>
             <Input
-              placeholder="請輸入 TRON 錢包地址"
+              placeholder="请输入 TRON 钱包地址"
               value={formData.walletAddress}
               onChange={(e) =>
                 setFormData({
@@ -158,9 +158,9 @@ export default function EditAgentForm({
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium">備註</label>
+            <label className="text-sm font-medium">备注</label>
             <Input
-              placeholder="請輸入備註（選填）"
+              placeholder="请输入备注（选填）"
               value={formData.notes}
               onChange={(e) =>
                 setFormData({ ...formData, notes: e.target.value })
@@ -169,7 +169,7 @@ export default function EditAgentForm({
           </div>
           <div className="flex items-end gap-2 md:col-span-2">
             <Button onClick={handleSubmit} disabled={isUpdating}>
-              {isUpdating ? "處理中..." : "確定"}
+              {isUpdating ? "处理中..." : "确定"}
             </Button>
             <Button variant="outline" onClick={onCancel}>
               取消

@@ -27,42 +27,42 @@ import {
 import { ArrowLeft } from "lucide-react";
 import { SystemWalletType } from "@saas-platform/shared-types";
 
-// Zod 驗證 schema - 根據類型動態驗證
+// Zod 验证 schema - 根据类型动态验证
 const createWalletSchema = z
   .object({
     type: z
       .string()
-      .min(1, "請選擇錢包類型")
+      .min(1, "请选择钱包类型")
       .refine(
         (val) =>
           val === SystemWalletType.CONTRACT_EXECUTION ||
           val === SystemWalletType.REVENUE_DISTRIBUTION,
-        "請選擇有效的錢包類型"
+        "请选择有效的钱包类型"
       ),
     name: z
       .string()
-      .min(1, "請輸入錢包名稱")
-      .min(2, "錢包名稱至少需要 2 個字符"),
+      .min(1, "请输入钱包名称")
+      .min(2, "钱包名称至少需要 2 个字符"),
     address: z
       .string()
-      .min(1, "請輸入錢包地址")
-      .min(34, "錢包地址長度至少需要 34 個字符")
+      .min(1, "请输入钱包地址")
+      .min(34, "钱包地址长度至少需要 34 个字符")
       .regex(
         /^T[A-Za-z0-9]{33}$/,
-        "請輸入有效的 TRON 錢包地址（以 T 開頭，共 34 個字符）"
+        "请输入有效的 TRON 钱包地址（以 T 开头，共 34 个字符）"
       ),
     privateKey: z.string().optional(),
   })
   .refine(
     (data) => {
-      // 如果是授權合約錢包，私鑰為必填
+      // 如果是授权合约钱包，私钥为必填
       if (data.type === SystemWalletType.CONTRACT_EXECUTION) {
         return data.privateKey && data.privateKey.trim().length > 0;
       }
       return true;
     },
     {
-      message: "授權合約錢包必須提供私鑰",
+      message: "授权合约钱包必须提供私钥",
       path: ["privateKey"],
     }
   );
@@ -70,15 +70,15 @@ const createWalletSchema = z
 type CreateWalletFormData = z.infer<typeof createWalletSchema>;
 
 export default function CreateWalletPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "創建錢包 - 平台管理後台";
+    document.title = "创建钱包 - 平台管理后台";
   }, []);
 
   const navigate = useNavigate();
   const { open } = useNotification();
 
-  // 創建錢包
+  // 创建钱包
   const createMutation = useCreate();
   const { mutate: createWallet, mutation } = createMutation;
   const isCreating = mutation?.isPending || false;
@@ -100,12 +100,12 @@ export default function CreateWalletPage() {
     },
   });
 
-  // 監聽類型變化，用於條件顯示私鑰欄位
+  // 监听类型变化，用于条件显示私钥栏位
   const walletType = watch("type");
 
-  // 提交創建錢包
+  // 提交创建钱包
   const onSubmit = async (data: CreateWalletFormData) => {
-    // 構建創建數據
+    // 构建创建数据
     const createData: any = {
       name: data.name,
       address: data.address,
@@ -114,7 +114,7 @@ export default function CreateWalletPage() {
       status: "active" as const,
     };
 
-    // 僅當類型為 CONTRACT_EXECUTION 時才包含私鑰
+    // 仅当类型为 CONTRACT_EXECUTION 时才包含私钥
     if (data.type === SystemWalletType.CONTRACT_EXECUTION && data.privateKey) {
       createData.privateKey = data.privateKey;
     }
@@ -128,16 +128,16 @@ export default function CreateWalletPage() {
         onSuccess: () => {
           open?.({
             type: "success",
-            message: "創建成功",
-            description: "錢包創建成功",
+            message: "创建成功",
+            description: "钱包创建成功",
           });
           navigate("/wallets");
         },
         onError: (error: any) => {
           open?.({
             type: "error",
-            message: "創建失敗",
-            description: error?.message || "創建錢包失敗，請檢查輸入",
+            message: "创建失败",
+            description: error?.message || "创建钱包失败，请检查输入",
           });
         },
       }
@@ -156,12 +156,12 @@ export default function CreateWalletPage() {
           <ArrowLeft className="w-4 h-4" />
           返回列表
         </Button>
-        <h2 className="text-2xl font-bold">創建錢包</h2>
+        <h2 className="text-2xl font-bold">创建钱包</h2>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>錢包資訊</CardTitle>
+          <CardTitle>钱包资讯</CardTitle>
         </CardHeader>
         <CardContent>
           <Form
@@ -177,94 +177,94 @@ export default function CreateWalletPage() {
               onSubmit={handleSubmit(onSubmit as any) as any}
               className="space-y-6"
             >
-              {/* 錢包類型 */}
+              {/* 钱包类型 */}
               <FormField
                 control={control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>錢包類型 *</FormLabel>
+                    <FormLabel>钱包类型 *</FormLabel>
                     <Select
                       value={field.value || ""}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="請選擇錢包類型" />
+                          <SelectValue placeholder="请选择钱包类型" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value={SystemWalletType.CONTRACT_EXECUTION}>
-                          授權合約錢包
+                          授权合约钱包
                         </SelectItem>
                         <SelectItem
                           value={SystemWalletType.REVENUE_DISTRIBUTION}
                         >
-                          收款錢包
+                          收款钱包
                         </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      授權合約錢包用於執行智能合約，需要提供私鑰
+                      授权合约钱包用于执行智能合约，需要提供私钥
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 錢包名稱 */}
+              {/* 钱包名称 */}
               <FormField
                 control={control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>錢包名稱 *</FormLabel>
+                    <FormLabel>钱包名称 *</FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入錢包名稱" {...field} />
+                      <Input placeholder="请输入钱包名称" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 錢包地址 */}
+              {/* 钱包地址 */}
               <FormField
                 control={control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>錢包地址 *</FormLabel>
+                    <FormLabel>钱包地址 *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="請輸入 TRON 錢包地址（以 T 開頭，共 34 個字符）"
+                        placeholder="请输入 TRON 钱包地址（以 T 开头，共 34 个字符）"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      TRON 錢包地址格式：以 T 開頭，共 34 個字符
+                      TRON 钱包地址格式：以 T 开头，共 34 个字符
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 私鑰 - 僅當類型為 CONTRACT_EXECUTION 時顯示 */}
+              {/* 私钥 - 仅当类型为 CONTRACT_EXECUTION 时显示 */}
               {walletType === SystemWalletType.CONTRACT_EXECUTION && (
                 <FormField
                   control={control}
                   name="privateKey"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>私鑰 *</FormLabel>
+                      <FormLabel>私钥 *</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
-                          placeholder="請輸入私鑰"
+                          placeholder="请输入私钥"
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        授權合約錢包必須提供私鑰，私鑰將被加密存儲
+                        授权合约钱包必须提供私钥，私钥将被加密存储
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -272,7 +272,7 @@ export default function CreateWalletPage() {
                 />
               )}
 
-              {/* 操作按鈕 */}
+              {/* 操作按钮 */}
               <div className="flex items-center justify-end gap-4 pt-4">
                 <Button
                   type="button"
@@ -283,7 +283,7 @@ export default function CreateWalletPage() {
                   取消
                 </Button>
                 <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "創建中..." : "創建錢包"}
+                  {isCreating ? "创建中..." : "创建钱包"}
                 </Button>
               </div>
             </form>

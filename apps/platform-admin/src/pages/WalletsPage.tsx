@@ -23,14 +23,14 @@ const typeMap: Record<string, string> = {
 };
 
 export default function WalletsPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "錢包管理 - 平台管理後台";
+    document.title = "钱包管理 - 平台管理后台";
   }, []);
 
   const navigate = useNavigate();
 
-  // 篩選狀態
+  // 筛选状态
   const [filters, setFilters] = useState({
     name: "",
     type: "",
@@ -38,7 +38,7 @@ export default function WalletsPage() {
     createdAt: "",
   });
 
-  // 構建查詢參數
+  // 构建查询参数
   const queryParams = useMemo(() => {
     const params: CrudFilter[] = [];
     if (filters.name) {
@@ -50,11 +50,11 @@ export default function WalletsPage() {
     if (filters.status) {
       params.push({ field: "status", operator: "eq", value: filters.status });
     }
-    // createdAt 需要根據實際 API 格式處理，暫時不處理
+    // createdAt 需要根据实际 API 格式处理，暂时不处理
     return params;
   }, [filters]);
 
-  // 獲取錢包列表
+  // 获取钱包列表
   const walletsQuery = useList<SystemWallet>({
     resource: "system-wallets",
     filters: queryParams,
@@ -65,7 +65,7 @@ export default function WalletsPage() {
   const isError = walletsQuery.query.isError;
   const error = walletsQuery.query.error;
 
-  // 處理篩選變更
+  // 处理筛选变更
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({
       ...prev,
@@ -73,20 +73,20 @@ export default function WalletsPage() {
     }));
   };
 
-  // 處理查詢
+  // 处理查询
   const handleSearch = () => {
-    // 觸發重新查詢（通過 filters 變更）
+    // 触发重新查询（通过 filters 变更）
     walletsQuery.query.refetch();
   };
 
-  // 獲取分配比例（需要從站點配置中獲取，這裡暫時顯示 "-"）
+  // 获取分配比例（需要从站点配置中获取，这里暂时显示 "-"）
   const getPercentage = (_wallet: SystemWallet) => {
-    // TODO: 從站點配置中獲取該錢包的分配比例
-    // 目前暫時返回 "-"
+    // TODO: 从站点配置中获取该钱包的分配比例
+    // 目前暂时返回 "-"
     return "-";
   };
 
-  // 導航到創建頁面
+  // 导航到创建页面
   const handleCreateWallet = () => {
     navigate("/wallets/create");
   };
@@ -94,27 +94,27 @@ export default function WalletsPage() {
   return (
     <ListView>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">錢包列表</h2>
+        <h2 className="text-2xl font-bold">钱包列表</h2>
         <Button onClick={handleCreateWallet}>
           <Plus className="w-4 h-4 mr-2" />
-          新增錢包
+          新增钱包
         </Button>
       </div>
 
-      {/* 篩選區域 */}
+      {/* 筛选区域 */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>篩選條件</CardTitle>
+          <CardTitle>筛选条件</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {/* 建立時間 */}
+            {/* 建立时间 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">建立時間</label>
+              <label className="text-sm font-medium">建立时间</label>
               <div className="relative">
                 <Input
                   type="date"
-                  placeholder="請選擇時間"
+                  placeholder="请选择时间"
                   value={filters.createdAt}
                   onChange={(e) =>
                     handleFilterChange("createdAt", e.target.value)
@@ -125,19 +125,19 @@ export default function WalletsPage() {
               </div>
             </div>
 
-            {/* 名稱 */}
+            {/* 名称 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">名稱</label>
+              <label className="text-sm font-medium">名称</label>
               <Input
-                placeholder="請輸入名稱"
+                placeholder="请输入名称"
                 value={filters.name}
                 onChange={(e) => handleFilterChange("name", e.target.value)}
               />
             </div>
 
-            {/* 狀態 */}
+            {/* 状态 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">狀態</label>
+              <label className="text-sm font-medium">状态</label>
               <Select
                 value={filters.status || "all"}
                 onValueChange={(value) =>
@@ -145,20 +145,20 @@ export default function WalletsPage() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="請選擇狀態" />
+                  <SelectValue placeholder="请选择状态" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全部</SelectItem>
-                  <SelectItem value="active">啟用</SelectItem>
+                  <SelectItem value="active">启用</SelectItem>
                   <SelectItem value="inactive">停用</SelectItem>
-                  <SelectItem value="suspended">暫停</SelectItem>
+                  <SelectItem value="suspended">暂停</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* 類型 */}
+            {/* 类型 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">類型</label>
+              <label className="text-sm font-medium">类型</label>
               <Select
                 value={filters.type || "all"}
                 onValueChange={(value) =>
@@ -166,7 +166,7 @@ export default function WalletsPage() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="請選擇類型" />
+                  <SelectValue placeholder="请选择类型" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全部</SelectItem>
@@ -180,7 +180,7 @@ export default function WalletsPage() {
               </Select>
             </div>
 
-            {/* 查詢按鈕 */}
+            {/* 查询按钮 */}
             <div className="flex items-end">
               <Button
                 onClick={handleSearch}
@@ -188,26 +188,26 @@ export default function WalletsPage() {
                 className="w-full"
               >
                 <Search className="w-4 h-4 mr-2" />
-                查詢
+                查询
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* 錯誤提示 */}
+      {/* 错误提示 */}
       {isError && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md mb-6">
-          {error?.message || "獲取錢包列表失敗"}
+          {error?.message || "获取钱包列表失败"}
         </div>
       )}
 
-      {/* 載入狀態 */}
+      {/* 载入状态 */}
       {isLoading && (
-        <div className="text-center py-8 text-muted-foreground">載入中...</div>
+        <div className="text-center py-8 text-muted-foreground">载入中...</div>
       )}
 
-      {/* 錢包列表表格 */}
+      {/* 钱包列表表格 */}
       {!isLoading && wallets.length > 0 && (
         <Card>
           <CardContent className="p-0">
@@ -215,11 +215,11 @@ export default function WalletsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4 font-medium">類型</th>
-                    <th className="text-left p-4 font-medium">錢包名稱</th>
+                    <th className="text-left p-4 font-medium">类型</th>
+                    <th className="text-left p-4 font-medium">钱包名称</th>
                     <th className="text-left p-4 font-medium">地址</th>
                     <th className="text-left p-4 font-medium">分配比例%</th>
-                    <th className="text-left p-4 font-medium">建立時間</th>
+                    <th className="text-left p-4 font-medium">建立时间</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -250,11 +250,11 @@ export default function WalletsPage() {
         </Card>
       )}
 
-      {/* 空狀態 */}
+      {/* 空状态 */}
       {!isLoading && wallets.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            暫無錢包數據
+            暂无钱包数据
           </CardContent>
         </Card>
       )}

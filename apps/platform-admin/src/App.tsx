@@ -21,7 +21,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import { createPlatformApiClient } from "@saas-platform/api-client";
 import "./i18n";
 
-// 初始化 API 客戶端
+// 初始化 API 客户端
 const apiUrl = import.meta.env.VITE_PLATFORM_API_URL || "http://localhost:3000";
 createPlatformApiClient(apiUrl);
 
@@ -67,7 +67,7 @@ function App() {
               list: "/",
               create: "/sites/create",
               meta: {
-                label: "站點列表",
+                label: "站点列表",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +91,7 @@ function App() {
               list: "/wallets",
               create: "/wallets/create",
               meta: {
-                label: "錢包管理",
+                label: "钱包管理",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -114,9 +114,9 @@ function App() {
           options={{
             syncWithLocation: true,
             warnWhenUnsavedChanges: true,
-            // 設置應用標題和圖標（用於 Sidebar Header）
+            // 设置应用标题和图标（用于 Sidebar Header）
             title: {
-              text: "系統商後台",
+              text: "系统商后台",
               icon: (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

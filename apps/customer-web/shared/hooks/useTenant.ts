@@ -1,9 +1,9 @@
 'use client';
 
 import { useContext } from 'react';
-import { TenantContext } from '@/shared/context/TenantContext';
+import { TenantContext, TenantContextValue } from '@/shared/context/TenantContext';
 
-export function useTenant() {
+export function useTenant(): TenantContextValue {
   const context = useContext(TenantContext);
 
   if (!context) {

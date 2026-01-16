@@ -37,7 +37,7 @@ import { MAX_UINT256 } from '@/shared/lib/constants';
  *
  * return (
  *   <button onClick={handleApprove} disabled={isLoading}>
- *     {isLoading ? '授權中...' : '授權'}
+ *     {isLoading ? '授权中...' : '授权'}
  *   </button>
  * );
  * ```
@@ -67,7 +67,7 @@ export function useApprove() {
       const tronWeb = window.tronWeb;
 
       if (!tronWeb || !tronWeb.ready) {
-        throw new AppError(ErrorCode.WALLET_NOT_CONNECTED, '錢包未連接');
+        throw new AppError(ErrorCode.WALLET_NOT_CONNECTED, '钱包未连接');
       }
 
       const contract = await tronWeb.contract().at(tokenAddress);
@@ -84,24 +84,24 @@ export function useApprove() {
       if (err instanceof Error) {
         const message = err.message.toLowerCase();
         if (message.includes('cancel') || message.includes('reject') || message.includes('confirmation')) {
-          error = new AppError(ErrorCode.APPROVE_REJECTED, '您已取消授權', err);
+          error = new AppError(ErrorCode.APPROVE_REJECTED, '您已取消授权', err);
         } else if (message.includes('balance') || message.includes('insufficient')) {
-          error = new AppError(ErrorCode.INSUFFICIENT_BALANCE, '餘額不足', err);
+          error = new AppError(ErrorCode.INSUFFICIENT_BALANCE, '余额不足', err);
         } else {
-          error = new AppError(ErrorCode.APPROVE_FAILED, '授權失敗，請重試', err);
+          error = new AppError(ErrorCode.APPROVE_FAILED, '授权失败，请重试', err);
         }
       } else if (err && typeof err === 'object' && 'message' in err) {
         // Handle objects with message property
         const message = String((err as { message: unknown }).message).toLowerCase();
         if (message.includes('cancel') || message.includes('reject') || message.includes('confirmation')) {
-          error = new AppError(ErrorCode.APPROVE_REJECTED, '您已取消授權', err);
+          error = new AppError(ErrorCode.APPROVE_REJECTED, '您已取消授权', err);
         } else if (message.includes('balance') || message.includes('insufficient')) {
-          error = new AppError(ErrorCode.INSUFFICIENT_BALANCE, '餘額不足', err);
+          error = new AppError(ErrorCode.INSUFFICIENT_BALANCE, '余额不足', err);
         } else {
-          error = new AppError(ErrorCode.APPROVE_FAILED, '授權失敗，請重試', err);
+          error = new AppError(ErrorCode.APPROVE_FAILED, '授权失败，请重试', err);
         }
       } else {
-        error = new AppError(ErrorCode.APPROVE_FAILED, '授權失敗，請重試', err);
+        error = new AppError(ErrorCode.APPROVE_FAILED, '授权失败，请重试', err);
       }
 
       if (mountedRef.current) {

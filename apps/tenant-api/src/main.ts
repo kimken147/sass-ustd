@@ -22,8 +22,10 @@ async function bootstrap() {
 
   // CORS 設置
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+    origin: true, // 允許所有來源（開發環境）
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-tenant-slug", "x-tenant-config"],
   });
 
   // API 前綴

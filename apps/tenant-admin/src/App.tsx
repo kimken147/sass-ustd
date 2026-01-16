@@ -23,7 +23,7 @@ import EditAgentPage from "./pages/EditAgentPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { createTenantApiClient } from "@saas-platform/api-client";
 
-// 初始化 API 客戶端
+// 初始化 API 客户端
 const apiUrl = import.meta.env.VITE_TENANT_API_URL || "http://localhost:3001";
 createTenantApiClient(apiUrl);
 
@@ -51,7 +51,7 @@ function App() {
               name: "dashboard",
               list: "/",
               meta: {
-                label: "儀表板",
+                label: "仪表板",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -76,7 +76,7 @@ function App() {
               name: "customers",
               list: "/customers",
               meta: {
-                label: "會員管理",
+                label: "会员管理",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +101,7 @@ function App() {
               name: "wallets",
               list: "/wallets",
               meta: {
-                label: "收款錢包",
+                label: "收款钱包",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +152,7 @@ function App() {
               name: "revenue-distributions",
               list: "/revenue-distributions",
               meta: {
-                label: "站長收益列表",
+                label: "站长收益列表",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -175,7 +175,7 @@ function App() {
               name: "commission-payouts",
               list: "/commission-payouts",
               meta: {
-                label: "代理分潤列表",
+                label: "代理分润列表",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -197,9 +197,9 @@ function App() {
           options={{
             syncWithLocation: true,
             warnWhenUnsavedChanges: true,
-            // 設置應用標題和圖標（用於 Sidebar Header）
+            // 设置应用标题和图标（用于 Sidebar Header）
             title: {
-              text: "租戶管理後台",
+              text: "租户管理后台",
               icon: (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

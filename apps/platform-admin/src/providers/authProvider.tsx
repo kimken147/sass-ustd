@@ -20,7 +20,7 @@ export const authProvider: AuthProvider = {
           message:
             error.response?.data?.message ||
             error.message ||
-            '登入失敗，請檢查您的帳號和密碼',
+            '登入失败，请检查您的帐号和密码',
         },
       };
     }
@@ -47,13 +47,13 @@ export const authProvider: AuthProvider = {
 
     if (token) {
       try {
-        // 驗證 token 是否有效
+        // 验证 token 是否有效
         await client.getMe();
         return {
           authenticated: true,
         };
       } catch (error) {
-        // Token 無效，嘗試刷新
+        // Token 无效，尝试刷新
         const refreshToken = client.getRefreshToken();
         if (refreshToken) {
           try {
@@ -62,7 +62,7 @@ export const authProvider: AuthProvider = {
               authenticated: true,
             };
           } catch (refreshError) {
-            // 刷新失敗，清除 token
+            // 刷新失败，清除 token
             client.clearToken();
             return {
               authenticated: false,
@@ -89,7 +89,7 @@ export const authProvider: AuthProvider = {
   },
 
   onError: async (error) => {
-    // 檢查 status（標準格式）或 statusCode（HttpError 格式）
+    // 检查 status（标准格式）或 statusCode（HttpError 格式）
     const statusCode = error?.status || error?.statusCode;
     if (statusCode === 401) {
       const client = getPlatformApiClient();
@@ -115,34 +115,34 @@ export const authProvider: AuthProvider = {
   },
 
   register: async () => {
-    // 平台管理後台不支援註冊
+    // 平台管理后台不支援注册
     return {
       success: false,
       error: {
         name: 'RegisterError',
-        message: '平台管理後台不支援註冊功能',
+        message: '平台管理后台不支援注册功能',
       },
     };
   },
 
   forgotPassword: async () => {
-    // TODO: 實作忘記密碼功能
+    // TODO: 实作忘记密码功能
     return {
       success: false,
       error: {
         name: 'ForgotPasswordError',
-        message: '忘記密碼功能尚未實作',
+        message: '忘记密码功能尚未实作',
       },
     };
   },
 
   updatePassword: async () => {
-    // TODO: 實作更新密碼功能
+    // TODO: 实作更新密码功能
     return {
       success: false,
       error: {
         name: 'UpdatePasswordError',
-        message: '更新密碼功能尚未實作',
+        message: '更新密码功能尚未实作',
       },
     };
   },

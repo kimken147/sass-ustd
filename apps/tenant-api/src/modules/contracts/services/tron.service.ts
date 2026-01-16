@@ -39,7 +39,8 @@ export class TronService {
       // 動態導入 TronWeb（如果未安裝則使用模擬模式）
       let TronWeb: any;
       try {
-        TronWeb = require("tronweb");
+        const tronwebModule = require("tronweb");
+        TronWeb = tronwebModule.TronWeb || tronwebModule.default?.TronWeb || tronwebModule;
       } catch (error) {
         this.logger.warn(
           "TronWeb 未安裝，將使用模擬模式。請執行: pnpm add tronweb"
@@ -181,7 +182,8 @@ export class TronService {
       let tronWebInstance = this.tronWeb;
       if (privateKey && privateKey !== this.contractExecutionWalletPrivateKey) {
         // 使用提供的私鑰創建新的 TronWeb 實例（此時 walletPrivateKey 已經解密）
-        const TronWeb = require("tronweb");
+        const tronwebMod = require("tronweb");
+        const TronWeb = tronwebMod.TronWeb || tronwebMod.default?.TronWeb || tronwebMod;
         const fullNode =
           this.network === TronNetwork.MAINNET
             ? "https://api.trongrid.io"
@@ -196,7 +198,8 @@ export class TronService {
         });
       } else if (!this.tronWeb && walletPrivateKey) {
         // 如果初始化時沒有創建 TronWeb，現在創建（使用已解密的私鑰）
-        const TronWeb = require("tronweb");
+        const tronwebMod = require("tronweb");
+        const TronWeb = tronwebMod.TronWeb || tronwebMod.default?.TronWeb || tronwebMod;
         const fullNode =
           this.network === TronNetwork.MAINNET
             ? "https://api.trongrid.io"
@@ -294,5 +297,40 @@ export class TronService {
    */
   isMockMode(): boolean {
     return !this.tronWeb || !this.contractExecutionWalletAddress;
+  }
+
+  /**
+   * 獲取錢包的 USDT 餘額
+   * @param walletAddress 錢包地址
+   * @param tokenAddress USDT Token 地址（可選）
+   * @returns 餘額（USDT 單位，已轉換）
+   */
+  async getUSDTBalance(walletAddress: string, tokenAddress?: string): Promise<number> {
+    if (!this.tronWeb) {
+      this.logger.warn('[模擬模式] 返回模擬餘額 1000 USDT');
+      return 1000; // 模擬模式返回 1000 USDT
+    }
+
+    try {
+      const token = tokenAddress || this.usdtTokenAddress;
+      const contract = await this.tronWeb.contract().at(token);
+      const balance = await contract.balanceOf(walletAddress).call();
+
+      // USDT 是 6 位小數
+      const balanceInUsdt = this.tronWeb.toBigNumber(balance).div(1e6).toNumber();
+      this.logger.log(`錢包 ${walletAddress} USDT 餘額: ${balanceInUsdt}`);
+
+      return balanceInUsdt;
+    } catch (error) {
+      this.logger.error(`獲取 USDT 餘額失敗: ${walletAddress}`, error);
+      throw new BadRequestException('無法獲取 USDT 餘額');
+    }
+  }
+
+  /**
+   * 獲取 USDT Token 地址
+   */
+  getUsdtTokenAddress(): string {
+    return this.usdtTokenAddress;
   }
 }

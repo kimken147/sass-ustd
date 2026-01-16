@@ -24,7 +24,7 @@ import {
   getTodayStartLocal,
 } from "@saas-platform/utils";
 
-// 統計卡片組件
+// 统计卡片组件
 function StatsCard({
   title,
   value,
@@ -67,12 +67,12 @@ function StatsCard({
 }
 
 export default function CustomersPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "會員管理 - 租戶管理後台";
+    document.title = "会员管理 - 租户管理后台";
   }, []);
 
-  // 篩選器狀態
+  // 筛选器状态
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(
@@ -84,12 +84,12 @@ export default function CustomersPage() {
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 選中狀態
+  // 选中状态
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const apiUrl = useApiUrl();
 
-  // 構建查詢參數
+  // 构建查询参数
   const queryParams = useMemo(() => {
     const params: Record<string, any> = {
       page,
@@ -111,9 +111,9 @@ export default function CustomersPage() {
     return params;
   }, [startDate, endDate, timeType, authorizationStatus, address, page, limit]);
 
-  // 使用 useCustom hook 獲取會員列表
+  // 使用 useCustom hook 获取会员列表
   // 注意：CustomerListResponse 是特殊格式（包含 customers, stats, total 等），
-  // 不符合標準的 { data: Array, total: number } 格式，所以需要使用 useCustom
+  // 不符合标准的 { data: Array, total: number } 格式，所以需要使用 useCustom
   const { query, result } = useCustom<CustomerListResponse>({
     url: `${apiUrl}/api/customers`,
     method: "get",
@@ -126,14 +126,14 @@ export default function CustomersPage() {
     query.refetch();
   };
 
-  // 從包裝的響應格式中提取實際數據
-  // TransformInterceptor 將數據包裝為 { success, data, timestamp }
+  // 从包装的响应格式中提取实际数据
+  // TransformInterceptor 将数据包装为 { success, data, timestamp }
   const customerListData = (result.data as any)?.data as CustomerListResponse | undefined;
   const isLoading = query.isLoading;
   const isError = query.isError;
   const error = query.error;
 
-  // 處理全選/取消全選
+  // 处理全选/取消全选
   const handleSelectAll = (checked: boolean | "indeterminate") => {
     if (checked === true && customerListData?.customers) {
       setSelectedIds(new Set(customerListData.customers.map((c) => c.id)));
@@ -142,7 +142,7 @@ export default function CustomersPage() {
     }
   };
 
-  // 處理單選
+  // 处理单选
   const handleSelect = (id: number, checked: boolean) => {
     const newSelected = new Set(selectedIds);
     if (checked) {
@@ -153,25 +153,25 @@ export default function CustomersPage() {
     setSelectedIds(newSelected);
   };
 
-  // 授權狀態映射
+  // 授权状态映射
   const authorizationStatusMap: Record<string, string> = {
-    authorized: "已授權",
-    unauthorized: "未授權",
+    authorized: "已授权",
+    unauthorized: "未授权",
     expired: "已失效",
   };
 
-  // 使用 useCustomMutation 處理收割（已選擇的會員）
+  // 使用 useCustomMutation 处理收割（已选择的会员）
   const { mutate: harvestMutate, mutation: harvestMutation } =
     useCustomMutation();
 
-  // 處理收割（已選擇的會員）
+  // 处理收割（已选择的会员）
   const handleHarvest = () => {
     if (selectedIds.size === 0) {
-      alert("請先選擇要收割的會員");
+      alert("请先选择要收割的会员");
       return;
     }
 
-    if (!confirm(`確定要收割 ${selectedIds.size} 個會員嗎？`)) {
+    if (!confirm(`确定要收割 ${selectedIds.size} 个会员吗？`)) {
       return;
     }
 
@@ -184,40 +184,40 @@ export default function CustomersPage() {
       {
         onSuccess: (data: any) => {
           const { successCount, failureCount } = data;
-          alert(`收割完成！成功: ${successCount} 個，失敗: ${failureCount} 個`);
-          // 清空選擇並刷新列表
+          alert(`收割完成！成功: ${successCount} 个，失败: ${failureCount} 个`);
+          // 清空选择并刷新列表
           setSelectedIds(new Set());
           query.refetch();
         },
         onError: (error: any) => {
           alert(
-            `收割失敗: ${error?.response?.data?.message || error?.message || "未知錯誤"}`
+            `收割失败: ${error?.response?.data?.message || error?.message || "未知错误"}`
           );
         },
       }
     );
   };
 
-  // 使用 useCustomMutation 處理一鍵收割（全部會員）
+  // 使用 useCustomMutation 处理一键收割（全部会员）
   const { mutate: harvestAllMutate, mutation: harvestAllMutation } =
     useCustomMutation();
 
-  // 處理一鍵收割（全部會員）
+  // 处理一键收割（全部会员）
   const handleHarvestAll = () => {
     if (!customerListData || !customerListData.customers || customerListData.customers.length === 0) {
-      alert("沒有可收割的會員");
+      alert("没有可收割的会员");
       return;
     }
 
     if (
       !confirm(
-        `確定要一鍵收割所有 ${customerListData.total} 個會員嗎？此操作可能需要較長時間。`
+        `确定要一键收割所有 ${customerListData.total} 个会员吗？此操作可能需要较长时间。`
       )
     ) {
       return;
     }
 
-    // 構建查詢字符串
+    // 构建查询字符串
     const queryParamsObj: Record<string, string> = {
       page: page.toString(),
       limit: limit.toString(),
@@ -257,14 +257,14 @@ export default function CustomersPage() {
         onSuccess: (data: any) => {
           const { successCount, failureCount } = data;
           alert(
-            `一鍵收割完成！成功: ${successCount} 個，失敗: ${failureCount} 個`
+            `一键收割完成！成功: ${successCount} 个，失败: ${failureCount} 个`
           );
           // 刷新列表
           query.refetch();
         },
         onError: (error: any) => {
           alert(
-            `一鍵收割失敗: ${error?.response?.data?.message || error?.message || "未知錯誤"}`
+            `一键收割失败: ${error?.response?.data?.message || error?.message || "未知错误"}`
           );
         },
       }
@@ -273,21 +273,21 @@ export default function CustomersPage() {
 
   return (
     <ListView>
-      <ListViewHeader title="會員管理" />
+      <ListViewHeader title="会员管理" />
 
-      {/* 篩選器區域 */}
+      {/* 筛选器区域 */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-end gap-4 flex-wrap">
-            {/* 時間範圍 */}
+            {/* 时间范围 */}
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">訂單時間</label>
+              <label className="text-sm font-medium mb-2 block">订单时间</label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
                   <Input
                     type="datetime-local"
-                    placeholder="請選擇時間"
+                    placeholder="请选择时间"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="pl-10"
@@ -298,7 +298,7 @@ export default function CustomersPage() {
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
                   <Input
                     type="datetime-local"
-                    placeholder="請選擇時間"
+                    placeholder="请选择时间"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="pl-10"
@@ -307,30 +307,30 @@ export default function CustomersPage() {
               </div>
             </div>
 
-            {/* 時間類型 */}
+            {/* 时间类型 */}
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">時間類型</label>
+              <label className="text-sm font-medium mb-2 block">时间类型</label>
               <Select
                 value={timeType}
                 onValueChange={(value) => setTimeType(value as TimeType)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="選擇時間類型" />
+                  <SelectValue placeholder="选择时间类型" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TimeType.AUTHORIZATION_TIME}>
-                    授權時間
+                    授权时间
                   </SelectItem>
                   <SelectItem value={TimeType.HARVEST_TIME}>
-                    收割時間
+                    收割时间
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* 授權狀態 */}
+            {/* 授权状态 */}
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">授權狀態</label>
+              <label className="text-sm font-medium mb-2 block">授权状态</label>
               <Select
                 value={authorizationStatus}
                 onValueChange={(value) =>
@@ -338,17 +338,17 @@ export default function CustomersPage() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="選擇授權狀態" />
+                  <SelectValue placeholder="选择授权状态" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={CustomerAuthorizationStatus.ALL}>
                     全部
                   </SelectItem>
                   <SelectItem value={CustomerAuthorizationStatus.AUTHORIZED}>
-                    已授權
+                    已授权
                   </SelectItem>
                   <SelectItem value={CustomerAuthorizationStatus.UNAUTHORIZED}>
-                    未授權
+                    未授权
                   </SelectItem>
                   <SelectItem value={CustomerAuthorizationStatus.EXPIRED}>
                     已失效
@@ -361,13 +361,13 @@ export default function CustomersPage() {
             <div className="flex-1 min-w-[200px]">
               <label className="text-sm font-medium mb-2 block">地址</label>
               <Input
-                placeholder="請輸入地址"
+                placeholder="请输入地址"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
             </div>
 
-            {/* 查詢按鈕 */}
+            {/* 查询按钮 */}
             <div className="flex items-end gap-2">
               <Button onClick={handleSearch} disabled={isLoading}>
                 <Search className="w-4 h-4 mr-2" />
@@ -378,57 +378,57 @@ export default function CustomersPage() {
         </CardContent>
       </Card>
 
-      {/* 錯誤提示 */}
+      {/* 错误提示 */}
       {isError && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
-          {error?.message || "獲取會員列表失敗"}
+          {error?.message || "获取会员列表失败"}
         </div>
       )}
 
-      {/* 統計數據 */}
+      {/* 统计数据 */}
       {customerListData?.stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <StatsCard
-            title="授權客戶"
+            title="授权客户"
             value={customerListData.stats.authorizedClients}
             growth={customerListData.stats.growthPercentage}
           />
           <StatsCard
-            title="總數量"
+            title="总数量"
             value={customerListData.stats.totalQuantity}
             growth={customerListData.stats.growthPercentage}
           />
           <StatsCard
-            title="收割數量"
+            title="收割数量"
             value={customerListData.stats.harvestQuantity}
             growth={customerListData.stats.growthPercentage}
           />
           <StatsCard
-            title="利潤"
+            title="利润"
             value={customerListData.stats.profit}
             growth={customerListData.stats.growthPercentage}
           />
           <StatsCard
-            title="商戶代理"
+            title="商户代理"
             value={customerListData.stats.merchantAgent}
             growth={customerListData.stats.growthPercentage}
           />
           <StatsCard
-            title="系統費用"
+            title="系统费用"
             value={customerListData.stats.systemFee}
             growth={customerListData.stats.growthPercentage}
           />
         </div>
       )}
 
-      {/* 批量操作欄 */}
+      {/* 批量操作栏 */}
       {selectedIds.size > 0 && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium">
-                  {selectedIds.size} 已選
+                  {selectedIds.size} 已选
                 </span>
                 <Button
                   variant="outline"
@@ -442,7 +442,7 @@ export default function CustomersPage() {
                   size="sm"
                   onClick={() => handleSelectAll(true)}
                 >
-                  全選
+                  全选
                 </Button>
               </div>
               <div className="flex items-center gap-2">
@@ -452,7 +452,7 @@ export default function CustomersPage() {
                   onClick={handleHarvest}
                   disabled={harvestMutation.isPending || selectedIds.size === 0}
                 >
-                  {harvestMutation.isPending ? "處理中..." : "收割"}
+                  {harvestMutation.isPending ? "处理中..." : "收割"}
                 </Button>
                 <Button
                   variant="outline"
@@ -465,7 +465,7 @@ export default function CustomersPage() {
                     customerListData.customers.length === 0
                   }
                 >
-                  {harvestAllMutation.isPending ? "處理中..." : "一鍵收割"}
+                  {harvestAllMutation.isPending ? "处理中..." : "一键收割"}
                 </Button>
               </div>
             </div>
@@ -473,12 +473,12 @@ export default function CustomersPage() {
         </Card>
       )}
 
-      {/* 載入狀態 */}
+      {/* 载入状态 */}
       {isLoading && (
-        <div className="text-center py-8 text-muted-foreground">載入中...</div>
+        <div className="text-center py-8 text-muted-foreground">载入中...</div>
       )}
 
-      {/* 會員列表表格 */}
+      {/* 会员列表表格 */}
       {!isLoading && customerListData && (
         <Card>
           <CardContent className="p-0">
@@ -497,25 +497,25 @@ export default function CustomersPage() {
                     </th>
                     <th className="p-4 text-left text-sm font-medium">ID</th>
                     <th className="p-4 text-left text-sm font-medium">
-                      會員錢包
+                      会员钱包
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      錢包明細
+                      钱包明细
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      授權時間
+                      授权时间
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      授權狀態
+                      授权状态
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      當前數量
+                      当前数量
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      最近收割數量
+                      最近收割数量
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      最近收割時間
+                      最近收割时间
                     </th>
                   </tr>
                 </thead>
@@ -538,7 +538,7 @@ export default function CustomersPage() {
                         <div>
                           {customer.notes && (
                             <div className="text-sm text-muted-foreground mb-1">
-                              站長備註: {customer.notes}
+                              站长备注: {customer.notes}
                             </div>
                           )}
                           <div className="font-mono text-sm">
@@ -604,13 +604,13 @@ export default function CustomersPage() {
         </Card>
       )}
 
-      {/* 分頁控制 */}
+      {/* 分页控制 */}
       {!isLoading && customerListData && customerListData.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            顯示第 {(page - 1) * limit + 1} -{" "}
-            {Math.min(page * limit, customerListData.total)} 筆，共{" "}
-            {customerListData.total} 筆
+            显示第 {(page - 1) * limit + 1} -{" "}
+            {Math.min(page * limit, customerListData.total)} 笔，共{" "}
+            {customerListData.total} 笔
           </div>
           <div className="flex items-center gap-2">
             <Button

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
 
-// Agent 類型定義
+// Agent 类型定义
 interface Agent {
   id: number;
   userId: number;
@@ -60,7 +60,7 @@ interface Agent {
   updatedAt: string;
 }
 
-// 樹狀節點類型
+// 树状节点类型
 interface TreeNode extends Agent {
   children: TreeNode[];
   isExpanded?: boolean;
@@ -68,24 +68,24 @@ interface TreeNode extends Agent {
 
 
 export default function AgentsPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "代理管理 - 租戶管理後台";
+    document.title = "代理管理 - 租户管理后台";
   }, []);
 
-  // 篩選狀態
+  // 筛选状态
   const [filters, setFilters] = useState({
     name: "",
     createdAt: getTodayStartLocal(),
   });
 
-  // 展開/收合狀態
+  // 展开/收合状态
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
-  // 導航
+  // 导航
   const { create, edit } = useNavigation();
 
-  // 構建查詢參數
+  // 构建查询参数
   const queryParams = useMemo(() => {
     const params: any[] = [];
     if (filters.name) {
@@ -98,7 +98,7 @@ export default function AgentsPage() {
     return params;
   }, [filters.name]);
 
-  // 獲取代理列表
+  // 获取代理列表
   const agentsQuery = useList<Agent>({
     resource: "agents",
     filters: queryParams,
@@ -109,13 +109,13 @@ export default function AgentsPage() {
   const isError = agentsQuery.query.isError;
   const error = agentsQuery.query.error;
 
-  // 刪除代理
+  // 删除代理
   const deleteMutation = useDelete();
   const { mutate: deleteAgent } = deleteMutation;
 
-  // 構建樹狀結構
+  // 构建树状结构
   const treeData = useMemo(() => {
-    // 先過濾建立時間
+    // 先过滤建立时间
     let filtered = agents;
     if (filters.createdAt) {
       const filterDate = new Date(filters.createdAt);
@@ -127,18 +127,18 @@ export default function AgentsPage() {
       });
     }
 
-    // 名稱篩選
+    // 名称筛选
     if (filters.name) {
       filtered = filtered.filter((agent) =>
         agent.name.toLowerCase().includes(filters.name.toLowerCase())
       );
     }
 
-    // 構建樹狀結構
+    // 构建树状结构
     const agentMap = new Map<number, TreeNode>();
     const rootNodes: TreeNode[] = [];
 
-    // 第一遍：創建所有節點
+    // 第一遍：创建所有节点
     filtered.forEach((agent) => {
       agentMap.set(agent.id, {
         ...agent,
@@ -147,7 +147,7 @@ export default function AgentsPage() {
       });
     });
 
-    // 第二遍：建立父子關係
+    // 第二遍：建立父子关系
     filtered.forEach((agent) => {
       const node = agentMap.get(agent.id)!;
       if (agent.parentAgentId) {
@@ -155,16 +155,16 @@ export default function AgentsPage() {
         if (parent) {
           parent.children.push(node);
         } else {
-          // 如果找不到父節點，可能是篩選導致的，仍然顯示為根節點
+          // 如果找不到父节点，可能是筛选导致的，仍然显示为根节点
           rootNodes.push(node);
         }
       } else {
-        // 沒有父節點，是根節點
+        // 没有父节点，是根节点
         rootNodes.push(node);
       }
     });
 
-    // 對每個節點的子節點進行排序（按建立時間）
+    // 对每个节点的子节点进行排序（按建立时间）
     const sortChildren = (node: TreeNode) => {
       node.children.sort(
         (a, b) =>
@@ -177,7 +177,7 @@ export default function AgentsPage() {
     return rootNodes;
   }, [agents, filters, expandedIds]);
 
-  // 切換展開/收合
+  // 切换展开/收合
   const toggleExpand = (agentId: number) => {
     setExpandedIds((prev) => {
       const newSet = new Set(prev);
@@ -190,7 +190,7 @@ export default function AgentsPage() {
     });
   };
 
-  // 處理篩選變更
+  // 处理筛选变更
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({
       ...prev,
@@ -198,24 +198,24 @@ export default function AgentsPage() {
     }));
   };
 
-  // 處理查詢
+  // 处理查询
   const handleSearch = () => {
     agentsQuery.query.refetch();
   };
 
-  // 處理新增代理
+  // 处理新增代理
   const handleAddNew = () => {
     create("agents");
   };
 
-  // 處理編輯代理
+  // 处理编辑代理
   const handleEdit = (agent: Agent) => {
     edit("agents", agent.id);
   };
 
-  // 處理刪除代理
+  // 处理删除代理
   const handleDelete = (agentId: number) => {
-    if (!confirm("確定要刪除此代理嗎？")) {
+    if (!confirm("确定要删除此代理吗？")) {
       return;
     }
 
@@ -230,8 +230,8 @@ export default function AgentsPage() {
         },
         onError: (error: any) => {
           alert(
-            `刪除失敗：${
-              error?.response?.data?.message || error?.message || "未知錯誤"
+            `删除失败：${
+              error?.response?.data?.message || error?.message || "未知错误"
             }`
           );
         },
@@ -239,23 +239,23 @@ export default function AgentsPage() {
     );
   };
 
-  // 複製推薦連結
+  // 复制推荐连结
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link).then(
       () => {
-        alert("已複製到剪貼板");
+        alert("已复制到剪贴板");
       },
       () => {
-        alert("複製失敗，請手動複製");
+        alert("复制失败，请手动复制");
       }
     );
   };
 
-  // 遞迴渲染樹狀節點
+  // 递归渲染树状节点
   const renderTreeNode = (node: TreeNode, depth: number = 0) => {
     const hasChildren = node.children.length > 0;
     const isExpanded = expandedIds.has(node.id);
-    const indentWidth = depth * 24; // 每層縮排 24px
+    const indentWidth = depth * 24; // 每层缩排 24px
 
     return (
       <React.Fragment key={node.id}>
@@ -265,7 +265,7 @@ export default function AgentsPage() {
             backgroundColor: depth % 2 === 0 ? undefined : "rgba(0,0,0,0.02)",
           }}
         >
-          {/* 授權合約鏈接 */}
+          {/* 授权合约链接 */}
           <td className="p-4">
             <Button
               size="sm"
@@ -273,11 +273,11 @@ export default function AgentsPage() {
               onClick={() => handleCopyLink(node.referralLink)}
             >
               <Copy className="w-4 h-4 mr-1" />
-              複製
+              复制
             </Button>
           </td>
 
-          {/* 名稱（帶展開/收合圖示） */}
+          {/* 名称（带展开/收合图示） */}
           <td className="p-4">
             <div
               className="flex items-center gap-2"
@@ -295,16 +295,16 @@ export default function AgentsPage() {
                   )}
                 </button>
               ) : (
-                <span className="w-6" /> // 佔位符，保持對齊
+                <span className="w-6" /> // 占位符，保持对齐
               )}
               <span>{node.name}</span>
             </div>
           </td>
 
-          {/* 帳號 */}
+          {/* 账号 */}
           <td className="p-4 font-mono text-sm">{node.username}</td>
 
-          {/* 代理錢包 */}
+          {/* 代理钱包 */}
           <td className="p-4 font-mono text-sm">
             {node.wallet?.address || "-"}
           </td>
@@ -312,7 +312,7 @@ export default function AgentsPage() {
           {/* 分配比例% */}
           <td className="p-4">{`${node.commission.selfRate}%`}</td>
 
-          {/* 建立時間 */}
+          {/* 建立时间 */}
           <td className="p-4 text-sm">{formatDateTime(node.createdAt)}</td>
 
           {/* 操作 */}
@@ -328,7 +328,7 @@ export default function AgentsPage() {
             </div>
           </td>
         </tr>
-        {/* 遞迴渲染子節點 */}
+        {/* 递归渲染子节点 */}
         {hasChildren && isExpanded &&
           node.children.map((child) => renderTreeNode(child, depth + 1))
         }
@@ -346,20 +346,20 @@ export default function AgentsPage() {
         </Button>
       </div>
 
-      {/* 篩選區域 */}
+      {/* 筛选区域 */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>篩選條件</CardTitle>
+          <CardTitle>筛选条件</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 建立時間 */}
+            {/* 建立时间 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">建立時間</label>
+              <label className="text-sm font-medium">建立时间</label>
               <div className="relative">
                 <Input
                   type="datetime-local"
-                  placeholder="請選擇時間"
+                  placeholder="请选择时间"
                   value={filters.createdAt}
                   onChange={(e) =>
                     handleFilterChange("createdAt", e.target.value)
@@ -370,17 +370,17 @@ export default function AgentsPage() {
               </div>
             </div>
 
-            {/* 名稱 */}
+            {/* 名称 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">名稱</label>
+              <label className="text-sm font-medium">名称</label>
               <Input
-                placeholder="請輸入名稱"
+                placeholder="请输入名称"
                 value={filters.name}
                 onChange={(e) => handleFilterChange("name", e.target.value)}
               />
             </div>
 
-            {/* 查詢按鈕 */}
+            {/* 查询按钮 */}
             <div className="flex items-end">
               <Button
                 onClick={handleSearch}
@@ -395,16 +395,16 @@ export default function AgentsPage() {
         </CardContent>
       </Card>
 
-      {/* 錯誤提示 */}
+      {/* 错误提示 */}
       {isError && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md mb-6">
-          {error?.message || "獲取代理列表失敗"}
+          {error?.message || "获取代理列表失败"}
         </div>
       )}
 
-      {/* 載入狀態 */}
+      {/* 载入状态 */}
       {isLoading && (
-        <div className="text-center py-8 text-muted-foreground">載入中...</div>
+        <div className="text-center py-8 text-muted-foreground">载入中...</div>
       )}
 
       {/* 代理列表表格 */}
@@ -418,15 +418,15 @@ export default function AgentsPage() {
                     <thead>
                       <tr className="border-b bg-muted/50">
                         <th className="text-left p-4 font-medium">
-                          授權合約鏈接
+                          授权合约链接
                         </th>
-                        <th className="text-left p-4 font-medium">名稱</th>
-                        <th className="text-left p-4 font-medium">帳號</th>
-                        <th className="text-left p-4 font-medium">代理錢包</th>
+                        <th className="text-left p-4 font-medium">名称</th>
+                        <th className="text-left p-4 font-medium">账号</th>
+                        <th className="text-left p-4 font-medium">代理钱包</th>
                         <th className="text-left p-4 font-medium">
                           分配比例%
                         </th>
-                        <th className="text-left p-4 font-medium">建立時間</th>
+                        <th className="text-left p-4 font-medium">建立时间</th>
                         <th className="text-left p-4 font-medium">操作</th>
                       </tr>
                     </thead>
@@ -440,7 +440,7 @@ export default function AgentsPage() {
           ) : (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
-                暫無代理數據
+                暂无代理数据
               </CardContent>
             </Card>
           )}

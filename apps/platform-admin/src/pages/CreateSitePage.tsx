@@ -26,36 +26,36 @@ import { Plus, Trash2 } from "lucide-react";
 import { SystemWallet, SystemWalletType } from "@saas-platform/shared-types";
 import { useFieldArray } from "react-hook-form";
 
-// Zod 驗證 schema
+// Zod 验证 schema
 const systemWalletSchema = z.object({
-  walletId: z.number().min(1, "請選擇錢包"),
+  walletId: z.number().min(1, "请选择钱包"),
   name: z.string(),
   address: z.string(),
-  percentage: z.number().min(1, "比例必須大於 0").max(100, "比例不能超過 100"),
+  percentage: z.number().min(1, "比例必须大于 0").max(100, "比例不能超过 100"),
 });
 
 const createSiteSchema = z
   .object({
-    name: z.string().min(1, "請輸入站點名稱"),
+    name: z.string().min(1, "请输入站点名称"),
     customDomain: z.string().optional(),
     authorizationWalletId: z.number().optional(),
     systemFeeRate: z
       .number()
-      .min(0, "系統費率不能小於 0")
-      .max(100, "系統費率不能超過 100")
+      .min(0, "系统费率不能小于 0")
+      .max(100, "系统费率不能超过 100")
       .default(10.0),
     systemWallets: z
       .array(systemWalletSchema)
-      .min(1, "至少需要添加一個系統費錢包"),
+      .min(1, "至少需要添加一个系统费钱包"),
     adminUsername: z
       .string()
-      .min(3, "管理員帳號長度至少為 3 個字元")
-      .max(50, "管理員帳號長度不能超過 50 個字元"),
+      .min(3, "管理员帐号长度至少为 3 个字元")
+      .max(50, "管理员帐号长度不能超过 50 个字元"),
     adminPassword: z
       .string()
-      .min(6, "密碼長度至少為 6 個字元")
-      .max(100, "密碼長度不能超過 100 個字元"),
-    adminName: z.string().min(2, "管理員名稱長度至少為 2 個字元"),
+      .min(6, "密码长度至少为 6 个字元")
+      .max(100, "密码长度不能超过 100 个字元"),
+    adminName: z.string().min(2, "管理员名称长度至少为 2 个字元"),
   })
   .refine(
     (data) => {
@@ -66,7 +66,7 @@ const createSiteSchema = z
       return totalPercentage === 100;
     },
     {
-      message: "系統費錢包比例總和必須為 100%",
+      message: "系统费钱包比例总和必须为 100%",
       path: ["systemWallets"],
     }
   );
@@ -74,14 +74,14 @@ const createSiteSchema = z
 type CreateSiteFormData = z.infer<typeof createSiteSchema>;
 
 export default function CreateSitePage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "創建站點 - 平台管理後台";
+    document.title = "创建站点 - 平台管理后台";
   }, []);
 
   const { list } = useNavigation();
 
-  // 獲取系統錢包列表（用於授權錢包和系統費錢包）
+  // 获取系统钱包列表（用于授权钱包和系统费钱包）
   const walletsQuery = useList<SystemWallet>({
     resource: "system-wallets",
     filters: [],
@@ -89,13 +89,13 @@ export default function CreateSitePage() {
 
   const wallets = walletsQuery.result?.data || [];
 
-  // 獲取可用於授權的錢包（類型為 CONTRACT_EXECUTION）
+  // 获取可用于授权的钱包（类型为 CONTRACT_EXECUTION）
   const authorizationWallets = wallets.filter(
     (wallet: SystemWallet) =>
       wallet.type === SystemWalletType.CONTRACT_EXECUTION
   );
 
-  // 獲取可用於系統費的錢包（類型為 REVENUE_DISTRIBUTION）
+  // 获取可用于系统费的钱包（类型为 REVENUE_DISTRIBUTION）
   const systemFeeWallets = wallets.filter(
     (wallet: SystemWallet) =>
       wallet.type === SystemWalletType.REVENUE_DISTRIBUTION
@@ -130,13 +130,13 @@ export default function CreateSitePage() {
     },
   });
 
-  // 使用 useFieldArray 管理動態系統費錢包列表
+  // 使用 useFieldArray 管理动态系统费钱包列表
   const { fields, append, remove } = useFieldArray({
     control,
     name: "systemWallets",
   });
 
-  // 監聽系統費錢包列表以計算總比例
+  // 监听系统费钱包列表以计算总比例
   const systemWallets = watch("systemWallets");
   const totalPercentage = systemWallets.reduce(
     (sum: number, wallet: { percentage?: number }) =>
@@ -144,7 +144,7 @@ export default function CreateSitePage() {
     0
   );
 
-  // 添加系統費錢包
+  // 添加系统费钱包
   const handleAddSystemWallet = () => {
     const selectedWallet = systemFeeWallets[0];
     if (!selectedWallet) return;
@@ -157,15 +157,15 @@ export default function CreateSitePage() {
     });
   };
 
-  // 處理表單提交
+  // 处理表单提交
   const onSubmit = async (data: CreateSiteFormData) => {
-    // 構建創建租戶的數據
+    // 构建创建租户的数据
     const slug = data.name
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
 
-    // 從 systemWallets 中只提取 walletId 和 percentage（後端會自動填充 name 和 address）
+    // 从 systemWallets 中只提取 walletId 和 percentage（后端会自动填充 name 和 address）
     const systemWallets = data.systemWallets.map((wallet) => ({
       walletId: wallet.walletId,
       percentage: wallet.percentage,
@@ -177,11 +177,11 @@ export default function CreateSitePage() {
       customDomain: data.customDomain || undefined,
       systemWallets: systemWallets,
       systemFeeRate: data.systemFeeRate || 10.0,
-      // 管理員帳號資訊
+      // 管理员帐号资讯
       adminUsername: data.adminUsername,
       adminPassword: data.adminPassword,
       adminName: data.adminName,
-      // 如果選擇了授權錢包，設置到 cryptoConfig
+      // 如果选择了授权钱包，设置到 cryptoConfig
       ...(data.authorizationWalletId && {
         cryptoConfig: {
           executionWalletId: data.authorizationWalletId,
@@ -198,7 +198,7 @@ export default function CreateSitePage() {
 
   return (
     <CreateView>
-      <CreateViewHeader title="設置站點" />
+      <CreateViewHeader title="设置站点" />
 
       <Form
         {...({
@@ -212,53 +212,53 @@ export default function CreateSitePage() {
         <form onSubmit={handleSubmit(onSubmit) as any}>
           <Card>
             <CardHeader>
-              <CardTitle>站點資訊</CardTitle>
+              <CardTitle>站点资讯</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 站點名稱 */}
+              {/* 站点名称 */}
               <FormField
                 control={control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>站點名稱</FormLabel>
+                    <FormLabel>站点名称</FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入站點名稱" {...field} />
+                      <Input placeholder="请输入站点名称" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 站點域名 */}
+              {/* 站点域名 */}
               <FormField
                 control={control}
                 name="customDomain"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>站點域名</FormLabel>
+                    <FormLabel>站点域名</FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入站點域名" {...field} />
+                      <Input placeholder="请输入站点域名" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 系統費率 */}
+              {/* 系统费率 */}
               <FormField
                 control={control}
                 name="systemFeeRate"
                 render={({ field }: { field: any }) => (
                   <FormItem>
-                    <FormLabel>系統費率 (%)</FormLabel>
+                    <FormLabel>系统费率 (%)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min="0"
                         max="100"
                         step="0.1"
-                        placeholder="請輸入系統費率"
+                        placeholder="请输入系统费率"
                         {...field}
                         value={field.value || ""}
                         onChange={(e) =>
@@ -275,10 +275,10 @@ export default function CreateSitePage() {
             </CardContent>
           </Card>
 
-          {/* 授權錢包區域 */}
+          {/* 授权钱包区域 */}
           <Card>
             <CardHeader>
-              <CardTitle>授權錢包</CardTitle>
+              <CardTitle>授权钱包</CardTitle>
             </CardHeader>
             <CardContent>
               <FormField
@@ -286,7 +286,7 @@ export default function CreateSitePage() {
                 name="authorizationWalletId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>授權錢包</FormLabel>
+                    <FormLabel>授权钱包</FormLabel>
                     <Select
                       value={field.value?.toString() || undefined}
                       onValueChange={(value) =>
@@ -295,7 +295,7 @@ export default function CreateSitePage() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="請選擇錢包" />
+                          <SelectValue placeholder="请选择钱包" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -316,24 +316,24 @@ export default function CreateSitePage() {
             </CardContent>
           </Card>
 
-          {/* 系統費錢包區域 */}
+          {/* 系统费钱包区域 */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>系統費錢包</CardTitle>
+                <CardTitle>系统费钱包</CardTitle>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    // TODO: 等新增錢包頁面開發完成後，改為跳轉到新增錢包頁面
+                    // TODO: 等新增钱包页面开发完成后，改为跳转到新增钱包页面
                     // 例如: navigate("/wallets/create");
                     handleAddSystemWallet();
                   }}
                   disabled={systemFeeWallets.length === 0}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  新增錢包
+                  新增钱包
                 </Button>
               </div>
             </CardHeader>
@@ -353,7 +353,7 @@ export default function CreateSitePage() {
                 </div>
               )}
 
-              {/* 系統費錢包列表 */}
+              {/* 系统费钱包列表 */}
               <div className="space-y-4">
                 {fields.map((field, index: number) => {
                   return (
@@ -450,14 +450,14 @@ export default function CreateSitePage() {
 
                 {fields.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    尚未添加系統費錢包
+                    尚未添加系统费钱包
                   </p>
                 )}
 
-                {/* 總比例提示 */}
+                {/* 总比例提示 */}
                 {fields.length > 0 && (
                   <div className="flex items-center justify-between pt-2 border-t">
-                    <span className="text-sm font-medium">總比例：</span>
+                    <span className="text-sm font-medium">总比例：</span>
                     <span
                       className={`text-sm font-bold ${
                         totalPercentage === 100
@@ -470,51 +470,51 @@ export default function CreateSitePage() {
                   </div>
                 )}
 
-                {/* 顯示系統費錢包總體錯誤訊息 */}
+                {/* 显示系统费钱包总体错误讯息 */}
                 {errors.systemWallets && (
                   <p className="text-sm font-medium text-destructive">
                     {typeof errors.systemWallets === "object" &&
                     "message" in errors.systemWallets
                       ? String(errors.systemWallets.message)
-                      : "系統費錢包配置有誤"}
+                      : "系统费钱包配置有误"}
                   </p>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* 管理員帳號區域 */}
+          {/* 管理员帐号区域 */}
           <Card>
             <CardHeader>
-              <CardTitle>管理員帳號</CardTitle>
+              <CardTitle>管理员帐号</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 管理員帳號 */}
+              {/* 管理员帐号 */}
               <FormField
                 control={control}
                 name="adminUsername"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>管理員帳號</FormLabel>
+                    <FormLabel>管理员帐号</FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入管理員帳號" {...field} />
+                      <Input placeholder="请输入管理员帐号" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 管理員密碼 */}
+              {/* 管理员密码 */}
               <FormField
                 control={control}
                 name="adminPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>管理員密碼</FormLabel>
+                    <FormLabel>管理员密码</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="請輸入管理員密碼"
+                        placeholder="请输入管理员密码"
                         {...field}
                       />
                     </FormControl>
@@ -523,15 +523,15 @@ export default function CreateSitePage() {
                 )}
               />
 
-              {/* 管理員名稱 */}
+              {/* 管理员名称 */}
               <FormField
                 control={control}
                 name="adminName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>管理員名稱</FormLabel>
+                    <FormLabel>管理员名称</FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入管理員名稱" {...field} />
+                      <Input placeholder="请输入管理员名称" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -540,7 +540,7 @@ export default function CreateSitePage() {
             </CardContent>
           </Card>
 
-          {/* 操作按鈕 */}
+          {/* 操作按钮 */}
           <div className="flex justify-end gap-4 mt-6">
             <Button
               type="button"
@@ -551,7 +551,7 @@ export default function CreateSitePage() {
               取消
             </Button>
             <Button type="submit" disabled={formLoading}>
-              {formLoading ? "建立中..." : "完成"}
+              {formLoading ? "创建中..." : "完成"}
             </Button>
           </div>
         </form>

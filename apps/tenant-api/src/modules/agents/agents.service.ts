@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository, EntityManager } from '@mikro-orm/postgresql';
@@ -15,19 +16,31 @@ import {
   AgentCommission,
   AgentWallet,
   TenantConfig,
+  AgentCommissionSetting,
 } from '@saas-platform/database';
 import { PasswordService } from '@saas-platform/auth';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 
 /**
- * 代理服務
+ * 代理链节点（用于分润计算）
+ */
+export interface AgentChainNode {
+  agent: Agent;
+  allocatedRate: number;  // 被分配的全局比率
+  selfRate: number;       // 自己保留的比率（allocatedRate - 下级的 allocatedRate）
+}
+
+/**
+ * 代理服务
  *
- * 使用獨立的 Tenant DB，配置存放在 tenant_config 表（只有一筆記錄）
- * 因此不需要 tenantId 參數
+ * 使用独立的 Tenant DB，配置存放在 tenant_config 表（只有一笔记录）
+ * 因此不需要 tenantId 参数
  */
 @Injectable()
 export class AgentsService {
+  private readonly logger = new Logger(AgentsService.name);
+
   constructor(
     @InjectRepository(TenantUser)
     private readonly userRepository: EntityRepository<TenantUser>,
@@ -35,23 +48,25 @@ export class AgentsService {
     private readonly agentRepository: EntityRepository<Agent>,
     @InjectRepository(TenantConfig)
     private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
+    @InjectRepository(AgentCommissionSetting)
+    private readonly commissionSettingRepository: EntityRepository<AgentCommissionSetting>,
     private readonly em: EntityManager,
     private readonly passwordService: PasswordService,
   ) {}
 
   /**
-   * 獲取租戶配置（只有一筆）
+   * 获取租户配置（只有一笔）
    */
   private async getTenantConfig(): Promise<TenantConfig> {
     const config = await this.tenantConfigRepository.findOne({ id: 1 });
     if (!config) {
-      throw new NotFoundException('租戶配置不存在，請先初始化');
+      throw new NotFoundException('租户配置不存在，请先初始化');
     }
     return config;
   }
 
   /**
-   * 獲取代理列表（排除站長，只顯示 level > 0 的代理）
+   * 获取代理列表（排除站长，只显示 level > 0 的代理）
    */
   async getAgents(): Promise<Agent[]> {
     return this.agentRepository.find(
@@ -64,7 +79,7 @@ export class AgentsService {
   }
 
   /**
-   * 獲取單個代理
+   * 获取单个代理
    */
   async getAgent(agentId: number): Promise<Agent> {
     const agent = await this.agentRepository.findOne(
@@ -80,11 +95,71 @@ export class AgentsService {
   }
 
   /**
-   * 獲取指定代理的下級代理列表（支援層級查詢）
-   * 使用 path 字段進行高效查詢：查找所有 path 以 "root/{agentId}" 開頭的代理
+   * 获取代理被分配的全局比率
+   */
+  async getAgentAllocatedRate(agentId: number): Promise<number> {
+    const setting = await this.commissionSettingRepository.findOne({
+      childAgent: agentId,
+    });
+
+    if (!setting) {
+      // 如果没有找到，可能是站长（顶级代理）
+      const agent = await this.agentRepository.findOne({ id: agentId });
+      if (agent && agent.level === 0) {
+        // 站长的比率是自动计算的（100% - systemFeeRate）
+        const config = await this.getTenantConfig();
+        return 100 - config.systemFeeRate;
+      }
+      throw new NotFoundException('找不到代理的分配比率设置');
+    }
+
+    return Number(setting.allocatedRate);
+  }
+
+  /**
+   * 获取代理链及其分配比率（从最底层到最顶层）
+   * 用于分润计算
+   */
+  async getAgentChainWithRates(startAgent: Agent): Promise<AgentChainNode[]> {
+    const chain: AgentChainNode[] = [];
+    let currentAgent: Agent | null = startAgent;
+    let previousAllocatedRate = 0;
+
+    // 预加载代理关系
+    await this.em.populate(startAgent, ['parentAgent']);
+
+    while (currentAgent) {
+      // 获取当前代理被分配的比率
+      const allocatedRate = await this.getAgentAllocatedRate(currentAgent.id);
+
+      // 计算 selfRate（自己保留的比率）
+      // selfRate = 自己的 allocatedRate - 下级的 allocatedRate
+      const selfRate = allocatedRate - previousAllocatedRate;
+
+      chain.push({
+        agent: currentAgent,
+        allocatedRate,
+        selfRate,
+      });
+
+      previousAllocatedRate = allocatedRate;
+
+      // 移动到上级代理
+      if (currentAgent.parentAgent) {
+        await this.em.populate(currentAgent, ['parentAgent']);
+        currentAgent = currentAgent.parentAgent;
+      } else {
+        currentAgent = null;
+      }
+    }
+
+    return chain;
+  }
+
+  /**
+   * 获取指定代理的下级代理列表
    */
   async getSubAgents(agentId: number): Promise<Agent[]> {
-    // 先獲取當前代理，確認其存在
     const currentAgent = await this.agentRepository.findOne(
       { id: agentId },
       { populate: ['user', 'parentAgent'] },
@@ -94,7 +169,6 @@ export class AgentsService {
       throw new NotFoundException('代理不存在');
     }
 
-    // 查詢直接下級（parentAgent = currentAgent）
     const subAgents = await this.agentRepository.find(
       { parentAgent: agentId },
       {
@@ -107,64 +181,66 @@ export class AgentsService {
   }
 
   /**
-   * 創建代理
-   * 1. 創建 TenantUser（role = AGENT）
-   * 2. 創建 Agent
-   * 3. 計算 level 和 path
-   * 4. 設定分潤比率和錢包
+   * 创建代理
+   * 1. 创建 TenantUser（role = AGENT）
+   * 2. 创建 Agent
+   * 3. 创建 AgentCommissionSetting
+   * 4. 计算 level 和 path
    */
   async createAgent(dto: CreateAgentDto): Promise<Agent> {
     const config = await this.getTenantConfig();
 
-    // 驗證上級比率範圍
-    const uplineRate = dto.uplineRate;
-    if (uplineRate < 0 || uplineRate > 100) {
-      throw new BadRequestException('上級比率必須在 0% 到 100% 之間');
+    // 验证分配比率范围
+    const allocatedRate = dto.allocatedRate;
+    if (allocatedRate <= 0 || allocatedRate > 100) {
+      throw new BadRequestException('分配比率必须在 0% 到 100% 之间');
     }
 
-    // 自動計算自己保留比率：selfRate = 100 - uplineRate
-    const selfRate = 100 - uplineRate;
-
-    // 檢查 username 是否已存在
+    // 检查 username 是否已存在
     const existingUser = await this.userRepository.findOne({
       username: dto.username,
     });
     if (existingUser) {
-      throw new ConflictException('該帳號已存在');
+      throw new ConflictException('该账号已存在');
     }
 
-    // 檢查 email 是否已存在（只有當 email 有值時才檢查）
+    // 检查 email 是否已存在
     if (dto.email) {
       const existingEmail = await this.userRepository.findOne({
         email: dto.email,
       });
       if (existingEmail) {
-        throw new ConflictException('該 Email 已存在');
+        throw new ConflictException('该 Email 已存在');
       }
     }
 
-    // 自動生成唯一的代理碼（邀請碼）
+    // 自动生成唯一的代理码
     const agentCode = await this.generateUniqueAgentCode();
 
-    // 獲取上級代理
+    // 获取上级代理
     let parentAgent: Agent | null = null;
     let level = 0;
     let path = 'root';
+    let maxAllocatedRate: number;
 
     if (dto.parentAgentId !== undefined) {
-      // 如果提供了上級代理 ID，使用指定的上級
+      // 使用指定的上级
       parentAgent = await this.agentRepository.findOne({
         id: dto.parentAgentId,
       });
 
       if (!parentAgent) {
-        throw new NotFoundException('上級代理不存在');
+        throw new NotFoundException('上级代理不存在');
       }
+
+      // 获取上级代理被分配的比率
+      const parentAllocatedRate = await this.getAgentAllocatedRate(parentAgent.id);
+      maxAllocatedRate = parentAllocatedRate;
 
       level = parentAgent.level + 1;
       path = `${parentAgent.path}/${parentAgent.id}`;
     } else {
-      // 如果沒有提供上級代理 ID，預設上級為站長（頂級代理，level = 0, parentAgent = null）
+      // 预设上级为站长
       parentAgent = await this.agentRepository.findOne(
         {
           level: 0,
@@ -175,34 +251,37 @@ export class AgentsService {
 
       if (!parentAgent) {
         throw new NotFoundException(
-          '找不到站長的代理記錄。請先為站長創建代理記錄。',
+          '找不到站长的代理记录。请先为站长创建代理记录。',
         );
       }
+
+      // 站长分配给下级，最大比率 = 100% - 系统费率
+      maxAllocatedRate = 100 - config.systemFeeRate;
 
       level = parentAgent.level + 1;
       path = `${parentAgent.path}/${parentAgent.id}`;
     }
 
-    // 獲取租戶的代理佣金率（baseRate）
-    const baseRate = config.cryptoConfig.agentCommissionRate || 30.0;
+    // 验证分配比率不超过上级的可分配额度
+    if (allocatedRate > maxAllocatedRate) {
+      throw new BadRequestException(
+        `分配比率不能超过 ${maxAllocatedRate}%（上级的可分配额度）`,
+      );
+    }
 
-    // 創建 TenantUser
+    // 创建 TenantUser
     const hashedPassword = await this.passwordService.hashPassword(dto.password);
     const user = this.userRepository.create({
       username: dto.username,
-      email: dto.email, // email 是可選的，可以是 undefined
+      email: dto.email,
       password: hashedPassword,
       name: dto.name,
       role: UserRole.AGENT,
       status: UserStatus.ACTIVE,
-      // 在獨立的 Tenant DB 中，不需要設定 tenant 關聯
     });
 
-    // 創建 Agent
+    // 创建 Agent
     const commission: AgentCommission = {
-      baseRate,
-      selfRate: selfRate,
-      uplineRate: uplineRate,
       isEnabled: true,
     };
 
@@ -214,7 +293,6 @@ export class AgentsService {
     };
 
     const agent = this.agentRepository.create({
-      // 在獨立的 Tenant DB 中，不需要設定 tenant 關聯
       user,
       name: dto.name,
       code: agentCode,
@@ -227,13 +305,24 @@ export class AgentsService {
       notes: dto.notes,
     });
 
-    // 如果創建的是下級代理，更新上級代理的統計
+    // 创建 AgentCommissionSetting
+    const commissionSetting = this.commissionSettingRepository.create({
+      parentAgent: parentAgent.level === 0 ? undefined : parentAgent,  // 站长时 parentAgent 为 null
+      childAgent: agent,
+      allocatedRate,
+    });
+
+    // 更新上级代理的统计
     if (parentAgent) {
       parentAgent.stats.directSubAgents += 1;
       parentAgent.stats.totalSubAgents += 1;
     }
 
     await this.em.flush();
+
+    this.logger.log(
+      `创建代理成功: ${agent.name} (${agent.code}), 分配比率: ${allocatedRate}%`,
+    );
 
     return agent;
   }
@@ -251,7 +340,7 @@ export class AgentsService {
       throw new NotFoundException('代理不存在');
     }
 
-    // 更新基本資訊
+    // 更新基本信息
     if (dto.name !== undefined) {
       agent.name = dto.name;
       if (agent.user) {
@@ -259,21 +348,50 @@ export class AgentsService {
       }
     }
 
-    // 更新分潤比率
-    if (dto.uplineRate !== undefined) {
-      // 驗證上級比率範圍
-      if (dto.uplineRate < 0 || dto.uplineRate > 100) {
-        throw new BadRequestException('上級比率必須在 0% 到 100% 之間');
+    // 更新分配比率
+    if (dto.allocatedRate !== undefined) {
+      const config = await this.getTenantConfig();
+
+      // 获取上级代理的可分配额度
+      let maxAllocatedRate: number;
+      if (agent.parentAgent) {
+        const parentAllocatedRate = await this.getAgentAllocatedRate(agent.parentAgent.id);
+        maxAllocatedRate = parentAllocatedRate;
+      } else {
+        // 直属站长
+        maxAllocatedRate = 100 - config.systemFeeRate;
       }
 
-      // 自動計算自己保留比率：selfRate = 100 - uplineRate
-      const selfRate = 100 - dto.uplineRate;
+      if (dto.allocatedRate > maxAllocatedRate) {
+        throw new BadRequestException(
+          `分配比率不能超过 ${maxAllocatedRate}%（上级的可分配额度）`,
+        );
+      }
 
-      agent.commission.selfRate = selfRate;
-      agent.commission.uplineRate = dto.uplineRate;
+      // 检查是否有下级代理，确保新比率不低于下级的比率
+      const subAgentSettings = await this.commissionSettingRepository.find({
+        parentAgent: agentId,
+      });
+
+      for (const subSetting of subAgentSettings) {
+        if (dto.allocatedRate < Number(subSetting.allocatedRate)) {
+          throw new BadRequestException(
+            `分配比率不能低于下级代理的比率 ${subSetting.allocatedRate}%`,
+          );
+        }
+      }
+
+      // 更新 AgentCommissionSetting
+      const setting = await this.commissionSettingRepository.findOne({
+        childAgent: agentId,
+      });
+
+      if (setting) {
+        setting.allocatedRate = dto.allocatedRate;
+      }
     }
 
-    // 更新錢包地址
+    // 更新钱包地址
     if (dto.walletAddress !== undefined) {
       if (!agent.wallet) {
         agent.wallet = {
@@ -283,7 +401,6 @@ export class AgentsService {
           totalPaidAmount: 0,
         };
       } else {
-        // 如果地址改變，重置驗證狀態
         if (agent.wallet.address !== dto.walletAddress) {
           agent.wallet.address = dto.walletAddress;
           agent.wallet.verified = false;
@@ -293,7 +410,7 @@ export class AgentsService {
       }
     }
 
-    // 更新狀態
+    // 更新状态
     if (dto.isActive !== undefined) {
       agent.status = dto.isActive ? AgentStatus.ACTIVE : AgentStatus.INACTIVE;
       if (agent.user) {
@@ -301,7 +418,7 @@ export class AgentsService {
       }
     }
 
-    // 更新備註
+    // 更新备注
     if (dto.notes !== undefined) {
       agent.notes = dto.notes;
     }
@@ -312,7 +429,7 @@ export class AgentsService {
   }
 
   /**
-   * 刪除代理（軟刪除）
+   * 删除代理（软删除）
    */
   async deleteAgent(agentId: number): Promise<void> {
     const agent = await this.agentRepository.findOne(
@@ -324,22 +441,22 @@ export class AgentsService {
       throw new NotFoundException('代理不存在');
     }
 
-    // 檢查是否有下級代理
+    // 检查是否有下级代理
     const subAgents = await this.agentRepository.find({ parentAgent: agentId });
 
     if (subAgents.length > 0) {
       throw new BadRequestException(
-        '無法刪除該代理，因為存在下級代理。請先處理下級代理。',
+        '无法删除该代理，因为存在下级代理。请先处理下级代理。',
       );
     }
 
-    // 軟刪除：停用代理和用戶
+    // 软删除：停用代理和用户
     agent.status = AgentStatus.INACTIVE;
     if (agent.user) {
       agent.user.status = UserStatus.INACTIVE;
     }
 
-    // 更新上級代理的統計
+    // 更新上级代理的统计
     if (agent.parentAgent) {
       const parentAgent = await this.agentRepository.findOne({
         id: agent.parentAgent.id,
@@ -360,7 +477,7 @@ export class AgentsService {
   }
 
   /**
-   * 生成唯一的代理碼
+   * 生成唯一的代理码
    */
   private async generateUniqueAgentCode(): Promise<string> {
     let code: string;
@@ -369,7 +486,6 @@ export class AgentsService {
     const maxAttempts = 100;
 
     while (!isUnique && attempts < maxAttempts) {
-      // 生成 6 位隨機碼
       const randomNum = Math.floor(Math.random() * 1000000);
       code = `AG${randomNum.toString().padStart(6, '0')}`;
 
@@ -383,7 +499,7 @@ export class AgentsService {
     }
 
     if (!isUnique) {
-      throw new Error('無法生成唯一的代理碼，請手動指定');
+      throw new Error('无法生成唯一的代理码，请手动指定');
     }
 
     return code!;

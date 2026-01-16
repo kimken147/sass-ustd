@@ -23,7 +23,7 @@ export default function RedirectClient() {
     }
 
     if (!wallet) {
-      setError('缺少錢包參數');
+      setError('缺少钱包参数');
       return;
     }
 
@@ -32,7 +32,7 @@ export default function RedirectClient() {
     const deeplinkUrl = buildWalletDeeplink(wallet, targetUrl);
 
     if (!deeplinkUrl) {
-      setError('不支援的錢包類型');
+      setError('不支持的钱包类型');
       return;
     }
 
@@ -69,13 +69,13 @@ export default function RedirectClient() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <LoadingSpinner size="lg" className="mx-auto mb-4" />
-        <p className="text-gray-600 mb-4">正在打開錢包...</p>
+        <p className="text-gray-600 mb-4">正在打开钱包...</p>
         {showManualButton && (
           <button
             onClick={handleManualOpen}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            手動打開錢包
+            手动打开钱包
           </button>
         )}
       </div>

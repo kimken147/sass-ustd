@@ -30,46 +30,46 @@ interface Agent {
   level: number;
 }
 
-// Zod 驗證 schema
+// Zod 验证 schema
 const agentFormSchema = z.object({
   name: z
     .string()
-    .min(1, "請輸入代理名稱")
-    .min(2, "代理名稱至少需要 2 個字符"),
+    .min(1, "请输入代理名称")
+    .min(2, "代理名称至少需要 2 个字符"),
   username: z
     .string()
-    .min(1, "請輸入帳號")
-    .min(3, "帳號至少需要 3 個字符"),
+    .min(1, "请输入账号")
+    .min(3, "账号至少需要 3 个字符"),
   email: z
     .string()
-    .email("請輸入有效的 Email 格式")
+    .email("请输入有效的 Email 格式")
     .optional()
     .or(z.literal("")),
   password: z
     .string()
-    .min(1, "請輸入密碼")
-    .min(6, "密碼至少需要 6 個字符"),
+    .min(1, "请输入密码")
+    .min(6, "密码至少需要 6 个字符"),
   parentAgentId: z.string().optional(),
   uplineRate: z
     .number()
-    .min(0, "分潤比例不能小於 0")
-    .max(100, "分潤比例不能超過 100"),
+    .min(0, "分润比例不能小于 0")
+    .max(100, "分润比例不能超过 100"),
   walletAddress: z
     .string()
-    .min(1, "請輸入錢包地址")
-    .min(34, "錢包地址長度至少需要 34 個字符")
+    .min(1, "请输入钱包地址")
+    .min(34, "钱包地址长度至少需要 34 个字符")
     .regex(
       /^T[A-Za-z0-9]{33}$/,
-      "請輸入有效的 TRON 錢包地址（以 T 開頭，共 34 個字符）"
+      "请输入有效的 TRON 钱包地址（以 T 开头，共 34 个字符）"
     ),
 });
 
 type AgentFormData = z.infer<typeof agentFormSchema>;
 
 export default function CreateAgentPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "創建代理 - 租戶管理後台";
+    document.title = "创建代理 - 租户管理后台";
   }, []);
 
   const { list } = useNavigation();
@@ -77,7 +77,7 @@ export default function CreateAgentPage() {
   const { mutate: createAgent, mutation } = createMutation;
   const isCreating = mutation.isPending || false;
 
-  // 獲取代理列表（用於選擇上級代理）
+  // 获取代理列表（用于选择上级代理）
   const agentsQuery = useList<Agent>({
     resource: "agents",
     filters: [],
@@ -85,7 +85,7 @@ export default function CreateAgentPage() {
 
   const agents = agentsQuery.result?.data || [];
 
-  // 使用 Refine 的 useForm hook 進行表單管理
+  // 使用 Refine 的 useForm hook 进行表单管理
   const form = useForm<AgentFormData>({
     resolver: zodResolver(agentFormSchema) as any,
     defaultValues: {
@@ -101,9 +101,9 @@ export default function CreateAgentPage() {
 
   const { control, handleSubmit } = form;
 
-  // 提交表單
+  // 提交表单
   const onSubmit = (data: AgentFormData) => {
-    // 構建創建代理的數據
+    // 构建创建代理的数据
     const createData: any = {
       name: data.name,
       username: data.username,
@@ -112,12 +112,12 @@ export default function CreateAgentPage() {
       walletAddress: data.walletAddress,
     };
 
-    // 只有當 email 有值時才添加
+    // 只有当 email 有值时才添加
     if (data.email) {
       createData.email = data.email;
     }
 
-    // 只有當選擇了上級代理時才添加
+    // 只有当选择了上级代理时才添加
     if (data.parentAgentId && data.parentAgentId !== "none") {
       createData.parentAgentId = parseInt(data.parentAgentId);
     }
@@ -132,11 +132,11 @@ export default function CreateAgentPage() {
           list("agents");
         },
         onError: (error: any) => {
-          console.error("創建代理失敗:", error);
+          console.error("创建代理失败:", error);
           alert(
             error?.response?.data?.message ||
               error?.message ||
-              "創建代理失敗"
+              "创建代理失败"
           );
         },
       }
@@ -155,34 +155,34 @@ export default function CreateAgentPage() {
         <form onSubmit={handleSubmit(onSubmit as any) as any}>
           <Card>
             <CardContent className="space-y-4 pt-6">
-              {/* 代理名稱 */}
+              {/* 代理名称 */}
               <FormField
                 control={control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      代理名稱 <span className="text-destructive">*</span>
+                      代理名称 <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入代理名稱" {...field} />
+                      <Input placeholder="请输入代理名称" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 帳號 */}
+              {/* 账号 */}
               <FormField
                 control={control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      帳號 <span className="text-destructive">*</span>
+                      账号 <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入帳號" {...field} />
+                      <Input placeholder="请输入账号" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,7 +199,7 @@ export default function CreateAgentPage() {
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="請輸入 Email（選填）"
+                        placeholder="请输入 Email（选填）"
                         {...field}
                       />
                     </FormControl>
@@ -208,19 +208,19 @@ export default function CreateAgentPage() {
                 )}
               />
 
-              {/* 密碼 */}
+              {/* 密码 */}
               <FormField
                 control={control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      密碼 <span className="text-destructive">*</span>
+                      密码 <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="請輸入密碼"
+                        placeholder="请输入密码"
                         {...field}
                       />
                     </FormControl>
@@ -229,7 +229,7 @@ export default function CreateAgentPage() {
                 )}
               />
 
-              {/* 地址（錢包地址） */}
+              {/* 地址（钱包地址） */}
               <FormField
                 control={control}
                 name="walletAddress"
@@ -240,7 +240,7 @@ export default function CreateAgentPage() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="請輸入 TRON 錢包地址（以 T 開頭）"
+                        placeholder="请输入 TRON 钱包地址（以 T 开头）"
                         {...field}
                       />
                     </FormControl>
@@ -249,32 +249,32 @@ export default function CreateAgentPage() {
                 )}
               />
 
-              {/* 上級代理 */}
+              {/* 上级代理 */}
               <FormField
                 control={control}
                 name="parentAgentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>上級代理</FormLabel>
+                    <FormLabel>上级代理</FormLabel>
                     <Select
                       value={field.value || "none"}
                       onValueChange={field.onChange}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="請選擇上級代理" />
+                          <SelectValue placeholder="请选择上级代理" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="none">
-                          無（預設上級為站長）
+                          无（预设上级为站长）
                         </SelectItem>
                         {agents.map((agent: Agent) => (
                           <SelectItem
                             key={agent.id}
                             value={agent.id.toString()}
                           >
-                            {agent.name} (層級: {agent.level})
+                            {agent.name} (层级: {agent.level})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -284,14 +284,14 @@ export default function CreateAgentPage() {
                 )}
               />
 
-              {/* 分潤（上級比率） */}
+              {/* 分润（上级比率） */}
               <FormField
                 control={control}
                 name="uplineRate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      分潤 <span className="text-destructive">*</span>
+                      分润 <span className="text-destructive">*</span>
                     </FormLabel>
                     <div className="flex items-center gap-2">
                       <FormControl>
@@ -300,7 +300,7 @@ export default function CreateAgentPage() {
                           min="0"
                           max="100"
                           step="0.01"
-                          placeholder="請輸入比例"
+                          placeholder="请输入比例"
                           {...field}
                           value={field.value || ""}
                           onChange={(e) =>
@@ -313,7 +313,7 @@ export default function CreateAgentPage() {
                       </FormControl>
                       <span className="text-muted-foreground">%</span>
                     </div>
-                    <FormDescription>分潤比例範圍：0 - 100</FormDescription>
+                    <FormDescription>分润比例范围：0 - 100</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -321,7 +321,7 @@ export default function CreateAgentPage() {
             </CardContent>
           </Card>
 
-          {/* 操作按鈕 */}
+          {/* 操作按钮 */}
           <div className="flex justify-end gap-4 mt-6">
             <Button
               type="button"

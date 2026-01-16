@@ -23,16 +23,16 @@ export function SuccessPage(_props: TenantPageProps) {
         </div>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          授權成功！
+          授权成功！
         </h1>
 
         <p className="text-gray-600 mb-8">
-          您的投資帳戶已成功註冊，現在可以開始投資了。
+          您的投资账户已成功注册，现在可以开始投资了。
         </p>
 
         <div className="bg-gray-50 rounded-lg p-4">
           <p className="text-sm text-gray-600">
-            請返回您的投資平台繼續操作
+            请返回您的投资平台继续操作
           </p>
         </div>
       </div>

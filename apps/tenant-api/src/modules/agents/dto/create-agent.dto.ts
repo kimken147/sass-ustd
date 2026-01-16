@@ -57,16 +57,15 @@ export class CreateAgentDto {
   parentAgentId?: number;
 
   @ApiProperty({
-    description:
-      "給上級的佣金比率 (%)，自己保留比率將自動計算為 100% - 上級比率",
-    example: 40,
+    description: "分配给该代理的全局比率 (%)，相对于总投资金额",
+    example: 70,
     minimum: 0,
     maximum: 100,
   })
-  @IsNumber({}, { message: "上級比率必須是數字" })
-  @Min(0, { message: "上級比率不能小於 0" })
-  @Max(100, { message: "上級比率不能大於 100" })
-  uplineRate!: number;
+  @IsNumber({}, { message: "分配比率必须是数字" })
+  @Min(0, { message: "分配比率不能小于 0" })
+  @Max(100, { message: "分配比率不能大于 100" })
+  allocatedRate!: number;
 
   @ApiProperty({
     description: "TRON 錢包地址",

@@ -9,6 +9,7 @@ export * from './user-tenant.entity'; // TenantUser (Tenant DB)
 export * from './user.entity'; // 保留舊的 User entity 以向後兼容（已棄用，請使用 PlatformUser 或 TenantUser）
 
 export * from './agent.entity';
+export * from './agent-commission-setting.entity';
 export * from './customer.entity';
 export * from './commission-payout.entity';
 export * from './revenue-distribution.entity';

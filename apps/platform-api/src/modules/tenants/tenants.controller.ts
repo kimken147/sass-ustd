@@ -83,6 +83,7 @@ export class TenantsController {
     type: TenantResponseDto,
   })
   @ApiResponse({ status: 404, description: "租戶不存在" })
+  @Public()
   async findBySlug(@Param("slug") slug: string): Promise<TenantResponseDto> {
     return this.tenantsService.findBySlug(slug);
   }

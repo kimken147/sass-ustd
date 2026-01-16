@@ -42,7 +42,7 @@ export interface RegisterCustomerResponse {
 
 export async function registerCustomer(params: RegisterCustomerParams): Promise<RegisterCustomerResponse> {
   try {
-    const response = await fetch(`${TENANT_API_URL}/contracts/execute`, {
+    const response = await fetch(`${TENANT_API_URL}/api/contracts/execute`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),

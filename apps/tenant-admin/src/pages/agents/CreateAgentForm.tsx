@@ -40,25 +40,25 @@ export default function CreateAgentForm({
   const isCreating = mutation.isPending || false;
 
   const handleSubmit = () => {
-    // 驗證必填字段
+    // 验证必填字段
     if (!formData.name || !formData.username || !formData.walletAddress) {
-      alert("請填寫所有必填字段");
+      alert("请填写所有必填字段");
       return;
     }
 
     if (!formData.email || !formData.password) {
-      alert("新增代理需要填寫 Email 和密碼");
+      alert("新增代理需要填写 Email 和密码");
       return;
     }
 
     if (!formData.uplineRate) {
-      alert("請填寫上級比率");
+      alert("请填写上级比率");
       return;
     }
 
     const uplineRate = parseFloat(formData.uplineRate);
     if (isNaN(uplineRate) || uplineRate < 0 || uplineRate > 100) {
-      alert("上級比率必須在 0-100 之間");
+      alert("上级比率必须在 0-100 之间");
       return;
     }
 
@@ -78,7 +78,7 @@ export default function CreateAgentForm({
       },
       {
         onSuccess: () => {
-          // 重置表單
+          // 重置表单
           setFormData({
             name: "",
             username: "",
@@ -93,10 +93,10 @@ export default function CreateAgentForm({
         },
         onError: (error: any) => {
           alert(
-            `創建失敗：${
+            `创建失败：${
               error?.response?.data?.message ||
               error?.message ||
-              "未知錯誤"
+              "未知错误"
             }`
           );
         },
@@ -112,9 +112,9 @@ export default function CreateAgentForm({
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">代理名稱 *</label>
+            <label className="text-sm font-medium">代理名称 *</label>
             <Input
-              placeholder="請輸入代理名稱"
+              placeholder="请输入代理名称"
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
@@ -122,9 +122,9 @@ export default function CreateAgentForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">帳號 *</label>
+            <label className="text-sm font-medium">账号 *</label>
             <Input
-              placeholder="請輸入帳號"
+              placeholder="请输入账号"
               value={formData.username}
               onChange={(e) =>
                 setFormData({ ...formData, username: e.target.value })
@@ -135,7 +135,7 @@ export default function CreateAgentForm({
             <label className="text-sm font-medium">Email *</label>
             <Input
               type="email"
-              placeholder="請輸入 Email"
+              placeholder="请输入 Email"
               value={formData.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -143,10 +143,10 @@ export default function CreateAgentForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">密碼 *</label>
+            <label className="text-sm font-medium">密码 *</label>
             <Input
               type="password"
-              placeholder="請輸入密碼"
+              placeholder="请输入密码"
               value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
@@ -154,10 +154,10 @@ export default function CreateAgentForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">上級代理 ID（選填）</label>
+            <label className="text-sm font-medium">上级代理 ID（选填）</label>
             <Input
               type="number"
-              placeholder="留空則預設上級為站長"
+              placeholder="留空则预设上级为站长"
               value={formData.parentAgentId || ""}
               onChange={(e) =>
                 setFormData({
@@ -170,12 +170,12 @@ export default function CreateAgentForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">上級比率% *</label>
+            <label className="text-sm font-medium">上级比率% *</label>
             <Input
               type="number"
               min="0"
               max="100"
-              placeholder="請輸入上級比率（0-100）"
+              placeholder="请输入上级比率（0-100）"
               value={formData.uplineRate}
               onChange={(e) =>
                 setFormData({ ...formData, uplineRate: e.target.value })
@@ -183,9 +183,9 @@ export default function CreateAgentForm({
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium">錢包地址 *</label>
+            <label className="text-sm font-medium">钱包地址 *</label>
             <Input
-              placeholder="請輸入 TRON 錢包地址"
+              placeholder="请输入 TRON 钱包地址"
               value={formData.walletAddress}
               onChange={(e) =>
                 setFormData({
@@ -196,9 +196,9 @@ export default function CreateAgentForm({
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-medium">備註</label>
+            <label className="text-sm font-medium">备注</label>
             <Input
-              placeholder="請輸入備註（選填）"
+              placeholder="请输入备注（选填）"
               value={formData.notes}
               onChange={(e) =>
                 setFormData({ ...formData, notes: e.target.value })
@@ -207,7 +207,7 @@ export default function CreateAgentForm({
           </div>
           <div className="flex items-end gap-2 md:col-span-2">
             <Button onClick={handleSubmit} disabled={isCreating}>
-              {isCreating ? "處理中..." : "確定"}
+              {isCreating ? "处理中..." : "确定"}
             </Button>
             <Button variant="outline" onClick={onCancel}>
               取消

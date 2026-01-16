@@ -1,7 +1,7 @@
 import { DataProvider, type HttpError } from "@refinedev/core";
 import { getTenantApiClient } from "@saas-platform/api-client";
 
-// 自定義 HttpError 類，符合 @refinedev/core 的 HttpError 接口
+// 自定义 HttpError 类，符合 @refinedev/core 的 HttpError 接口
 class HttpErrorImpl extends Error implements HttpError {
   statusCode: number;
   errors?: Record<string, any>;
@@ -24,7 +24,7 @@ export const dataProvider: DataProvider = {
     const { currentPage = 1, pageSize = 10 } = pagination ?? {};
 
     try {
-      // 構建查詢參數
+      // 构建查询参数
       const params: Record<string, any> = {
         page: currentPage,
         limit: pageSize,
@@ -36,11 +36,11 @@ export const dataProvider: DataProvider = {
         params.sort = `${sorter.field}:${sorter.order}`;
       }
 
-      // 添加篩選（同時處理分頁和日期篩選）
+      // 添加筛选（同时处理分页和日期筛选）
       if (filters && filters.length > 0) {
         filters.forEach((filter) => {
           if ("field" in filter && "value" in filter) {
-            // 特殊處理分頁參數：如果 filters 中有 page 或 limit，覆蓋默認值
+            // 特殊处理分页参数：如果 filters 中有 page 或 limit，覆盖默认值
             if (filter.field === "page" || filter.field === "limit") {
               params[filter.field] = filter.value;
             } else {
@@ -57,10 +57,10 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
-      // 有些 endpoints 會直接回傳陣列
+      // 有些 endpoints 会直接回传阵列
       if (Array.isArray(responseData)) {
         return {
           data: responseData,
@@ -68,19 +68,19 @@ export const dataProvider: DataProvider = {
         };
       }
 
-      // 特殊處理 customers 資源：它返回 { customers, total, stats, ... } 格式
+      // 特殊处理 customers 资源：它返回 { customers, total, stats, ... } 格式
       if (resource === "customers" && responseData.customers) {
         return {
           data: responseData.customers,
           total: responseData.total || 0,
-          // 保留額外的 stats 信息在 meta 中
+          // 保留额外的 stats 信息在 meta 中
           meta: {
             stats: responseData.stats,
           },
         };
       }
 
-      // 標準格式：{ data: [...], total: ... } 或直接是數組
+      // 标准格式：{ data: [...], total: ... } 或直接是数组
       return {
         data: responseData.data || responseData.items || responseData,
         total: responseData.total || responseData.count || 0,
@@ -103,7 +103,7 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
       return {
@@ -128,7 +128,7 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
       return {
@@ -153,7 +153,7 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
       return {

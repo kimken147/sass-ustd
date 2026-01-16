@@ -10,15 +10,16 @@ export default async function TenantLayout({
 }) {
   const headersList = await headers();
   const configStr = headersList.get('x-tenant-config');
+  const slug = headersList.get('x-tenant-slug');
 
-  if (!configStr) {
+  if (!configStr || !slug) {
     notFound();
   }
 
   const tenantConfig: TenantConfig = JSON.parse(configStr);
 
   return (
-    <TenantProvider config={tenantConfig}>
+    <TenantProvider slug={slug} config={tenantConfig}>
       {children}
     </TenantProvider>
   );

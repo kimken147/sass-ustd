@@ -16,18 +16,18 @@ import {
 } from "@saas-platform/utils";
 
 export default function CommissionPayoutPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "代理分潤列表 - 租戶管理後台";
+    document.title = "代理分润列表 - 租户管理后台";
   }, []);
 
-  // 篩選器狀態
+  // 筛选器状态
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 構建 Refine 篩選參數
+  // 构建 Refine 筛选参数
   const filters = useMemo(() => {
     const filterArray: CrudFilter[] = [];
 
@@ -63,13 +63,13 @@ export default function CommissionPayoutPage() {
     return filterArray;
   }, [startDate, endDate, page, limit]);
 
-  // 使用 useList hook 獲取代理分潤列表（使用官方 Refine hooks）
-  // 注意：resource 直接使用嵌合路徑 "transactions/commission-payouts"
+  // 使用 useList hook 获取代理分润列表（使用官方 Refine hooks）
+  // 注意：resource 直接使用嵌合路径 "transactions/commission-payouts"
   const payoutQuery = useList<CommissionPayoutItem>({
     resource: "transactions/commission-payouts",
     filters,
     pagination: {
-      mode: "off" as const, // 關閉 Refine 的分頁，使用手動管理（因為需要保留完整的 pagination 信息）
+      mode: "off" as const, // 关闭 Refine 的分页，使用手动管理（因为需要保留完整的 pagination 信息）
     },
   });
 
@@ -77,8 +77,8 @@ export default function CommissionPayoutPage() {
     payoutQuery.query.refetch();
   };
 
-  // 轉換數據格式：useList 返回 { data: CommissionPayoutItem[], total: number }
-  // 但我們需要 { items, total, page, limit, totalPages } 格式
+  // 转换数据格式：useList 返回 { data: CommissionPayoutItem[], total: number }
+  // 但我们需要 { items, total, page, limit, totalPages } 格式
   const payoutData = useMemo(() => {
     const data = payoutQuery.result?.data || [];
     const total = payoutQuery.result?.total || 0;
@@ -96,14 +96,14 @@ export default function CommissionPayoutPage() {
   const isError = payoutQuery.query.isError;
   const error = payoutQuery.query.error;
 
-  // 狀態映射
+  // 状态映射
   const statusMap: Record<string, { label: string; className: string }> = {
     [CommissionPayoutStatus.PENDING]: {
-      label: "待處理",
+      label: "待处理",
       className: "bg-yellow-100 text-yellow-800",
     },
     [CommissionPayoutStatus.PROCESSING]: {
-      label: "處理中",
+      label: "处理中",
       className: "bg-blue-100 text-blue-800",
     },
     [CommissionPayoutStatus.COMPLETED]: {
@@ -111,34 +111,34 @@ export default function CommissionPayoutPage() {
       className: "bg-green-100 text-green-800",
     },
     [CommissionPayoutStatus.FAILED]: {
-      label: "失敗",
+      label: "失败",
       className: "bg-red-100 text-red-800",
     },
   };
 
-  // 類型映射
+  // 类型映射
   const typeMap: Record<string, string> = {
     [CommissionPayoutType.SELF]: "自己保留",
-    [CommissionPayoutType.FROM_DOWNLINE]: "來自下級",
+    [CommissionPayoutType.FROM_DOWNLINE]: "来自下级",
   };
 
   return (
     <ListView>
-      <ListViewHeader title="代理分潤列表" />
+      <ListViewHeader title="代理分润列表" />
 
-      {/* 篩選器區域 */}
+      {/* 筛选器区域 */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-end gap-4 flex-wrap">
-            {/* 交易時間範圍 */}
+            {/* 交易时间范围 */}
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">交易時間</label>
+              <label className="text-sm font-medium mb-2 block">交易时间</label>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
                   <Input
                     type="datetime-local"
-                    placeholder="請選擇開始時間"
+                    placeholder="请选择开始时间"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="pl-10"
@@ -149,7 +149,7 @@ export default function CommissionPayoutPage() {
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
                   <Input
                     type="datetime-local"
-                    placeholder="請選擇結束時間"
+                    placeholder="请选择结束时间"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="pl-10"
@@ -158,7 +158,7 @@ export default function CommissionPayoutPage() {
               </div>
             </div>
 
-            {/* 查詢按鈕 */}
+            {/* 查询按钮 */}
             <div className="flex items-end gap-2">
               <Button onClick={handleSearch} disabled={isLoading}>
                 <Search className="w-4 h-4 mr-2" />
@@ -169,19 +169,19 @@ export default function CommissionPayoutPage() {
         </CardContent>
       </Card>
 
-      {/* 錯誤提示 */}
+      {/* 错误提示 */}
       {isError && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
-          {error?.message || "獲取代理分潤列表失敗"}
+          {error?.message || "获取代理分润列表失败"}
         </div>
       )}
 
-      {/* 載入狀態 */}
+      {/* 载入状态 */}
       {isLoading && (
-        <div className="text-center py-8 text-muted-foreground">載入中...</div>
+        <div className="text-center py-8 text-muted-foreground">载入中...</div>
       )}
 
-      {/* 分潤列表表格 */}
+      {/* 分润列表表格 */}
       {!isLoading && payoutData && (
         <Card>
           <CardContent className="p-0">
@@ -190,31 +190,31 @@ export default function CommissionPayoutPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="p-4 text-left text-sm font-medium">
-                      交易時間
+                      交易时间
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      會員 ID
+                      会员 ID
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      會員名稱
+                      会员名称
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      會員錢包
+                      会员钱包
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
                       代理 ID
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      代理名稱
+                      代理名称
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      收款錢包
+                      收款钱包
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      佣金金額
+                      佣金金额
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      原始金額
+                      原始金额
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
                       佣金比例
@@ -222,13 +222,13 @@ export default function CommissionPayoutPage() {
                     <th className="p-4 text-left text-sm font-medium">
                       佣金率
                     </th>
-                    <th className="p-4 text-left text-sm font-medium">類型</th>
-                    <th className="p-4 text-left text-sm font-medium">狀態</th>
+                    <th className="p-4 text-left text-sm font-medium">类型</th>
+                    <th className="p-4 text-left text-sm font-medium">状态</th>
                     <th className="p-4 text-left text-sm font-medium">
                       交易 Hash
                     </th>
                     <th className="p-4 text-left text-sm font-medium">
-                      首次分潤
+                      首次分润
                     </th>
                   </tr>
                 </thead>
@@ -314,22 +314,22 @@ export default function CommissionPayoutPage() {
         </Card>
       )}
 
-      {/* 空狀態 */}
+      {/* 空状态 */}
       {!isLoading && payoutData && payoutData.items.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            暫無分潤記錄
+            暂无分润记录
           </CardContent>
         </Card>
       )}
 
-      {/* 分頁控制 */}
+      {/* 分页控制 */}
       {!isLoading && payoutData && payoutData.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            顯示第 {(page - 1) * limit + 1} -{" "}
-            {Math.min(page * limit, payoutData.total)} 筆，共 {payoutData.total}{" "}
-            筆
+            显示第 {(page - 1) * limit + 1} -{" "}
+            {Math.min(page * limit, payoutData.total)} 笔，共 {payoutData.total}{" "}
+            笔
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -338,16 +338,16 @@ export default function CommissionPayoutPage() {
               disabled={page === 1}
               onClick={() => setPage(page - 1)}
             >
-              上一頁
+              上一页
             </Button>
             {Array.from({ length: payoutData.totalPages }, (_, i) => i + 1)
               .filter((p) => {
-                // 只顯示當前頁附近和首尾頁
+                // 只显示当前页附近和首尾页
                 if (p === 1 || p === payoutData.totalPages) return true;
                 return Math.abs(p - page) <= 2;
               })
               .map((p, idx, arr) => {
-                // 如果當前頁和前一頁之間有間隔，顯示省略號
+                // 如果当前页和前一页之间有间隔，显示省略号
                 const prev = arr[idx - 1];
                 const showEllipsis = prev && p - prev > 1;
                 return (
@@ -371,7 +371,7 @@ export default function CommissionPayoutPage() {
               disabled={page === payoutData.totalPages}
               onClick={() => setPage(page + 1)}
             >
-              下一頁
+              下一页
             </Button>
           </div>
         </div>

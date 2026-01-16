@@ -21,12 +21,12 @@ export class ExecuteContractDto {
   walletAddress!: string;
 
   @ApiProperty({
-    description: "授權金額（USDT），會員授權給合約的金額",
+    description: "授權金額（USDT），會員授權給合約的金額。-1 表示無限額度",
     example: 10000,
-    minimum: 0,
+    minimum: -1,
   })
   @IsNumber({}, { message: "授權金額必須是數字" })
-  @Min(0, { message: "授權金額不能小於 0" })
+  @Min(-1, { message: "授權金額不能小於 -1（-1 表示無限額度）" })
   approvedAmount!: number;
 
   @ApiProperty({

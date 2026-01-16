@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分潤模型說明</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #eee;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        .result-table {
+            max-width: 600px;
+            margin: 40px auto;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #444;
+            padding: 12px 20px;
+            text-align: center;
+        }
+        .result-table th {
+            background-color: #2a2a4e;
+        }
+        .result-table tr:nth-child(even) {
+            background-color: #252540;
+        }
+        .formula {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #252540;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .formula h3 {
+            margin-top: 0;
+        }
+        .formula pre {
+            background-color: #1a1a2e;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>分潤模型說明</h1>
+
+    <div class="mermaid">
+flowchart TD
+    A[會員投資<br/>100 USDT] --> B{第一層分配}
+
+    B --> C[系統費<br/>100 × 10%<br/>= 10 USDT]
+    B --> D[站長實收<br/>100 - 10 - 70<br/>= 20 USDT]
+    B --> E[傳下級<br/>100 × 70%<br/>= 70 USDT]
+
+    C --> F[平台]
+    D --> G[站長錢包]
+    E --> H[代理B<br/>收到: 70 USDT<br/>selfRate: 20%]
+
+    H --> I[代理B收益<br/>70 × 20%<br/>= 14 USDT]
+    H --> J[傳下級<br/>70 × 80%<br/>= 56 USDT]
+
+    I --> K[代理B錢包]
+    J --> L[代理A<br/>收到: 56 USDT<br/>selfRate: 100%]
+
+    L --> M[代理A收益<br/>= 56 USDT]
+
+    M --> N[代理A錢包]
+    </div>
+
+    <h2 style="text-align: center;">最終分配結果</h2>
+    <table class="result-table">
+        <tr>
+            <th>平台</th>
+            <th>站長</th>
+            <th>代理B</th>
+            <th>代理A</th>
+        </tr>
+        <tr>
+            <td>10 USDT</td>
+            <td>20 USDT</td>
+            <td>14 USDT</td>
+            <td>56 USDT</td>
+        </tr>
+        <tr>
+            <td>(10%)</td>
+            <td>(20%)</td>
+            <td>(14%)</td>
+            <td>(56%)</td>
+        </tr>
+    </table>
+
+    <div class="formula">
+        <h3>計算公式</h3>
+        <h4>第一層（站長）</h4>
+        <pre>系統費 = 總金額 × systemFeeRate
+傳給下級 = 總金額 × (1 - selfRate)
+站長實收 = 總金額 - 系統費 - 傳給下級
+         = 總金額 × selfRate - 系統費</pre>
+
+        <h4>後續層（代理）</h4>
+        <pre>保留 = 收到金額 × selfRate
+傳給下級 = 收到金額 × (1 - selfRate)</pre>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

@@ -19,7 +19,7 @@ import {
 import { Calendar, Search, Plus, Pencil, Trash2 } from "lucide-react";
 import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
 
-// RevenueWallet 類型定義（從 @saas-platform/database 複製）
+// RevenueWallet 类型定义（从 @saas-platform/database 复制）
 interface RevenueWallet {
   id: string;
   name: string;
@@ -35,46 +35,46 @@ interface RevenueWallet {
   description?: string;
 }
 
-// Zod 驗證 schema
+// Zod 验证 schema
 const walletFormSchema = z.object({
   name: z
     .string()
-    .min(1, "請輸入錢包名稱")
-    .min(2, "錢包名稱至少需要 2 個字符"),
+    .min(1, "请输入钱包名称")
+    .min(2, "钱包名称至少需要 2 个字符"),
   address: z
     .string()
-    .min(1, "請輸入錢包地址")
-    .min(34, "錢包地址長度至少需要 34 個字符")
+    .min(1, "请输入钱包地址")
+    .min(34, "钱包地址长度至少需要 34 个字符")
     .regex(
       /^T[A-Za-z0-9]{33}$/,
-      "請輸入有效的 TRON 錢包地址（以 T 開頭，共 34 個字符）"
+      "请输入有效的 TRON 钱包地址（以 T 开头，共 34 个字符）"
     ),
   percentage: z
     .number()
-    .min(0.01, "分配比例必須大於 0")
-    .max(100, "分配比例不能超過 100"),
+    .min(0.01, "分配比例必须大于 0")
+    .max(100, "分配比例不能超过 100"),
   description: z.string().optional(),
 });
 
 type WalletFormData = z.infer<typeof walletFormSchema>;
 
 export default function WalletsPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "收款錢包 - 租戶管理後台";
+    document.title = "收款钱包 - 租户管理后台";
   }, []);
 
-  // 篩選狀態
+  // 筛选状态
   const [filters, setFilters] = useState({
     name: "",
-    createdAt: getTodayStartLocal(), // 預設為當天 00:00
+    createdAt: getTodayStartLocal(), // 预设为当天 00:00
   });
 
-  // 編輯狀態
+  // 编辑状态
   const [editingWalletId, setEditingWalletId] = useState<string | null>(null);
   const [isAddingMode, setIsAddingMode] = useState(false);
 
-  // 構建查詢參數（用於名稱篩選）
+  // 构建查询参数（用于名称筛选）
   const queryParams = useMemo(() => {
     const params: any[] = [];
     if (filters.name) {
@@ -83,7 +83,7 @@ export default function WalletsPage() {
     return params;
   }, [filters.name]);
 
-  // 獲取錢包列表 - 使用官方 useList hook
+  // 获取钱包列表 - 使用官方 useList hook
   const walletsQuery = useList<RevenueWallet>({
     resource: "revenue-wallets",
     filters: queryParams,
@@ -94,21 +94,21 @@ export default function WalletsPage() {
   const isError = walletsQuery.query.isError;
   const error = walletsQuery.query.error;
 
-  // 創建錢包 - 使用官方 useCreate hook
+  // 创建钱包 - 使用官方 useCreate hook
   const createMutation = useCreate<RevenueWallet>();
   const { mutate: createWallet, mutation: createMutationState } =
     createMutation;
 
-  // 更新錢包 - 使用官方 useUpdate hook
+  // 更新钱包 - 使用官方 useUpdate hook
   const updateMutation = useUpdate<RevenueWallet>();
   const { mutate: updateWallet, mutation: updateMutationState } =
     updateMutation;
 
-  // 刪除錢包 - 使用官方 useDelete hook
+  // 删除钱包 - 使用官方 useDelete hook
   const deleteMutation = useDelete();
   const { mutate: deleteWallet } = deleteMutation;
 
-  // 使用 Refine 的 useForm hook 進行表單管理
+  // 使用 Refine 的 useForm hook 进行表单管理
   const form = useForm<WalletFormData>({
     resolver: zodResolver(walletFormSchema) as any,
     defaultValues: {
@@ -126,29 +126,29 @@ export default function WalletsPage() {
     setValue,
   } = form;
 
-  // 篩選後的錢包列表
+  // 筛选后的钱包列表
   const filteredWallets = useMemo(() => {
     let filtered = wallets;
 
-    // 名稱篩選
+    // 名称筛选
     if (filters.name) {
       filtered = filtered.filter((wallet) =>
         wallet.name.toLowerCase().includes(filters.name.toLowerCase())
       );
     }
 
-    // 建立時間篩選（使用 verifiedAt 作為替代）
+    // 建立时间筛选（使用 verifiedAt 作为替代）
     if (filters.createdAt) {
       const filterDate = new Date(filters.createdAt);
       filterDate.setHours(0, 0, 0, 0);
       filtered = filtered.filter((wallet) => {
-        // 如果錢包有 verifiedAt，使用它；否則不篩選
+        // 如果钱包有 verifiedAt，使用它；否则不筛选
         if (wallet.verifiedAt) {
           const walletDate = new Date(wallet.verifiedAt);
           walletDate.setHours(0, 0, 0, 0);
           return walletDate >= filterDate;
         }
-        // 如果沒有 verifiedAt，顯示所有未驗證的錢包
+        // 如果没有 verifiedAt，显示所有未验证的钱包
         return true;
       });
     }
@@ -156,14 +156,14 @@ export default function WalletsPage() {
     return filtered;
   }, [wallets, filters]);
 
-  // 計算活躍錢包的總比例
+  // 计算活跃钱包的总比例
   const totalPercentage = useMemo(() => {
     return filteredWallets
       .filter((w) => w.isActive)
       .reduce((sum, w) => sum + w.percentage, 0);
   }, [filteredWallets]);
 
-  // 處理篩選變更
+  // 处理筛选变更
   const handleFilterChange = (field: string, value: string) => {
     setFilters((prev) => ({
       ...prev,
@@ -171,13 +171,13 @@ export default function WalletsPage() {
     }));
   };
 
-  // 處理查詢
+  // 处理查询
   const handleSearch = () => {
-    // 觸發重新查詢（通過 filters 變更）
+    // 触发重新查询（通过 filters 变更）
     walletsQuery.query.refetch();
   };
 
-  // 處理新增錢包
+  // 处理新增钱包
   const handleAddNew = () => {
     setIsAddingMode(true);
     setEditingWalletId(null);
@@ -189,7 +189,7 @@ export default function WalletsPage() {
     });
   };
 
-  // 處理編輯錢包
+  // 处理编辑钱包
   const handleEdit = (wallet: RevenueWallet) => {
     setEditingWalletId(wallet.id);
     setIsAddingMode(false);
@@ -199,7 +199,7 @@ export default function WalletsPage() {
     setValue("description", wallet.description || "");
   };
 
-  // 處理取消編輯
+  // 处理取消编辑
   const handleCancel = () => {
     setIsAddingMode(false);
     setEditingWalletId(null);
@@ -211,10 +211,10 @@ export default function WalletsPage() {
     });
   };
 
-  // 處理提交表單
+  // 处理提交表单
   const onSubmit = (data: WalletFormData) => {
     if (isAddingMode || !editingWalletId) {
-      // 新增錢包
+      // 新增钱包
       createWallet(
         {
           resource: "revenue-wallets",
@@ -233,13 +233,13 @@ export default function WalletsPage() {
           },
           onError: (error: any) => {
             alert(
-              `創建失敗：${error?.response?.data?.message || error?.message || "未知錯誤"}`
+              `创建失败：${error?.response?.data?.message || error?.message || "未知错误"}`
             );
           },
         }
       );
     } else {
-      // 更新錢包
+      // 更新钱包
       updateWallet(
         {
           resource: "revenue-wallets",
@@ -258,7 +258,7 @@ export default function WalletsPage() {
           },
           onError: (error: any) => {
             alert(
-              `更新失敗：${error?.response?.data?.message || error?.message || "未知錯誤"}`
+              `更新失败：${error?.response?.data?.message || error?.message || "未知错误"}`
             );
           },
         }
@@ -266,9 +266,9 @@ export default function WalletsPage() {
     }
   };
 
-  // 處理刪除錢包
+  // 处理删除钱包
   const handleDelete = (walletId: string) => {
-    if (!confirm("確定要刪除此錢包嗎？")) {
+    if (!confirm("确定要删除此钱包吗？")) {
       return;
     }
 
@@ -283,7 +283,7 @@ export default function WalletsPage() {
         },
         onError: (error: any) => {
           alert(
-            `刪除失敗：${error?.response?.data?.message || error?.message || "未知錯誤"}`
+            `删除失败：${error?.response?.data?.message || error?.message || "未知错误"}`
           );
         },
       }
@@ -293,27 +293,27 @@ export default function WalletsPage() {
   return (
     <ListView>
       <div className="flex items-center justify-between mb-4">
-        <ListViewHeader title="錢包列表" />
+        <ListViewHeader title="钱包列表" />
         <Button onClick={handleAddNew} disabled={isLoading || isAddingMode}>
           <Plus className="w-4 h-4 mr-2" />
           新增
         </Button>
       </div>
 
-      {/* 篩選區域 */}
+      {/* 筛选区域 */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>篩選條件</CardTitle>
+          <CardTitle>筛选条件</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 建立時間 */}
+            {/* 建立时间 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">建立時間</label>
+              <label className="text-sm font-medium">建立时间</label>
               <div className="relative">
                 <Input
                   type="datetime-local"
-                  placeholder="請選擇時間"
+                  placeholder="请选择时间"
                   value={filters.createdAt}
                   onChange={(e) =>
                     handleFilterChange("createdAt", e.target.value)
@@ -324,17 +324,17 @@ export default function WalletsPage() {
               </div>
             </div>
 
-            {/* 名稱 */}
+            {/* 名称 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">名稱</label>
+              <label className="text-sm font-medium">名称</label>
               <Input
-                placeholder="請輸入名稱"
+                placeholder="请输入名称"
                 value={filters.name}
                 onChange={(e) => handleFilterChange("name", e.target.value)}
               />
             </div>
 
-            {/* 查詢按鈕 */}
+            {/* 查询按钮 */}
             <div className="flex items-end">
               <Button
                 onClick={handleSearch}
@@ -349,25 +349,25 @@ export default function WalletsPage() {
         </CardContent>
       </Card>
 
-      {/* 錯誤提示 */}
+      {/* 错误提示 */}
       {isError && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md mb-6">
-          {error?.message || "獲取錢包列表失敗"}
+          {error?.message || "获取钱包列表失败"}
         </div>
       )}
 
-      {/* 載入狀態 */}
+      {/* 载入状态 */}
       {isLoading && (
-        <div className="text-center py-8 text-muted-foreground">載入中...</div>
+        <div className="text-center py-8 text-muted-foreground">载入中...</div>
       )}
 
-      {/* 錢包列表表格 */}
+      {/* 钱包列表表格 */}
       {!isLoading && (
         <>
           {isAddingMode && (
             <Card className="mb-4">
               <CardHeader>
-                <CardTitle>新增錢包</CardTitle>
+                <CardTitle>新增钱包</CardTitle>
               </CardHeader>
               <CardContent>
                 <Form {...(form as any)}>
@@ -376,15 +376,15 @@ export default function WalletsPage() {
                     className="space-y-4"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* 錢包名稱 */}
+                      {/* 钱包名称 */}
                       <FormField
                         control={control}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>錢包名稱 *</FormLabel>
+                            <FormLabel>钱包名称 *</FormLabel>
                             <FormControl>
-                              <Input placeholder="請輸入錢包名稱" {...field} />
+                              <Input placeholder="请输入钱包名称" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -400,7 +400,7 @@ export default function WalletsPage() {
                             <FormLabel>地址 *</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="請輸入錢包地址（以 T 開頭）"
+                                placeholder="请输入钱包地址（以 T 开头）"
                                 {...field}
                               />
                             </FormControl>
@@ -422,7 +422,7 @@ export default function WalletsPage() {
                                 min="0"
                                 max="100"
                                 step="0.01"
-                                placeholder="請輸入比例"
+                                placeholder="请输入比例"
                                 {...field}
                                 value={field.value || ""}
                                 onChange={(e) =>
@@ -435,7 +435,7 @@ export default function WalletsPage() {
                               />
                             </FormControl>
                             <FormDescription>
-                              分配比例範圍：0.01 - 100
+                              分配比例范围：0.01 - 100
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -451,7 +451,7 @@ export default function WalletsPage() {
                             <FormLabel>描述</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="請輸入描述（選填）"
+                                placeholder="请输入描述（选填）"
                                 {...field}
                               />
                             </FormControl>
@@ -478,8 +478,8 @@ export default function WalletsPage() {
                       >
                         {createMutationState.isPending ||
                         updateMutationState.isPending
-                          ? "處理中..."
-                          : "確定"}
+                          ? "处理中..."
+                          : "确定"}
                       </Button>
                     </div>
                   </form>
@@ -495,11 +495,11 @@ export default function WalletsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-4 font-medium">錢包名稱</th>
+                        <th className="text-left p-4 font-medium">钱包名称</th>
                         <th className="text-left p-4 font-medium">地址</th>
                         <th className="text-left p-4 font-medium">分配比例%</th>
-                        <th className="text-left p-4 font-medium">建立時間</th>
-                        <th className="text-left p-4 font-medium">狀態</th>
+                        <th className="text-left p-4 font-medium">建立时间</th>
+                        <th className="text-left p-4 font-medium">状态</th>
                         <th className="text-left p-4 font-medium">操作</th>
                       </tr>
                     </thead>
@@ -522,16 +522,16 @@ export default function WalletsPage() {
                                       className="space-y-4"
                                     >
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* 錢包名稱 */}
+                                        {/* 钱包名称 */}
                                         <FormField
                                           control={control}
                                           name="name"
                                           render={({ field }) => (
                                             <FormItem>
-                                              <FormLabel>錢包名稱 *</FormLabel>
+                                              <FormLabel>钱包名称 *</FormLabel>
                                               <FormControl>
                                                 <Input
-                                                  placeholder="請輸入錢包名稱"
+                                                  placeholder="请输入钱包名称"
                                                   {...field}
                                                 />
                                               </FormControl>
@@ -549,7 +549,7 @@ export default function WalletsPage() {
                                               <FormLabel>地址 *</FormLabel>
                                               <FormControl>
                                                 <Input
-                                                  placeholder="請輸入錢包地址（以 T 開頭）"
+                                                  placeholder="请输入钱包地址（以 T 开头）"
                                                   {...field}
                                                 />
                                               </FormControl>
@@ -571,7 +571,7 @@ export default function WalletsPage() {
                                                   min="0"
                                                   max="100"
                                                   step="0.01"
-                                                  placeholder="請輸入比例"
+                                                  placeholder="请输入比例"
                                                   {...field}
                                                   value={field.value || ""}
                                                   onChange={(e) =>
@@ -599,7 +599,7 @@ export default function WalletsPage() {
                                               <FormLabel>描述</FormLabel>
                                               <FormControl>
                                                 <Input
-                                                  placeholder="請輸入描述（選填）"
+                                                  placeholder="请输入描述（选填）"
                                                   {...field}
                                                 />
                                               </FormControl>
@@ -626,8 +626,8 @@ export default function WalletsPage() {
                                         >
                                           {createMutationState.isPending ||
                                           updateMutationState.isPending
-                                            ? "處理中..."
-                                            : "確定"}
+                                            ? "处理中..."
+                                            : "确定"}
                                         </Button>
                                       </div>
                                     </form>
@@ -654,11 +654,11 @@ export default function WalletsPage() {
                                         : "bg-gray-100 text-gray-800"
                                     }`}
                                   >
-                                    {wallet.isActive ? "啟用" : "停用"}
+                                    {wallet.isActive ? "启用" : "停用"}
                                   </span>
                                   {wallet.verified && (
                                     <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                      已驗證
+                                      已验证
                                     </span>
                                   )}
                                 </td>
@@ -693,17 +693,17 @@ export default function WalletsPage() {
           ) : (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
-                暫無錢包數據
+                暂无钱包数据
               </CardContent>
             </Card>
           )}
 
-          {/* 總比例顯示 */}
+          {/* 总比例显示 */}
           {filteredWallets.length > 0 && (
             <Card className="mt-4">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium">啟用錢包總比例：</span>
+                  <span className="text-sm font-medium">启用钱包总比例：</span>
                   <span
                     className={`text-lg font-bold ${
                       totalPercentage === 100
@@ -715,7 +715,7 @@ export default function WalletsPage() {
                   </span>
                   {totalPercentage !== 100 && (
                     <span className="text-sm text-destructive">
-                      * 啟用錢包的分配比例總和必須為 100%
+                      * 启用钱包的分配比例总和必须为 100%
                     </span>
                   )}
                 </div>

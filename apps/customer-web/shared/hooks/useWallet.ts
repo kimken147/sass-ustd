@@ -21,11 +21,11 @@ import { WALLET_CONNECTION_DELAY } from '@/shared/lib/constants';
  * ```tsx
  * const { isReady, isConnected, address, error } = useWallet();
  *
- * if (!isReady) return <div>檢查錢包中...</div>;
- * if (error) return <div>錯誤: {error.message}</div>;
- * if (!isConnected) return <div>請連接錢包</div>;
+ * if (!isReady) return <div>检查钱包中...</div>;
+ * if (error) return <div>错误: {error.message}</div>;
+ * if (!isConnected) return <div>请连接钱包</div>;
  *
- * return <div>已連接: {address}</div>;
+ * return <div>已连接: {address}</div>;
  * ```
  */
 export function useWallet(): WalletState {
@@ -49,7 +49,7 @@ export function useWallet(): WalletState {
           address: null,
           error: new AppError(
             ErrorCode.WALLET_NOT_FOUND,
-            '請在錢包 App 中開啟此頁面'
+            '请在钱包 App 中打开此页面'
           ),
         });
         return;
@@ -71,7 +71,7 @@ export function useWallet(): WalletState {
           address: null,
           error: new AppError(
             ErrorCode.WALLET_NOT_CONNECTED,
-            '請先連接錢包'
+            '请先连接钱包'
           ),
         });
         return;
@@ -86,7 +86,7 @@ export function useWallet(): WalletState {
           address: null,
           error: new AppError(
             ErrorCode.WALLET_NOT_CONNECTED,
-            '無法獲取錢包地址'
+            '无法获取钱包地址'
           ),
         });
         return;

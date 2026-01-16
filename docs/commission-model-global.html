@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分潤模型 - 全局比率模式</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #eee;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            margin: 0;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        .result-table {
+            max-width: 600px;
+            margin: 40px auto;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #444;
+            padding: 12px 20px;
+            text-align: center;
+        }
+        .result-table th {
+            background-color: #2a2a4e;
+        }
+        .result-table tr:nth-child(even) {
+            background-color: #252540;
+        }
+        .formula {
+            max-width: 700px;
+            margin: 40px auto;
+            background-color: #252540;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .formula h3 {
+            margin-top: 0;
+        }
+        .formula pre {
+            background-color: #1a1a2e;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .highlight {
+            color: #4fc3f7;
+        }
+        .agent-tree {
+            max-width: 700px;
+            margin: 40px auto;
+            background-color: #252540;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>分潤模型 - 全局比率模式</h1>
+    <p style="text-align: center; color: #888;">每個代理只能分配自己擁有的比率給下級</p>
+
+    <div class="mermaid">
+flowchart TD
+    A[會員投資<br/>100 USDT<br/>= 100%] --> B{第一層分配}
+
+    B --> C[系統費<br/>10%<br/>= 10 USDT]
+    B --> D[站長保留<br/>20%<br/>= 20 USDT]
+    B --> E[分配給代理B<br/>70%<br/>= 70 USDT]
+
+    C --> F[平台]
+    D --> G[站長錢包]
+    E --> H[代理B<br/>擁有: 70%<br/>最多可分配: 70%]
+
+    H --> I[代理B保留<br/>14%<br/>= 14 USDT]
+    H --> J[分配給代理A<br/>56%<br/>= 56 USDT]
+
+    I --> K[代理B錢包]
+    J --> L[代理A<br/>擁有: 56%<br/>最多可分配: 56%]
+
+    L --> M[代理A保留<br/>56%<br/>= 56 USDT]
+
+    M --> N[代理A錢包]
+    </div>
+
+    <h2>最終分配結果</h2>
+    <table class="result-table">
+        <tr>
+            <th>角色</th>
+            <th>平台</th>
+            <th>站長</th>
+            <th>代理B</th>
+            <th>代理A</th>
+            <th>總計</th>
+        </tr>
+        <tr>
+            <td><strong>全局比率</strong></td>
+            <td>10%</td>
+            <td>20%</td>
+            <td>14%</td>
+            <td>56%</td>
+            <td>100%</td>
+        </tr>
+        <tr>
+            <td><strong>金額</strong></td>
+            <td>10 USDT</td>
+            <td>20 USDT</td>
+            <td>14 USDT</td>
+            <td>56 USDT</td>
+            <td>100 USDT</td>
+        </tr>
+    </table>
+
+    <div class="agent-tree">
+        <h3>代理設定結構</h3>
+        <pre>
+站長
+├── systemFeeRate: 10%     (系統費)
+├── selfRate: 20%          (自己保留)
+└── 分配給代理B: 70%       (100% - 10% - 20% = 70%)
+
+代理B
+├── 擁有: 70%              (從站長獲得)
+├── selfRate: 14%          (自己保留，全局比率)
+└── 分配給代理A: 56%       (70% - 14% = 56%)
+
+代理A
+├── 擁有: 56%              (從代理B獲得)
+└── selfRate: 56%          (自己保留，無下級)
+        </pre>
+    </div>
+
+    <div class="formula">
+        <h3>計算規則</h3>
+
+        <h4>1. 全局比率概念</h4>
+        <pre>所有比率都是相對於「總投資金額」的百分比
+例如：代理B 擁有 70%，代表從 100 USDT 中可獲得最多 70 USDT</pre>
+
+        <h4>2. 分配限制</h4>
+        <pre>代理新增下級時，最多只能分配「自己擁有的比率」
+例如：代理B 擁有 70%，新增代理A 時最多只能給 70%</pre>
+
+        <h4>3. 計算公式</h4>
+        <pre>系統費 = 總金額 × systemFeeRate
+站長收益 = 總金額 × 站長selfRate
+代理收益 = 總金額 × 代理擁有的全局比率</pre>
+    </div>
+
+    <div class="formula">
+        <h3>與相對比率模式的比較</h3>
+        <table class="result-table" style="max-width: 100%;">
+            <tr>
+                <th>項目</th>
+                <th>全局比率模式</th>
+                <th>相對比率模式</th>
+            </tr>
+            <tr>
+                <td>比率基準</td>
+                <td>總投資金額</td>
+                <td>收到的金額</td>
+            </tr>
+            <tr>
+                <td>代理B設定</td>
+                <td>selfRate: 14%（全局）</td>
+                <td>selfRate: 20%（相對）</td>
+            </tr>
+            <tr>
+                <td>代理B收益</td>
+                <td>100 × 14% = 14</td>
+                <td>70 × 20% = 14</td>
+            </tr>
+            <tr>
+                <td>結果</td>
+                <td colspan="2" style="text-align: center;">相同</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

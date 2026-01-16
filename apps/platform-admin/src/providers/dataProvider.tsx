@@ -52,10 +52,10 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
-      // 有些 endpoints 會直接回傳陣列
+      // 有些 endpoints 会直接回传数组
       if (Array.isArray(responseData)) {
         return {
           data: responseData,
@@ -63,7 +63,7 @@ export const dataProvider: DataProvider = {
         };
       }
 
-      // 特殊處理 sites 資源：它返回 { totalStats, sites, total, page, limit, totalPages }
+      // 特殊处理 sites 资源：它返回 { totalStats, sites, total, page, limit, totalPages }
       if (resource === "sites" && responseData.sites) {
         return {
           data: responseData.sites,
@@ -98,7 +98,7 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
       return {
@@ -123,7 +123,7 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
       return {
@@ -148,7 +148,7 @@ export const dataProvider: DataProvider = {
       });
 
       // client.request 返回 axios response.data，即 { success, data, timestamp }
-      // 需要取出 data 屬性作為實際數據
+      // 需要取出 data 属性作为实际数据
       const responseData = response.data || response;
 
       return {
