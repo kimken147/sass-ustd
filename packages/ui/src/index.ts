@@ -118,11 +118,23 @@ export {
 } from "./components/ui/sidebar";
 export { Skeleton } from "./components/ui/skeleton";
 export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from "./components/ui/table";
+export {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
 } from "./components/ui/tooltip";
+export { CopyableText } from "./components/ui/copyable-text";
+export type { CopyableTextProps } from "./components/ui/copyable-text";
 
 // Refine UI Components
 export { Layout } from "./components/refine-ui/layout/layout";
@@ -164,6 +176,9 @@ export {
 } from "./components/refine-ui/theme/theme-provider";
 export { ThemeToggle } from "./components/refine-ui/theme/theme-toggle";
 export { ThemeSelect } from "./components/refine-ui/theme/theme-select";
+
+export { DataTable } from "./components/refine-ui/data-table";
+export type { DataTableProps } from "./components/refine-ui/data-table";
 
 // Hooks
 export { useIsMobile } from "./hooks/use-mobile";

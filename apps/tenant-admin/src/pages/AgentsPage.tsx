@@ -1,9 +1,23 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useList, useDelete, useNavigation } from "@refinedev/core";
-import { ListView, ListViewHeader } from "@saas-platform/ui";
-import { Button } from "@saas-platform/ui";
-import { Input } from "@saas-platform/ui";
-import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
+import { useList, useNavigation } from "@refinedev/core";
+import {
+  ListView,
+  ListViewHeader,
+  Button,
+  Input,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CopyableText,
+  TooltipProvider,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@saas-platform/ui";
 import {
   Calendar,
   Search,
@@ -14,6 +28,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
+import { useIsMobile } from "@saas-platform/ui";
 
 // Agent 类型定义
 interface Agent {
@@ -66,8 +81,9 @@ interface TreeNode extends Agent {
   isExpanded?: boolean;
 }
 
-
 export default function AgentsPage() {
+  const isMobile = useIsMobile();
+
   // 设置页面标题
   useEffect(() => {
     document.title = "代理管理 - 租户管理后台";
@@ -108,10 +124,6 @@ export default function AgentsPage() {
   const isLoading = agentsQuery.query.isLoading;
   const isError = agentsQuery.query.isError;
   const error = agentsQuery.query.error;
-
-  // 删除代理
-  const deleteMutation = useDelete();
-  const { mutate: deleteAgent } = deleteMutation;
 
   // 构建树状结构
   const treeData = useMemo(() => {
@@ -155,11 +167,9 @@ export default function AgentsPage() {
         if (parent) {
           parent.children.push(node);
         } else {
-          // 如果找不到父节点，可能是筛选导致的，仍然显示为根节点
           rootNodes.push(node);
         }
       } else {
-        // 没有父节点，是根节点
         rootNodes.push(node);
       }
     });
@@ -176,6 +186,21 @@ export default function AgentsPage() {
 
     return rootNodes;
   }, [agents, filters, expandedIds]);
+
+  // 扁平化树状数据（用于移动端显示）
+  const flattenedData = useMemo(() => {
+    const result: { node: TreeNode; depth: number }[] = [];
+    const flatten = (nodes: TreeNode[], depth: number) => {
+      nodes.forEach((node) => {
+        result.push({ node, depth });
+        if (expandedIds.has(node.id) && node.children.length > 0) {
+          flatten(node.children, depth + 1);
+        }
+      });
+    };
+    flatten(treeData, 0);
+    return result;
+  }, [treeData, expandedIds]);
 
   // 切换展开/收合
   const toggleExpand = (agentId: number) => {
@@ -213,72 +238,32 @@ export default function AgentsPage() {
     edit("agents", agent.id);
   };
 
-  // 处理删除代理
-  const handleDelete = (agentId: number) => {
-    if (!confirm("确定要删除此代理吗？")) {
-      return;
-    }
-
-    deleteAgent(
-      {
-        resource: "agents",
-        id: agentId.toString(),
-      },
-      {
-        onSuccess: () => {
-          agentsQuery.query.refetch();
-        },
-        onError: (error: any) => {
-          alert(
-            `删除失败：${
-              error?.response?.data?.message || error?.message || "未知错误"
-            }`
-          );
-        },
-      }
-    );
-  };
-
-  // 复制推荐连结
-  const handleCopyLink = (link: string) => {
-    navigator.clipboard.writeText(link).then(
-      () => {
-        alert("已复制到剪贴板");
-      },
-      () => {
-        alert("复制失败，请手动复制");
-      }
-    );
-  };
-
-  // 递归渲染树状节点
+  // 递归渲染树状节点（桌面端）
   const renderTreeNode = (node: TreeNode, depth: number = 0) => {
     const hasChildren = node.children.length > 0;
     const isExpanded = expandedIds.has(node.id);
-    const indentWidth = depth * 24; // 每层缩排 24px
+    const indentWidth = depth * 24;
 
     return (
       <React.Fragment key={node.id}>
-        <tr
-          className="border-b hover:bg-muted/50"
+        <TableRow
           style={{
             backgroundColor: depth % 2 === 0 ? undefined : "rgba(0,0,0,0.02)",
           }}
         >
           {/* 授权合约链接 */}
-          <td className="p-4">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleCopyLink(node.referralLink)}
-            >
-              <Copy className="w-4 h-4 mr-1" />
-              复制
-            </Button>
-          </td>
+          <TableCell>
+            <CopyableText
+              text={node.referralLink}
+              displayText="复制链接"
+              truncate={false}
+              fontMono={false}
+              textSize="sm"
+            />
+          </TableCell>
 
           {/* 名称（带展开/收合图示） */}
-          <td className="p-4">
+          <TableCell>
             <div
               className="flex items-center gap-2"
               style={{ paddingLeft: `${indentWidth}px` }}
@@ -295,157 +280,246 @@ export default function AgentsPage() {
                   )}
                 </button>
               ) : (
-                <span className="w-6" /> // 占位符，保持对齐
+                <span className="w-6" />
               )}
               <span>{node.name}</span>
             </div>
-          </td>
+          </TableCell>
 
           {/* 账号 */}
-          <td className="p-4 font-mono text-sm">{node.username}</td>
+          <TableCell className="font-mono text-sm">{node.username}</TableCell>
 
           {/* 代理钱包 */}
-          <td className="p-4 font-mono text-sm">
-            {node.wallet?.address || "-"}
-          </td>
+          <TableCell>
+            {node.wallet?.address ? (
+              <CopyableText text={node.wallet.address} />
+            ) : (
+              "-"
+            )}
+          </TableCell>
 
           {/* 分配比例% */}
-          <td className="p-4">{`${node.commission.selfRate}%`}</td>
+          <TableCell>{`${node.commission.selfRate}%`}</TableCell>
 
           {/* 建立时间 */}
-          <td className="p-4 text-sm">{formatDateTime(node.createdAt)}</td>
+          <TableCell className="text-sm">
+            {formatDateTime(node.createdAt)}
+          </TableCell>
 
           {/* 操作 */}
-          <td className="p-4">
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleEdit(node)}
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-            </div>
-          </td>
-        </tr>
+          <TableCell>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleEdit(node)}
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          </TableCell>
+        </TableRow>
         {/* 递归渲染子节点 */}
-        {hasChildren && isExpanded &&
-          node.children.map((child) => renderTreeNode(child, depth + 1))
-        }
+        {hasChildren &&
+          isExpanded &&
+          node.children.map((child) => renderTreeNode(child, depth + 1))}
       </React.Fragment>
     );
   };
 
-  return (
-    <ListView>
-      <div className="flex items-center justify-between mb-4">
-        <ListViewHeader title="代理列表" canCreate={false} />
-        <Button onClick={handleAddNew} disabled={isLoading}>
-          <Plus className="w-4 h-4 mr-2" />
-          新增代理
-        </Button>
-      </div>
+  // 渲染移动端卡片
+  const renderMobileCard = (node: TreeNode, depth: number) => {
+    const hasChildren = node.children.length > 0;
+    const isExpanded = expandedIds.has(node.id);
 
-      {/* 筛选区域 */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>筛选条件</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 建立时间 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">建立时间</label>
-              <div className="relative">
-                <Input
-                  type="datetime-local"
-                  placeholder="请选择时间"
-                  value={filters.createdAt}
-                  onChange={(e) =>
-                    handleFilterChange("createdAt", e.target.value)
-                  }
-                  className="pr-10"
-                />
-                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              </div>
+    return (
+      <Card key={node.id} className="overflow-hidden">
+        <CardContent className="p-4 space-y-3">
+          {/* 名称和层级指示 */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {hasChildren && (
+                <button
+                  onClick={() => toggleExpand(node.id)}
+                  className="p-1 hover:bg-muted rounded"
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+              <span className="font-medium">{node.name}</span>
+              {depth > 0 && (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                  L{depth}
+                </span>
+              )}
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleEdit(node)}
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          </div>
 
-            {/* 名称 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">名称</label>
-              <Input
-                placeholder="请输入名称"
-                value={filters.name}
-                onChange={(e) => handleFilterChange("name", e.target.value)}
+          {/* 详细信息 */}
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">账号</span>
+              <span className="font-mono">{node.username}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">代理钱包</span>
+              {node.wallet?.address ? (
+                <CopyableText text={node.wallet.address} textSize="xs" />
+              ) : (
+                <span>-</span>
+              )}
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">分配比例</span>
+              <span>{node.commission.selfRate}%</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">建立时间</span>
+              <span>{formatDateTime(node.createdAt)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">推荐链接</span>
+              <CopyableText
+                text={node.referralLink}
+                displayText="复制"
+                truncate={false}
+                fontMono={false}
+                textSize="xs"
               />
-            </div>
-
-            {/* 查询按钮 */}
-            <div className="flex items-end">
-              <Button
-                onClick={handleSearch}
-                disabled={isLoading}
-                className="w-full"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                查詢
-              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+    );
+  };
 
-      {/* 错误提示 */}
-      {isError && (
-        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md mb-6">
-          {error?.message || "获取代理列表失败"}
+  return (
+    <TooltipProvider>
+      <ListView>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <ListViewHeader title="代理列表" canCreate={false} />
+          <Button onClick={handleAddNew} disabled={isLoading} className="w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
+            新增代理
+          </Button>
         </div>
-      )}
 
-      {/* 载入状态 */}
-      {isLoading && (
-        <div className="text-center py-8 text-muted-foreground">载入中...</div>
-      )}
-
-      {/* 代理列表表格 */}
-      {!isLoading && (
-        <>
-          {treeData.length > 0 ? (
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left p-4 font-medium">
-                          授权合约链接
-                        </th>
-                        <th className="text-left p-4 font-medium">名称</th>
-                        <th className="text-left p-4 font-medium">账号</th>
-                        <th className="text-left p-4 font-medium">代理钱包</th>
-                        <th className="text-left p-4 font-medium">
-                          分配比例%
-                        </th>
-                        <th className="text-left p-4 font-medium">建立时间</th>
-                        <th className="text-left p-4 font-medium">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {treeData.map((node) => renderTreeNode(node, 0))}
-                    </tbody>
-                  </table>
+        {/* 筛选区域 */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>筛选条件</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* 建立时间 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">建立时间</label>
+                <div className="relative">
+                  <Input
+                    type="datetime-local"
+                    placeholder="请选择时间"
+                    value={filters.createdAt}
+                    onChange={(e) =>
+                      handleFilterChange("createdAt", e.target.value)
+                    }
+                    className="pr-10"
+                  />
+                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                暂无代理数据
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-    </ListView>
+              </div>
+
+              {/* 名称 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">名称</label>
+                <Input
+                  placeholder="请输入名称"
+                  value={filters.name}
+                  onChange={(e) => handleFilterChange("name", e.target.value)}
+                />
+              </div>
+
+              {/* 查询按钮 */}
+              <div className="flex items-end">
+                <Button
+                  onClick={handleSearch}
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  查詢
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 错误提示 */}
+        {isError && (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md mb-6">
+            {error?.message || "获取代理列表失败"}
+          </div>
+        )}
+
+        {/* 载入状态 */}
+        {isLoading && (
+          <div className="text-center py-8 text-muted-foreground">载入中...</div>
+        )}
+
+        {/* 代理列表 */}
+        {!isLoading && (
+          <>
+            {treeData.length > 0 ? (
+              isMobile ? (
+                // 移动端卡片视图
+                <div className="space-y-3">
+                  {flattenedData.map(({ node, depth }) =>
+                    renderMobileCard(node, depth)
+                  )}
+                </div>
+              ) : (
+                // 桌面端表格视图
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/50">
+                            <TableHead className="whitespace-nowrap">授权合约链接</TableHead>
+                            <TableHead className="whitespace-nowrap">名称</TableHead>
+                            <TableHead className="whitespace-nowrap">账号</TableHead>
+                            <TableHead className="whitespace-nowrap">代理钱包</TableHead>
+                            <TableHead className="whitespace-nowrap">分配比例%</TableHead>
+                            <TableHead className="whitespace-nowrap">建立时间</TableHead>
+                            <TableHead className="whitespace-nowrap">操作</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {treeData.map((node) => renderTreeNode(node, 0))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  暂无代理数据
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+      </ListView>
+    </TooltipProvider>
   );
 }
