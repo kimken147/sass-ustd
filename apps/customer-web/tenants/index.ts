@@ -11,6 +11,10 @@ const tenantRegistry: Record<string, () => Promise<TenantPages>> = {
     InvestPage: m.InvestPage,
     SuccessPage: m.SuccessPage,
   })),
+  'test002': () => import('./test002').then(m => ({
+    InvestPage: m.InvestPage,
+    SuccessPage: m.SuccessPage,
+  })),
 };
 
 export async function getTenantPages(slug: string): Promise<TenantPages | null> {
