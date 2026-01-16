@@ -48,7 +48,7 @@ function App() {
               name: "dashboard",
               list: "/",
               meta: {
-                label: "儀表板",
+                label: "仪表板",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +73,7 @@ function App() {
               name: "wallet",
               list: "/wallet",
               meta: {
-                label: "收款錢包",
+                label: "收款钱包",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -98,7 +98,7 @@ function App() {
               create: "/sub-agents/create",
               edit: "/sub-agents/edit/:id",
               meta: {
-                label: "下級代理",
+                label: "下级代理",
                 icon: (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -124,7 +124,7 @@ function App() {
             syncWithLocation: true,
             // 設置應用標題和圖標（用於 Sidebar Header）
             title: {
-              text: "代理商後台",
+              text: "代理商后台",
               icon: (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

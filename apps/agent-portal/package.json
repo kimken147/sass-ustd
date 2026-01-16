@@ -30,6 +30,7 @@
     "@saas-platform/ui": "workspace:*",
     "@saas-platform/utils": "workspace:*",
     "@tanstack/react-query": "^5.62.11",
+    "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-query-devtools": "^5.62.11",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",

@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigation, useCustom } from "@refinedev/core";
-import { CreateView, CreateViewHeader } from "@saas-platform/ui";
-import { Button } from "@saas-platform/ui";
-import { Input } from "@saas-platform/ui";
-import { Label } from "@saas-platform/ui";
-import { Card, CardContent } from "@saas-platform/ui";
+import {
+  CreateView,
+  CreateViewHeader,
+  Button,
+  Input,
+  Label,
+  Card,
+  CardContent,
+} from "@saas-platform/ui";
 import { useParams } from "react-router";
 import { getTenantApiClient } from "@saas-platform/api-client";
 
@@ -31,28 +35,28 @@ interface EditSubAgentFormData {
 }
 
 export default function EditSubAgentPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "編輯下級代理 - 代理商後台";
+    document.title = "编辑下级代理 - 代理商后台";
   }, []);
 
   const { id } = useParams<{ id: string }>();
   const { list } = useNavigation();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // 獲取下級代理列表，找到要編輯的代理
+  // 获取下级代理列表，找到要编辑的代理
   const { query: subAgentsQuery, result: subAgentsResult } =
     useCustom<Agent[]>({
       url: "/api/agents/me/subordinates",
       method: "get",
     });
 
-  // 從 API 響應中提取實際數據（API 返回 { success, data, timestamp } 格式）
+  // 从 API 响应中提取实际数据（API 返回 { success, data, timestamp } 格式）
   const subAgentsData = (subAgentsResult.data as any)?.data as Agent[] | undefined;
   const subAgents = subAgentsData || [];
   const agent = subAgents.find((a) => a.id === parseInt(id || "0"));
 
-  // 表單狀態
+  // 表单状态
   const [formData, setFormData] = useState<EditSubAgentFormData>({
     name: "",
     uplineRate: "",
@@ -60,7 +64,7 @@ export default function EditSubAgentPage() {
     notes: "",
   });
 
-  // 當代理數據加載完成時，初始化表單
+  // 当代理数据加载完成时，初始化表单
   useEffect(() => {
     if (agent) {
       setFormData({
@@ -72,7 +76,7 @@ export default function EditSubAgentPage() {
     }
   }, [agent]);
 
-  // 處理表單輸入變更
+  // 处理表单输入变更
   const handleInputChange = (
     field: keyof EditSubAgentFormData,
     value: any
@@ -83,18 +87,18 @@ export default function EditSubAgentPage() {
     }));
   };
 
-  // 提交表單
+  // 提交表单
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!id || !agent) {
-      alert("下級代理不存在");
+      alert("下级代理不存在");
       return;
     }
 
-    // 驗證必填字段
+    // 验证必填字段
     if (!formData.name || !formData.walletAddress) {
-      alert("請填寫所有必填字段");
+      alert("请填写所有必填字段");
       return;
     }
 
@@ -107,7 +111,7 @@ export default function EditSubAgentPage() {
     if (formData.uplineRate) {
       const uplineRate = parseFloat(formData.uplineRate);
       if (isNaN(uplineRate) || uplineRate < 0 || uplineRate > 100) {
-        alert("上級比率必須在 0-100 之間");
+        alert("上级比率必须在 0-100 之间");
         return;
       }
       updateData.uplineRate = uplineRate;
@@ -122,14 +126,14 @@ export default function EditSubAgentPage() {
         data: updateData,
       });
 
-      // 成功後返回列表頁
+      // 成功后返回列表页
       list("sub-agents");
     } catch (error: any) {
       alert(
-        `更新失敗：${
+        `更新失败：${
           error?.response?.data?.message ||
           error?.message ||
-          "未知錯誤"
+          "未知错误"
         }`
       );
     } finally {
@@ -146,8 +150,12 @@ export default function EditSubAgentPage() {
   if (isLoading) {
     return (
       <CreateView>
-        <CreateViewHeader title="編輯下級" />
-        <div className="text-center py-8 text-muted-foreground">載入中...</div>
+        <CreateViewHeader title="编辑下级" />
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            加载中...
+          </CardContent>
+        </Card>
       </CreateView>
     );
   }
@@ -155,55 +163,57 @@ export default function EditSubAgentPage() {
   if (!agent) {
     return (
       <CreateView>
-        <CreateViewHeader title="編輯下級" />
-        <div className="text-center py-8 text-destructive">
-          下級代理不存在或無權限訪問
-        </div>
+        <CreateViewHeader title="编辑下级" />
+        <Card>
+          <CardContent className="py-12 text-center text-destructive">
+            下级代理不存在或无权限访问
+          </CardContent>
+        </Card>
       </CreateView>
     );
   }
 
   return (
     <CreateView>
-      <CreateViewHeader title="編輯下級" />
+      <CreateViewHeader title="编辑下级" />
 
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="space-y-4 pt-6">
-            {/* 代理名稱 */}
+            {/* 代理名称 */}
             <div className="space-y-2">
               <Label htmlFor="name">
-                代理名稱 <span className="text-destructive">*</span>
+                代理名称 <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
-                placeholder="請輸入代理名稱"
+                placeholder="请输入代理名称"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 required
               />
             </div>
 
-            {/* 帳號（只讀） */}
+            {/* 账号（只读） */}
             <div className="space-y-2">
-              <Label htmlFor="username">帳號</Label>
+              <Label htmlFor="username">账号</Label>
               <Input
                 id="username"
                 value={agent.username}
                 disabled
                 className="bg-muted"
               />
-              <p className="text-xs text-muted-foreground">帳號無法修改</p>
+              <p className="text-xs text-muted-foreground">账号无法修改</p>
             </div>
 
-            {/* 地址（錢包地址） */}
+            {/* 地址（钱包地址） */}
             <div className="space-y-2">
               <Label htmlFor="walletAddress">
                 地址 <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="walletAddress"
-                placeholder="請輸入 TRON 錢包地址"
+                placeholder="请输入 TRON 钱包地址"
                 value={formData.walletAddress}
                 onChange={(e) =>
                   handleInputChange("walletAddress", e.target.value)
@@ -212,16 +222,16 @@ export default function EditSubAgentPage() {
               />
             </div>
 
-            {/* 分潤（上級比率） */}
+            {/* 分润（上级比率） */}
             <div className="space-y-2">
-              <Label htmlFor="uplineRate">分潤</Label>
+              <Label htmlFor="uplineRate">分润</Label>
               <div className="flex items-center gap-2">
                 <Input
                   id="uplineRate"
                   type="number"
                   min="0"
                   max="100"
-                  placeholder="請輸入比例"
+                  placeholder="请输入比例"
                   value={formData.uplineRate}
                   onChange={(e) =>
                     handleInputChange("uplineRate", e.target.value)
@@ -231,16 +241,16 @@ export default function EditSubAgentPage() {
                 <span className="text-muted-foreground">%</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                上級比率：給上級代理的佣金比例（自己保留 = 100% - 上級比率）
+                上级比率：给上级代理的佣金比例（自己保留 = 100% - 上级比率）
               </p>
             </div>
 
-            {/* 備註 */}
+            {/* 备注 */}
             <div className="space-y-2">
-              <Label htmlFor="notes">備註</Label>
+              <Label htmlFor="notes">备注</Label>
               <Input
                 id="notes"
-                placeholder="請輸入備註（選填）"
+                placeholder="请输入备注（选填）"
                 value={formData.notes}
                 onChange={(e) => handleInputChange("notes", e.target.value)}
               />
@@ -248,17 +258,18 @@ export default function EditSubAgentPage() {
           </CardContent>
         </Card>
 
-        {/* 操作按鈕 */}
-        <div className="flex justify-end gap-4 mt-6">
+        {/* 操作按钮 */}
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-4 mt-6">
           <Button
             type="button"
             variant="outline"
             onClick={handleCancel}
             disabled={isUpdating}
+            className="w-full sm:w-auto"
           >
             取消
           </Button>
-          <Button type="submit" disabled={isUpdating}>
+          <Button type="submit" disabled={isUpdating} className="w-full sm:w-auto">
             {isUpdating ? "更新中..." : "完成"}
           </Button>
         </div>

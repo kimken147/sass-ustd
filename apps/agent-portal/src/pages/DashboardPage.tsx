@@ -1,8 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useCustom } from "@refinedev/core";
-import { ListView, ListViewHeader } from "@saas-platform/ui";
-import { Button } from "@saas-platform/ui";
-import { Input } from "@saas-platform/ui";
+import { ColumnDef } from "@tanstack/react-table";
+import {
+  ListView,
+  ListViewHeader,
+  DataTable,
+  Button,
+  Input,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CopyableText,
+  TooltipProvider,
+} from "@saas-platform/ui";
 import {
   Select,
   SelectContent,
@@ -10,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@saas-platform/ui";
-import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
 import { Calendar, Search, AlertCircle } from "lucide-react";
 import {
   TimeType,
@@ -23,7 +33,7 @@ import {
   getTodayStartLocal,
 } from "@saas-platform/utils";
 
-// 統計卡片組件
+// 统计卡片组件
 function StatsCard({
   title,
   value,
@@ -58,7 +68,7 @@ function StatsCard({
               {growth >= 0 ? "+" : ""}
               {growth.toFixed(1)}%
             </span>{" "}
-            較上月
+            较上月
           </p>
         )}
       </CardContent>
@@ -66,13 +76,92 @@ function StatsCard({
   );
 }
 
+// 授权状态映射
+const authorizationStatusMap: Record<string, { label: string; className: string }> = {
+  authorized: { label: "授权中", className: "bg-green-100 text-green-800" },
+  unauthorized: { label: "未授权", className: "bg-gray-100 text-gray-800" },
+  expired: { label: "已失效", className: "bg-red-100 text-red-800" },
+};
+
+// 定义表格列
+const columns: ColumnDef<CustomerItem, unknown>[] = [
+  {
+    accessorKey: "id",
+    header: "订单号",
+  },
+  {
+    accessorKey: "walletAddress",
+    header: "会员钱包",
+    cell: (info) => {
+      const address = info.getValue() as string;
+      const row = info.row.original;
+      if (!address) return "-";
+      return (
+        <CopyableText
+          text={address}
+          displayText={row.notes ? `${row.notes} ${address.substring(0, 10)}...` : undefined}
+        />
+      );
+    },
+  },
+  {
+    accessorKey: "authorizationTime",
+    header: "授权时间",
+    cell: (info) => {
+      const value = info.getValue() as string | null;
+      return value ? formatDateTimeLocalized(value) : "-";
+    },
+  },
+  {
+    accessorKey: "authorizationStatus",
+    header: "授权状态",
+    cell: (info) => {
+      const status = info.getValue() as string;
+      const statusInfo = authorizationStatusMap[status] || {
+        label: status,
+        className: "bg-gray-100 text-gray-800",
+      };
+      return (
+        <span
+          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusInfo.className}`}
+        >
+          {statusInfo.label}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "recentHarvest.amount",
+    header: "已收割",
+    cell: (info) => {
+      const row = info.row.original;
+      const amount = row.recentHarvest?.amount;
+      return amount
+        ? amount.toLocaleString("zh-TW", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+        : "-";
+    },
+  },
+  {
+    accessorKey: "recentHarvest.harvestTime",
+    header: "最近收割时间",
+    cell: (info) => {
+      const row = info.row.original;
+      const harvestTime = row.recentHarvest?.harvestTime;
+      return harvestTime ? formatDateTimeLocalized(harvestTime) : "-";
+    },
+  },
+];
+
 export default function DashboardPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "總覽 - 代理商後台";
+    document.title = "总览 - 代理商后台";
   }, []);
 
-  // 篩選器狀態
+  // 筛选器状态
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(
@@ -84,7 +173,7 @@ export default function DashboardPage() {
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 構建查詢參數
+  // 构建查询参数
   const queryParams = useMemo(() => {
     const params: Record<string, any> = {
       page,
@@ -106,10 +195,7 @@ export default function DashboardPage() {
     return params;
   }, [startDate, endDate, timeType, authorizationStatus, address, page, limit]);
 
-  // 使用 useCustom hook 獲取會員列表
-  // 注意：CustomerListResponse 是特殊格式（包含 customers, stats, total 等），
-  // 不符合標準的 { data: Array, total: number } 格式，所以需要使用 useCustom
-  // 這是 Refine 官方推薦的做法，用於處理特殊 API 格式
+  // 使用 useCustom hook 获取会员列表
   const { query: customerQuery, result: customerResult } =
     useCustom<CustomerListResponse>({
       url: "/api/customers",
@@ -123,351 +209,199 @@ export default function DashboardPage() {
     customerQuery.refetch();
   };
 
-  // 從包裝的響應格式中提取實際數據
-  // TransformInterceptor 將數據包裝為 { success, data, timestamp }
+  // 从包装的响应格式中提取实际数据
   const customerData = (customerResult.data as any)?.data as CustomerListResponse | undefined;
   const isLoading = customerQuery.isLoading;
   const isError = customerQuery.isError;
   const error = customerQuery.error;
 
-  // 授權狀態映射
-  const authorizationStatusMap: Record<string, string> = {
-    authorized: "授權中",
-    unauthorized: "未授權",
-    expired: "已失效",
-  };
+  // 转换数据格式
+  const tableData = useMemo(() => {
+    return {
+      items: customerData?.customers || [],
+      total: customerData?.total || 0,
+      totalPages: customerData?.totalPages || 0,
+    };
+  }, [customerData]);
 
-  // 格式化錢包地址（顯示前後部分）
-  const formatWalletAddress = (address: string, notes?: string) => {
-    if (!address) return "";
-    if (address.length <= 20) return address;
-    const prefix = address.substring(0, 10);
-    const suffix = address.substring(address.length - 6);
-    const displayAddress = `${prefix}...${suffix}`;
-    if (notes) {
-      return `${notes} ${displayAddress}`;
-    }
-    return displayAddress;
+  // 处理分页变化
+  const handlePaginationChange = (pagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => {
+    setPage(pagination.pageIndex + 1);
   };
 
   return (
-    <ListView>
-      <ListViewHeader title="總覽" />
+    <TooltipProvider>
+      <ListView>
+        <ListViewHeader title="总览" />
 
-      {/* 重要提示 */}
-      <Card className="border-destructive/50 bg-destructive/5">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">*請先設置收款錢包</span>
-          </div>
-        </CardContent>
-      </Card>
+        {/* 重要提示 */}
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">*请先设置收款钱包</span>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* 篩選器區域 */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-end gap-4 flex-wrap">
-            {/* 時間範圍 */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">訂單時間</label>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
+        {/* 筛选器区域 */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* 时间范围 */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">订单时间</label>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <div className="relative flex-1">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
+                    <Input
+                      type="datetime-local"
+                      placeholder="请选择时间"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <span className="text-muted-foreground text-center hidden sm:block">至</span>
+                  <div className="relative flex-1">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
+                    <Input
+                      type="datetime-local"
+                      placeholder="请选择时间"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 筛选选项行 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* 时间类型 */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">时间类型</label>
+                  <Select
+                    value={timeType}
+                    onValueChange={(value) => setTimeType(value as TimeType)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择时间类型" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TimeType.AUTHORIZATION_TIME}>
+                        授权时间
+                      </SelectItem>
+                      <SelectItem value={TimeType.HARVEST_TIME}>
+                        收割时间
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 授权状态 */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">授权状态</label>
+                  <Select
+                    value={authorizationStatus}
+                    onValueChange={(value) =>
+                      setAuthorizationStatus(value as CustomerAuthorizationStatus)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择授权状态" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={CustomerAuthorizationStatus.ALL}>
+                        全部
+                      </SelectItem>
+                      <SelectItem value={CustomerAuthorizationStatus.AUTHORIZED}>
+                        已授权
+                      </SelectItem>
+                      <SelectItem value={CustomerAuthorizationStatus.UNAUTHORIZED}>
+                        未授权
+                      </SelectItem>
+                      <SelectItem value={CustomerAuthorizationStatus.EXPIRED}>
+                        已失效
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 地址 */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">地址</label>
                   <Input
-                    type="datetime-local"
-                    placeholder="請選擇時間"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="pl-10"
+                    placeholder="请输入地址"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                   />
                 </div>
-                <span className="text-muted-foreground">至</span>
-                <div className="relative flex-1">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                  <Input
-                    type="datetime-local"
-                    placeholder="請選擇時間"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="pl-10"
-                  />
+
+                {/* 查询按钮 */}
+                <div className="flex items-end">
+                  <Button onClick={handleSearch} disabled={isLoading} className="w-full">
+                    <Search className="w-4 h-4 mr-2" />
+                    查询
+                  </Button>
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* 時間類型 */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">時間類型</label>
-              <Select
-                value={timeType}
-                onValueChange={(value) => setTimeType(value as TimeType)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="選擇時間類型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TimeType.AUTHORIZATION_TIME}>
-                    授權時間
-                  </SelectItem>
-                  <SelectItem value={TimeType.HARVEST_TIME}>
-                    收割時間
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 授權狀態 */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">授權狀態</label>
-              <Select
-                value={authorizationStatus}
-                onValueChange={(value) =>
-                  setAuthorizationStatus(value as CustomerAuthorizationStatus)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="選擇授權狀態" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={CustomerAuthorizationStatus.ALL}>
-                    全部
-                  </SelectItem>
-                  <SelectItem value={CustomerAuthorizationStatus.AUTHORIZED}>
-                    已授權
-                  </SelectItem>
-                  <SelectItem value={CustomerAuthorizationStatus.UNAUTHORIZED}>
-                    未授權
-                  </SelectItem>
-                  <SelectItem value={CustomerAuthorizationStatus.EXPIRED}>
-                    已失效
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 地址 */}
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">地址</label>
-              <Input
-                placeholder="請輸入地址"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
-            </div>
-
-            {/* 查詢按鈕 */}
-            <div className="flex items-end gap-2">
-              <Button onClick={handleSearch} disabled={isLoading}>
-                <Search className="w-4 h-4 mr-2" />
-                查詢
-              </Button>
-            </div>
+        {/* 错误提示 */}
+        {isError && (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
+            {error?.message || "获取会员列表失败"}
           </div>
-        </CardContent>
-      </Card>
+        )}
 
-      {/* 錯誤提示 */}
-      {isError && (
-        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
-          {error?.message || "獲取會員列表失敗"}
-        </div>
-      )}
+        {/* 统计数据 */}
+        {customerData?.stats && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatsCard
+              title="授权客户"
+              value={customerData.stats.authorizedClients}
+              growth={customerData.stats.growthPercentage}
+            />
+            <StatsCard
+              title="收割数量"
+              value={customerData.stats.harvestQuantity}
+              growth={customerData.stats.growthPercentage}
+            />
+            <StatsCard
+              title="利润"
+              value={customerData.stats.profit}
+              growth={customerData.stats.growthPercentage}
+            />
+          </div>
+        )}
 
-      {/* 統計數據 */}
-      {customerData?.stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatsCard
-            title="授權客戶"
-            value={customerData.stats.authorizedClients}
-            growth={customerData.stats.growthPercentage}
-          />
-          <StatsCard
-            title="收割數量"
-            value={customerData.stats.harvestQuantity}
-            growth={customerData.stats.growthPercentage}
-          />
-          <StatsCard
-            title="利潤"
-            value={customerData.stats.profit}
-            growth={customerData.stats.growthPercentage}
-          />
-        </div>
-      )}
-
-      {/* 會員列表表格 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>會員列表</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              載入中...
-            </div>
-          ) : customerData && customerData.customers && customerData.customers.length > 0 ? (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">
-                        訂單號
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium">
-                        會員錢包
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium">
-                        授權時間
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium">
-                        授權狀態
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium">
-                        已收割
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium">
-                        最近收割時間
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customerData.customers?.map((customer: CustomerItem) => (
-                      <tr
-                        key={customer.id}
-                        className="border-b hover:bg-muted/50"
-                      >
-                        <td className="py-3 px-4">{customer.id}</td>
-                        <td className="py-3 px-4">
-                          {formatWalletAddress(
-                            customer.walletAddress,
-                            customer.notes
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          {customer.authorizationTime
-                            ? formatDateTimeLocalized(
-                                customer.authorizationTime
-                              )
-                            : "-"}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center px-2 py-1 rounded text-xs ${
-                              customer.authorizationStatus === "authorized"
-                                ? "bg-green-100 text-green-800"
-                                : customer.authorizationStatus === "expired"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {
-                              authorizationStatusMap[
-                                customer.authorizationStatus
-                              ]
-                            }
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          {customer.recentHarvest?.amount
-                            ? customer.recentHarvest.amount.toLocaleString(
-                                "zh-TW",
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )
-                            : "-"}
-                        </td>
-                        <td className="py-3 px-4">
-                          {customer.recentHarvest?.harvestTime
-                            ? formatDateTimeLocalized(
-                                customer.recentHarvest.harvestTime
-                              )
-                            : "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* 分頁控制 */}
-              {customerData && customerData.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    共 {customerData.total} 筆，第 {page} /{" "}
-                    {customerData.totalPages} 頁
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(page - 1)}
-                      disabled={page <= 1 || isLoading}
-                    >
-                      Previous
-                    </Button>
-                    {Array.from(
-                      { length: Math.min(5, customerData.totalPages) },
-                      (_, i) => {
-                        let pageNum: number;
-                        if (customerData.totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (page <= 3) {
-                          pageNum = i + 1;
-                        } else if (page >= customerData.totalPages - 2) {
-                          pageNum = customerData.totalPages - 4 + i;
-                        } else {
-                          pageNum = page - 2 + i;
-                        }
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={pageNum === page ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setPage(pageNum)}
-                            disabled={isLoading}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      }
-                    )}
-                    {customerData.totalPages > 5 && (
-                      <>
-                        {page < customerData.totalPages - 2 && (
-                          <span className="px-2">...</span>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPage(customerData.totalPages)}
-                          disabled={isLoading}
-                        >
-                          {customerData.totalPages}
-                        </Button>
-                      </>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(page + 1)}
-                      disabled={page >= customerData.totalPages || isLoading}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              暫無數據
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </ListView>
+        {/* 会员列表表格 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>会员列表</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 sm:p-6">
+            <DataTable
+              columns={columns}
+              data={tableData.items}
+              isLoading={isLoading}
+              emptyMessage="暂无数据"
+              paginationMode="server"
+              pageCount={tableData.totalPages}
+              pageIndex={page - 1}
+              pageSize={limit}
+              total={tableData.total}
+              onPaginationChange={handlePaginationChange}
+            />
+          </CardContent>
+        </Card>
+      </ListView>
+    </TooltipProvider>
   );
 }

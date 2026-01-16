@@ -3,10 +3,13 @@ import { useCreate, useNavigation } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CreateView, CreateViewHeader } from "@saas-platform/ui";
-import { Button } from "@saas-platform/ui";
-import { Input } from "@saas-platform/ui";
 import {
+  CreateView,
+  CreateViewHeader,
+  Button,
+  Input,
+  Card,
+  CardContent,
   Form,
   FormField,
   FormItem,
@@ -15,24 +18,23 @@ import {
   FormMessage,
   FormDescription,
 } from "@saas-platform/ui";
-import { Card, CardContent } from "@saas-platform/ui";
 
-// Zod 驗證 schema
+// Zod 验证 schema
 const subAgentFormSchema = z.object({
-  name: z.string().min(1, "請輸入代理名稱").min(2, "代理名稱至少需要 2 個字符"),
-  username: z.string().min(1, "請輸入帳號").min(3, "帳號至少需要 3 個字符"),
-  password: z.string().min(1, "請輸入密碼").min(6, "密碼至少需要 6 個字符"),
+  name: z.string().min(1, "请输入代理名称").min(2, "代理名称至少需要 2 个字符"),
+  username: z.string().min(1, "请输入账号").min(3, "账号至少需要 3 个字符"),
+  password: z.string().min(1, "请输入密码").min(6, "密码至少需要 6 个字符"),
   uplineRate: z
     .number()
-    .min(0, "分潤比例不能小於 0")
-    .max(100, "分潤比例不能超過 100"),
+    .min(0, "分润比例不能小于 0")
+    .max(100, "分润比例不能超过 100"),
   walletAddress: z
     .string()
-    .min(1, "請輸入錢包地址")
-    .min(34, "錢包地址長度至少需要 34 個字符")
+    .min(1, "请输入钱包地址")
+    .min(34, "钱包地址长度至少需要 34 个字符")
     .regex(
       /^T[A-Za-z0-9]{33}$/,
-      "請輸入有效的 TRON 錢包地址（以 T 開頭，共 34 個字符）"
+      "请输入有效的 TRON 钱包地址（以 T 开头，共 34 个字符）"
     ),
   notes: z.string().optional().or(z.literal("")),
 });
@@ -40,9 +42,9 @@ const subAgentFormSchema = z.object({
 type SubAgentFormData = z.infer<typeof subAgentFormSchema>;
 
 export default function CreateSubAgentPage() {
-  // 設置頁面標題
+  // 设置页面标题
   useEffect(() => {
-    document.title = "創建下級代理 - 代理商後台";
+    document.title = "创建下级代理 - 代理商后台";
   }, []);
 
   const { list } = useNavigation();
@@ -50,7 +52,7 @@ export default function CreateSubAgentPage() {
   const { mutate: createSubAgent, mutation } = createMutation;
   const isCreating = mutation.isPending || false;
 
-  // 使用 Refine 的 useForm hook 進行表單管理
+  // 使用 Refine 的 useForm hook 进行表单管理
   const form = useForm<SubAgentFormData>({
     resolver: zodResolver(subAgentFormSchema) as any,
     defaultValues: {
@@ -65,9 +67,9 @@ export default function CreateSubAgentPage() {
 
   const { control, handleSubmit } = form;
 
-  // 提交表單
+  // 提交表单
   const onSubmit = (data: SubAgentFormData) => {
-    // 構建創建下級代理的數據
+    // 构建创建下级代理的数据
     const createData: any = {
       name: data.name,
       username: data.username,
@@ -76,7 +78,7 @@ export default function CreateSubAgentPage() {
       walletAddress: data.walletAddress,
     };
 
-    // 只有當 notes 有值時才添加
+    // 只有当 notes 有值时才添加
     if (data.notes) {
       createData.notes = data.notes;
     }
@@ -91,11 +93,11 @@ export default function CreateSubAgentPage() {
           list("sub-agents");
         },
         onError: (error: any) => {
-          console.error("創建下級代理失敗:", error);
+          console.error("创建下级代理失败:", error);
           alert(
             error?.response?.data?.message ||
               error?.message ||
-              "創建下級代理失敗"
+              "创建下级代理失败"
           );
         },
       }
@@ -108,59 +110,59 @@ export default function CreateSubAgentPage() {
 
   return (
     <CreateView>
-      <CreateViewHeader title="新增下級" />
+      <CreateViewHeader title="新增下级" />
 
       <Form {...(form as any)}>
         <form onSubmit={handleSubmit(onSubmit as any) as any}>
           <Card>
             <CardContent className="space-y-4 pt-6">
-              {/* 代理名稱 */}
+              {/* 代理名称 */}
               <FormField
                 control={control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      代理名稱 <span className="text-destructive">*</span>
+                      代理名称 <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入代理名稱" {...field} />
+                      <Input placeholder="请输入代理名称" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 帳號 */}
+              {/* 账号 */}
               <FormField
                 control={control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      帳號 <span className="text-destructive">*</span>
+                      账号 <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入帳號" {...field} />
+                      <Input placeholder="请输入账号" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 密碼 */}
+              {/* 密码 */}
               <FormField
                 control={control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      密碼 <span className="text-destructive">*</span>
+                      密码 <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="請輸入密碼"
+                        placeholder="请输入密码"
                         {...field}
                       />
                     </FormControl>
@@ -169,7 +171,7 @@ export default function CreateSubAgentPage() {
                 )}
               />
 
-              {/* 地址（錢包地址） */}
+              {/* 地址（钱包地址） */}
               <FormField
                 control={control}
                 name="walletAddress"
@@ -180,7 +182,7 @@ export default function CreateSubAgentPage() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="請輸入 TRON 錢包地址（以 T 開頭）"
+                        placeholder="请输入 TRON 钱包地址（以 T 开头）"
                         {...field}
                       />
                     </FormControl>
@@ -189,14 +191,14 @@ export default function CreateSubAgentPage() {
                 )}
               />
 
-              {/* 分潤（上級比率） */}
+              {/* 分润（上级比率） */}
               <FormField
                 control={control}
                 name="uplineRate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      分潤 <span className="text-destructive">*</span>
+                      分润 <span className="text-destructive">*</span>
                     </FormLabel>
                     <div className="flex items-center gap-2">
                       <FormControl>
@@ -205,7 +207,7 @@ export default function CreateSubAgentPage() {
                           min="0"
                           max="100"
                           step="0.01"
-                          placeholder="請輸入比例"
+                          placeholder="请输入比例"
                           {...field}
                           value={field.value || ""}
                           onChange={(e) =>
@@ -219,23 +221,23 @@ export default function CreateSubAgentPage() {
                       <span className="text-muted-foreground">%</span>
                     </div>
                     <FormDescription>
-                      上級比率：給上級代理的佣金比例（自己保留 = 100% -
-                      上級比率）
+                      上级比率：给上级代理的佣金比例（自己保留 = 100% -
+                      上级比率）
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* 備註 */}
+              {/* 备注 */}
               <FormField
                 control={control}
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>備註</FormLabel>
+                    <FormLabel>备注</FormLabel>
                     <FormControl>
-                      <Input placeholder="請輸入備註（選填）" {...field} />
+                      <Input placeholder="请输入备注（选填）" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -244,17 +246,18 @@ export default function CreateSubAgentPage() {
             </CardContent>
           </Card>
 
-          {/* 操作按鈕 */}
-          <div className="flex justify-end gap-4 mt-6">
+          {/* 操作按钮 */}
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-4 mt-6">
             <Button
               type="button"
               variant="outline"
               onClick={handleCancel}
               disabled={isCreating}
+              className="w-full sm:w-auto"
             >
               取消
             </Button>
-            <Button type="submit" disabled={isCreating}>
+            <Button type="submit" disabled={isCreating} className="w-full sm:w-auto">
               {isCreating ? "建立中..." : "完成"}
             </Button>
           </div>
