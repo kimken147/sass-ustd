@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useEffect } from "react";
 import { useCreate, useList, useNavigation } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,10 +50,10 @@ const agentFormSchema = z.object({
     .min(1, "请输入密码")
     .min(6, "密码至少需要 6 个字符"),
   parentAgentId: z.string().optional(),
-  uplineRate: z
+  allocatedRate: z
     .number()
-    .min(0, "分润比例不能小于 0")
-    .max(100, "分润比例不能超过 100"),
+    .min(0, "分配比率不能小于 0")
+    .max(100, "分配比率不能超过 100"),
   walletAddress: z
     .string()
     .min(1, "请输入钱包地址")
@@ -94,7 +94,7 @@ export default function CreateAgentPage() {
       email: "",
       password: "",
       parentAgentId: "none",
-      uplineRate: 0,
+      allocatedRate: 0,
       walletAddress: "",
     },
   });
@@ -108,7 +108,7 @@ export default function CreateAgentPage() {
       name: data.name,
       username: data.username,
       password: data.password,
-      uplineRate: data.uplineRate,
+      allocatedRate: data.allocatedRate,
       walletAddress: data.walletAddress,
     };
 
@@ -284,14 +284,14 @@ export default function CreateAgentPage() {
                 )}
               />
 
-              {/* 分润（上级比率） */}
+              {/* 分配比率 */}
               <FormField
                 control={control}
-                name="uplineRate"
+                name="allocatedRate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      分润 <span className="text-destructive">*</span>
+                      分配比率 <span className="text-destructive">*</span>
                     </FormLabel>
                     <div className="flex items-center gap-2">
                       <FormControl>
@@ -313,7 +313,7 @@ export default function CreateAgentPage() {
                       </FormControl>
                       <span className="text-muted-foreground">%</span>
                     </div>
-                    <FormDescription>分润比例范围：0 - 100</FormDescription>
+                    <FormDescription>分配给该代理的全局比率，相对于总投资金额（0 - 100%）</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

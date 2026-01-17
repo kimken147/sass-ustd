@@ -302,6 +302,16 @@ export class AgentsController {
     // 生成推薦連結
     const referralLink = await this.generateReferralLink(agent);
 
+    // 獲取分配比率（僅對非站長代理）
+    let allocatedRate: number | undefined;
+    if (agent.level > 0) {
+      try {
+        allocatedRate = await this.agentsService.getAgentAllocatedRate(agent.id);
+      } catch {
+        // 如果無法獲取，保持 undefined
+      }
+    }
+
     return {
       id: agent.id,
       userId: agent.user.id,
@@ -314,6 +324,7 @@ export class AgentsController {
       level: agent.level,
       wallet: agent.wallet,
       commission: agent.commission,
+      allocatedRate,
       status: agent.status,
       stats: agent.stats,
       notes: agent.notes,

@@ -23,7 +23,6 @@ import {
   Search,
   Plus,
   Pencil,
-  Copy,
   ChevronRight,
   ChevronDown,
 } from "lucide-react";

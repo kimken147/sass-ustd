@@ -24,10 +24,10 @@ const subAgentFormSchema = z.object({
   name: z.string().min(1, "请输入代理名称").min(2, "代理名称至少需要 2 个字符"),
   username: z.string().min(1, "请输入账号").min(3, "账号至少需要 3 个字符"),
   password: z.string().min(1, "请输入密码").min(6, "密码至少需要 6 个字符"),
-  uplineRate: z
+  allocatedRate: z
     .number()
-    .min(0, "分润比例不能小于 0")
-    .max(100, "分润比例不能超过 100"),
+    .min(0, "分配比率不能小于 0")
+    .max(100, "分配比率不能超过 100"),
   walletAddress: z
     .string()
     .min(1, "请输入钱包地址")
@@ -59,7 +59,7 @@ export default function CreateSubAgentPage() {
       name: "",
       username: "",
       password: "",
-      uplineRate: 0,
+      allocatedRate: 0,
       walletAddress: "",
       notes: "",
     },
@@ -74,7 +74,7 @@ export default function CreateSubAgentPage() {
       name: data.name,
       username: data.username,
       password: data.password,
-      uplineRate: data.uplineRate,
+      allocatedRate: data.allocatedRate,
       walletAddress: data.walletAddress,
     };
 
@@ -191,14 +191,14 @@ export default function CreateSubAgentPage() {
                 )}
               />
 
-              {/* 分润（上级比率） */}
+              {/* 分配比率 */}
               <FormField
                 control={control}
-                name="uplineRate"
+                name="allocatedRate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      分润 <span className="text-destructive">*</span>
+                      分配比率 <span className="text-destructive">*</span>
                     </FormLabel>
                     <div className="flex items-center gap-2">
                       <FormControl>
@@ -221,8 +221,7 @@ export default function CreateSubAgentPage() {
                       <span className="text-muted-foreground">%</span>
                     </div>
                     <FormDescription>
-                      上级比率：给上级代理的佣金比例（自己保留 = 100% -
-                      上级比率）
+                      分配给该代理的全局比率，相对于总投资金额（0 - 100%）
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

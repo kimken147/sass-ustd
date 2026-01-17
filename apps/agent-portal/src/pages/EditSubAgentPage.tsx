@@ -17,10 +17,7 @@ interface Agent {
   userId: number;
   username: string;
   name: string;
-  commission: {
-    uplineRate: number;
-    selfRate: number;
-  };
+  allocatedRate?: number;
   wallet?: {
     address: string;
   };
@@ -29,7 +26,7 @@ interface Agent {
 
 interface EditSubAgentFormData {
   name: string;
-  uplineRate: string;
+  allocatedRate: string;
   walletAddress: string;
   notes?: string;
 }
@@ -59,7 +56,7 @@ export default function EditSubAgentPage() {
   // 表单状态
   const [formData, setFormData] = useState<EditSubAgentFormData>({
     name: "",
-    uplineRate: "",
+    allocatedRate: "",
     walletAddress: "",
     notes: "",
   });
@@ -69,7 +66,7 @@ export default function EditSubAgentPage() {
     if (agent) {
       setFormData({
         name: agent.name,
-        uplineRate: agent.commission.uplineRate.toString(),
+        allocatedRate: agent.allocatedRate?.toString() || "",
         walletAddress: agent.wallet?.address || "",
         notes: agent.notes || "",
       });
@@ -108,13 +105,13 @@ export default function EditSubAgentPage() {
       notes: formData.notes || undefined,
     };
 
-    if (formData.uplineRate) {
-      const uplineRate = parseFloat(formData.uplineRate);
-      if (isNaN(uplineRate) || uplineRate < 0 || uplineRate > 100) {
-        alert("上级比率必须在 0-100 之间");
+    if (formData.allocatedRate) {
+      const allocatedRate = parseFloat(formData.allocatedRate);
+      if (isNaN(allocatedRate) || allocatedRate < 0 || allocatedRate > 100) {
+        alert("分配比率必须在 0-100 之间");
         return;
       }
-      updateData.uplineRate = uplineRate;
+      updateData.allocatedRate = allocatedRate;
     }
 
     setIsUpdating(true);
@@ -222,26 +219,27 @@ export default function EditSubAgentPage() {
               />
             </div>
 
-            {/* 分润（上级比率） */}
+            {/* 分配比率 */}
             <div className="space-y-2">
-              <Label htmlFor="uplineRate">分润</Label>
+              <Label htmlFor="allocatedRate">分配比率</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  id="uplineRate"
+                  id="allocatedRate"
                   type="number"
                   min="0"
                   max="100"
+                  step="0.01"
                   placeholder="请输入比例"
-                  value={formData.uplineRate}
+                  value={formData.allocatedRate}
                   onChange={(e) =>
-                    handleInputChange("uplineRate", e.target.value)
+                    handleInputChange("allocatedRate", e.target.value)
                   }
                   className="flex-1"
                 />
                 <span className="text-muted-foreground">%</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                上级比率：给上级代理的佣金比例（自己保留 = 100% - 上级比率）
+                分配给该代理的全局比率，相对于总投资金额（0 - 100%）
               </p>
             </div>
 

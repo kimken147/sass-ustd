@@ -69,6 +69,13 @@ export class AgentResponseDto {
   commission!: AgentCommission;
 
   @ApiProperty({
+    description: '分配的全局比率 (%)，相對於總投資金額',
+    example: 70,
+    required: false,
+  })
+  allocatedRate?: number;
+
+  @ApiProperty({
     description: '狀態',
     enum: AgentStatus,
     example: AgentStatus.ACTIVE,
