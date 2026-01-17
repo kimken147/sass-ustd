@@ -1,21 +1,19 @@
 import { DataProvider, type HttpError } from "@refinedev/core";
 import { getTenantApiClient } from "@saas-platform/api-client";
 
-// 自定义 HttpError 类，符合 @refinedev/core 的 HttpError 接口
-class HttpErrorImpl extends Error implements HttpError {
-  statusCode: number;
-  errors?: Record<string, any>;
-
-  constructor(
-    message: string,
-    statusCode: number,
-    errors?: Record<string, any>
-  ) {
-    super(message);
-    this.name = "HttpError";
-    this.statusCode = statusCode;
-    this.errors = errors;
-  }
+// 創建符合 Refine HttpError 接口的普通對象
+// 使用普通對象而非 Error 子類，確保 statusCode 屬性能被 Refine 正確讀取
+function createHttpError(
+  message: string,
+  statusCode: number,
+  errors?: Record<string, any>
+): HttpError {
+  return {
+    message,
+    statusCode,
+    name: "HttpError",
+    errors,
+  };
 }
 
 export const dataProvider: DataProvider = {
@@ -89,7 +87,7 @@ export const dataProvider: DataProvider = {
       const errorMessage =
         error.response?.data?.message || `Failed to fetch ${resource}`;
       const statusCode = error.response?.status || 500;
-      throw new HttpErrorImpl(errorMessage, statusCode);
+      throw createHttpError(errorMessage, statusCode);
     }
   },
 
@@ -113,7 +111,7 @@ export const dataProvider: DataProvider = {
       const errorMessage =
         error.response?.data?.message || `Failed to fetch ${resource}/${id}`;
       const statusCode = error.response?.status || 500;
-      throw new HttpErrorImpl(errorMessage, statusCode);
+      throw createHttpError(errorMessage, statusCode);
     }
   },
 
@@ -138,7 +136,7 @@ export const dataProvider: DataProvider = {
       const errorMessage =
         error.response?.data?.message || `Failed to create ${resource}`;
       const statusCode = error.response?.status || 500;
-      throw new HttpErrorImpl(errorMessage, statusCode);
+      throw createHttpError(errorMessage, statusCode);
     }
   },
 
@@ -163,7 +161,7 @@ export const dataProvider: DataProvider = {
       const errorMessage =
         error.response?.data?.message || `Failed to update ${resource}/${id}`;
       const statusCode = error.response?.status || 500;
-      throw new HttpErrorImpl(errorMessage, statusCode);
+      throw createHttpError(errorMessage, statusCode);
     }
   },
 
@@ -184,7 +182,7 @@ export const dataProvider: DataProvider = {
       const errorMessage =
         error.response?.data?.message || `Failed to delete ${resource}/${id}`;
       const statusCode = error.response?.status || 500;
-      throw new HttpErrorImpl(errorMessage, statusCode);
+      throw createHttpError(errorMessage, statusCode);
     }
   },
 
@@ -207,7 +205,7 @@ export const dataProvider: DataProvider = {
       const errorMessage =
         error.response?.data?.message || `Failed to ${method} ${url}`;
       const statusCode = error.response?.status || 500;
-      throw new HttpErrorImpl(errorMessage, statusCode);
+      throw createHttpError(errorMessage, statusCode);
     }
   },
 
