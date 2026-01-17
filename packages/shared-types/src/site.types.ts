@@ -8,7 +8,7 @@
  */
 export enum TimeType {
   AUTHORIZATION_TIME = "authorization_time", // 授權時間
-  HARVEST_TIME = "harvest_time", // 收割時間
+  HARVEST_TIME = "harvest_time", // 提幣時間
 }
 
 /**
@@ -26,7 +26,7 @@ export enum AuthorizationStatus {
 export interface SiteStats {
   authorizedClients: number; // 授權客戶數量
   totalQuantity: number; // 總數量
-  harvestQuantity: number; // 收割數量
+  harvestQuantity: number; // 提幣數量
   profit: number; // 利潤
   merchantAgent: number; // 商戶代理
   systemFee: number; // 系統費用

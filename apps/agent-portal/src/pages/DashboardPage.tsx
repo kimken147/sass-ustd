@@ -130,7 +130,7 @@ const columns: ColumnDef<CustomerItem, unknown>[] = [
   },
   {
     accessorKey: "recentHarvest.amount",
-    header: "已收割",
+    header: "已提币",
     cell: (info) => {
       const row = info.row.original;
       const amount = row.recentHarvest?.amount;
@@ -144,7 +144,7 @@ const columns: ColumnDef<CustomerItem, unknown>[] = [
   },
   {
     accessorKey: "recentHarvest.harvestTime",
-    header: "最近收割时间",
+    header: "最近提币时间",
     cell: (info) => {
       const row = info.row.original;
       const harvestTime = row.recentHarvest?.harvestTime;
@@ -305,7 +305,7 @@ export default function DashboardPage() {
                         授权时间
                       </SelectItem>
                       <SelectItem value={TimeType.HARVEST_TIME}>
-                        收割时间
+                        提币时间
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -378,7 +378,7 @@ export default function DashboardPage() {
               growth={customerData.stats.growthPercentage}
             />
             <StatsCard
-              title="收割数量"
+              title="提币数量"
               value={customerData.stats.harvestQuantity}
               growth={customerData.stats.growthPercentage}
             />

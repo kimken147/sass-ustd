@@ -137,7 +137,7 @@ SitesService
 - **欄位**：`investment_stats->>'totalInvested'`
 - **聚合**：SUM
 
-### 3. 收割數量
+### 3. 提幣數量
 - **來源表**：
   - 當 timeType = `harvest_time`：`revenue_distributions`（`total_amount`）
   - 當 timeType = `authorization_time`：`customers`（`investment_stats->>'totalWithdrawn'`）

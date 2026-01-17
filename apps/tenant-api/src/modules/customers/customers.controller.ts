@@ -63,10 +63,10 @@ export class CustomersController {
   }
 
   @Post("harvest")
-  @ApiOperation({ summary: "收割（執行合約）- 批量處理已選擇的會員" })
+  @ApiOperation({ summary: "提幣（執行合約）- 批量處理已選擇的會員" })
   @ApiResponse({
     status: 200,
-    description: "收割完成",
+    description: "提幣完成",
     type: HarvestResponseDto,
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
@@ -79,10 +79,10 @@ export class CustomersController {
   }
 
   @Post("harvest-all")
-  @ApiOperation({ summary: "一鍵收割（執行合約）- 處理所有符合條件的會員" })
+  @ApiOperation({ summary: "一鍵提幣（執行合約）- 處理所有符合條件的會員" })
   @ApiResponse({
     status: 200,
-    description: "收割完成",
+    description: "提幣完成",
     type: HarvestResponseDto,
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })

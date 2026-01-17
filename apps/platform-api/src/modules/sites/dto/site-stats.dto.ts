@@ -12,7 +12,7 @@ export class SiteStatsDto implements SiteStats {
   @ApiProperty({ description: "總數量", example: 2000.0 })
   totalQuantity!: number;
 
-  @ApiProperty({ description: "收割數量", example: 10000.0 })
+  @ApiProperty({ description: "提幣數量", example: 10000.0 })
   harvestQuantity!: number;
 
   @ApiProperty({ description: "利潤", example: 7000.0 })

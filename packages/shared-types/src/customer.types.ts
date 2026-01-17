@@ -21,7 +21,7 @@ export enum CustomerAuthorizationStatus {
 export interface CustomerListQuery {
   startDate?: string; // 開始時間（ISO 8601）
   endDate?: string; // 結束時間（ISO 8601）
-  timeType?: TimeType; // 時間類型（授權時間/收割時間）
+  timeType?: TimeType; // 時間類型（授權時間/提幣時間）
   authorizationStatus?: CustomerAuthorizationStatus; // 授權狀態
   address?: string; // 錢包地址（模糊查詢）
   page?: number; // 頁碼
@@ -29,11 +29,11 @@ export interface CustomerListQuery {
 }
 
 /**
- * 最近收割資訊
+ * 最近提幣資訊
  */
 export interface RecentHarvestInfo {
-  amount: number; // 最近收割數量
-  harvestTime?: Date; // 最近收割時間
+  amount: number; // 最近提幣數量
+  harvestTime?: Date; // 最近提幣時間
 }
 
 /**
@@ -46,7 +46,7 @@ export interface CustomerItem {
   authorizationTime?: Date; // 授權時間
   authorizationStatus: "authorized" | "unauthorized" | "expired"; // 授權狀態
   currentAmount: number; // 當前數量
-  recentHarvest?: RecentHarvestInfo; // 最近收割資訊
+  recentHarvest?: RecentHarvestInfo; // 最近提幣資訊
 }
 
 /**
@@ -55,7 +55,7 @@ export interface CustomerItem {
 export interface CustomerStats {
   authorizedClients: number; // 授權客戶數量
   totalQuantity: number; // 總數量
-  harvestQuantity: number; // 收割數量
+  harvestQuantity: number; // 提幣數量
   profit: number; // 利潤
   merchantAgent: number; // 商戶代理
   systemFee: number; // 系統費用

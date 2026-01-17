@@ -188,21 +188,21 @@ export default function CustomersPage() {
     setSelectedIds(newSelected);
   };
 
-  // 使用 useCustomMutation 处理收割（已选择的会员）
+  // 使用 useCustomMutation 处理提币（已选择的会员）
   const { mutate: harvestMutate, mutation: harvestMutation } = useCustomMutation();
 
-  // 处理收割（已选择的会员）
+  // 处理提币（已选择的会员）
   const handleHarvest = () => {
     if (selectedIds.size === 0) {
       open?.({
         type: "error",
         message: "操作失败",
-        description: "请先选择要收割的会员",
+        description: "请先选择要提币的会员",
       });
       return;
     }
 
-    if (!confirm(`确定要收割 ${selectedIds.size} 个会员吗？`)) {
+    if (!confirm(`确定要提币 ${selectedIds.size} 个会员吗？`)) {
       return;
     }
 
@@ -219,7 +219,7 @@ export default function CustomersPage() {
           const { successCount, failureCount } = data;
           open?.({
             type: "success",
-            message: "收割完成",
+            message: "提币完成",
             description: `成功: ${successCount} 个，失败: ${failureCount} 个`,
           });
           setSelectedIds(new Set());
@@ -228,7 +228,7 @@ export default function CustomersPage() {
         onError: (error: any) => {
           open?.({
             type: "error",
-            message: "收割失败",
+            message: "提币失败",
             description:
               error?.response?.data?.message || error?.message || "未知错误",
           });
@@ -237,21 +237,21 @@ export default function CustomersPage() {
     );
   };
 
-  // 使用 useCustomMutation 处理一键收割（全部会员）
+  // 使用 useCustomMutation 处理一键提币（全部会员）
   const { mutate: harvestAllMutate, mutation: harvestAllMutation } = useCustomMutation();
 
-  // 处理一键收割（全部会员）
+  // 处理一键提币（全部会员）
   const handleHarvestAll = () => {
     if (!customerListData?.customers?.length) {
       open?.({
         type: "error",
         message: "操作失败",
-        description: "没有可收割的会员",
+        description: "没有可提币的会员",
       });
       return;
     }
 
-    if (!confirm(`确定要一键收割所有 ${customerListData.total} 个会员吗？此操作可能需要较长时间。`)) {
+    if (!confirm(`确定要一键提币所有 ${customerListData.total} 个会员吗？此操作可能需要较长时间。`)) {
       return;
     }
 
@@ -281,7 +281,7 @@ export default function CustomersPage() {
           const { successCount, failureCount } = data;
           open?.({
             type: "success",
-            message: "一键收割完成",
+            message: "一键提币完成",
             description: `成功: ${successCount} 个，失败: ${failureCount} 个`,
           });
           query.refetch();
@@ -289,7 +289,7 @@ export default function CustomersPage() {
         onError: (error: any) => {
           open?.({
             type: "error",
-            message: "一键收割失败",
+            message: "一键提币失败",
             description:
               error?.response?.data?.message || error?.message || "未知错误",
           });
@@ -389,7 +389,7 @@ export default function CustomersPage() {
       },
       {
         id: "recentHarvestAmount",
-        header: "最近收割数量",
+        header: "最近提币数量",
         cell: (info) => {
           const harvest = info.row.original.recentHarvest;
           return harvest ? formatAmount(harvest.amount) : "-";
@@ -397,7 +397,7 @@ export default function CustomersPage() {
       },
       {
         id: "recentHarvestTime",
-        header: "最近收割时间",
+        header: "最近提币时间",
         cell: (info) => {
           const harvest = info.row.original.recentHarvest;
           return harvest?.harvestTime
@@ -461,7 +461,7 @@ export default function CustomersPage() {
                         授权时间
                       </SelectItem>
                       <SelectItem value={TimeType.HARVEST_TIME}>
-                        收割时间
+                        提币时间
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -531,7 +531,7 @@ export default function CustomersPage() {
               growth={customerListData.stats.growthPercentage}
             />
             <StatsCard
-              title="收割数量"
+              title="提币数量"
               value={customerListData.stats.harvestQuantity}
               growth={customerListData.stats.growthPercentage}
             />
@@ -553,11 +553,11 @@ export default function CustomersPage() {
           </div>
         )}
 
-        {/* 批量操作栏 */}
-        {selectedIds.size > 0 && (
-          <Card>
-            <CardContent className="py-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* 操作栏 - 一键提币始终显示 */}
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              {selectedIds.size > 0 ? (
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium">{selectedIds.size} 已选</span>
                   <Button
@@ -575,28 +575,32 @@ export default function CustomersPage() {
                     全选
                   </Button>
                 </div>
-                <div className="flex items-center gap-2">
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center gap-2">
+                {selectedIds.size > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleHarvest}
-                    disabled={harvestMutation.isPending || selectedIds.size === 0}
+                    disabled={harvestMutation.isPending}
                   >
-                    {harvestMutation.isPending ? "处理中..." : "收割"}
+                    {harvestMutation.isPending ? "处理中..." : "提币"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleHarvestAll}
-                    disabled={harvestAllMutation.isPending || !customers.length}
-                  >
-                    {harvestAllMutation.isPending ? "处理中..." : "一键收割"}
-                  </Button>
-                </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleHarvestAll}
+                  disabled={harvestAllMutation.isPending || !customers.length}
+                >
+                  {harvestAllMutation.isPending ? "处理中..." : "一键提币"}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 会员列表表格 */}
         <DataTable

@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsNumber, ArrayMinSize } from "class-validator";
 
 /**
- * 收割單個會員 DTO
+ * 提幣單個會員 DTO
  */
 export class HarvestCustomerDto {
   @ApiProperty({
@@ -14,7 +14,7 @@ export class HarvestCustomerDto {
 }
 
 /**
- * 批量收割 DTO
+ * 批量提幣 DTO
  */
 export class BatchHarvestDto {
   @ApiProperty({
@@ -29,7 +29,7 @@ export class BatchHarvestDto {
 }
 
 /**
- * 收割結果
+ * 提幣結果
  */
 export class HarvestResultDto {
   @ApiProperty({ description: "會員 ID" })
@@ -46,7 +46,7 @@ export class HarvestResultDto {
 }
 
 /**
- * 收割響應 DTO
+ * 提幣響應 DTO
  */
 export class HarvestResponseDto {
   @ApiProperty({ description: "成功數量" })
@@ -55,6 +55,6 @@ export class HarvestResponseDto {
   @ApiProperty({ description: "失敗數量" })
   failureCount!: number;
 
-  @ApiProperty({ description: "收割結果列表", type: [HarvestResultDto] })
+  @ApiProperty({ description: "提幣結果列表", type: [HarvestResultDto] })
   results!: HarvestResultDto[];
 }

@@ -178,7 +178,7 @@ export default function DashboardPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TimeType.AUTHORIZATION_TIME}>授权时间</SelectItem>
-                  <SelectItem value={TimeType.HARVEST_TIME}>收割时间</SelectItem>
+                  <SelectItem value={TimeType.HARVEST_TIME}>提币时间</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
             growth={totalStats.growthPercentage}
           />
           <StatsCard
-            title="收割數量"
+            title="提币數量"
             value={totalStats.harvestQuantity}
             growth={totalStats.growthPercentage}
           />
@@ -320,7 +320,7 @@ export default function DashboardPage() {
                       growth={site.stats.growthPercentage}
                     />
                     <StatsCard
-                      title="收割數量"
+                      title="提币數量"
                       value={site.stats.harvestQuantity}
                       growth={site.stats.growthPercentage}
                     />

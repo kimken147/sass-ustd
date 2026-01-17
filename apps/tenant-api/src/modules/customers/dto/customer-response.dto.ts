@@ -2,13 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { CustomerItem, RecentHarvestInfo } from "@saas-platform/shared-types";
 
 /**
- * 最近收割資訊 DTO
+ * 最近提幣資訊 DTO
  */
 export class RecentHarvestInfoDto implements RecentHarvestInfo {
-  @ApiProperty({ description: "最近收割數量", example: 10000.0 })
+  @ApiProperty({ description: "最近提幣數量", example: 10000.0 })
   amount!: number;
 
-  @ApiPropertyOptional({ description: "最近收割時間", example: "2025-11-24T10:08:12Z" })
+  @ApiPropertyOptional({ description: "最近提幣時間", example: "2025-11-24T10:08:12Z" })
   harvestTime?: Date;
 }
 
@@ -39,7 +39,7 @@ export class CustomerResponseDto implements CustomerItem {
   currentAmount!: number;
 
   @ApiPropertyOptional({
-    description: "最近收割資訊",
+    description: "最近提幣資訊",
     type: RecentHarvestInfoDto,
   })
   recentHarvest?: RecentHarvestInfoDto;

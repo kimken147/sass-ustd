@@ -132,8 +132,8 @@ export class CustomersService {
       const endDate = query.endDate ? new Date(query.endDate) : null;
 
       if (isHarvestTime) {
-        // 收割時間：需要從 RevenueDistribution 查詢
-        // 先獲取在時間範圍內有收割記錄的會員 ID
+        // 提幣時間：需要從 RevenueDistribution 查詢
+        // 先獲取在時間範圍內有提幣記錄的會員 ID
         const harvestWhere: any = {
           deletedAt: null,
         };
@@ -162,7 +162,7 @@ export class CustomersService {
       }
     }
 
-    // 獲取每個會員的最近收割資訊
+    // 獲取每個會員的最近提幣資訊
     const customerIds = customers.map((c) => c.id);
     const recentHarvests = await this.getRecentHarvests(customerIds);
 
@@ -224,7 +224,7 @@ export class CustomersService {
   }
 
   /**
-   * 獲取最近收割資訊
+   * 獲取最近提幣資訊
    */
   private async getRecentHarvests(
     customerIds: number[]
@@ -233,7 +233,7 @@ export class CustomersService {
       return new Map();
     }
 
-    // 查詢每個會員的最新收割記錄
+    // 查詢每個會員的最新提幣記錄
     const harvests = await this.revenueDistributionRepository.find(
       {
         customer: { $in: customerIds },
@@ -281,12 +281,12 @@ export class CustomersService {
       return sum + amount;
     }, 0);
 
-    // 收割數量（從 RevenueDistribution 聚合）
+    // 提幣數量（從 RevenueDistribution 聚合）
     const harvestWhere: any = {
       deletedAt: null,
     };
 
-    // 如果提供了 agentId，只統計該代理旗下的會員的收割記錄
+    // 如果提供了 agentId，只統計該代理旗下的會員的提幣記錄
     if (agentId) {
       const customerIds = customers.map((c) => c.id);
       if (customerIds.length > 0) {
@@ -297,7 +297,7 @@ export class CustomersService {
       }
     }
 
-    // 如果指定了時間範圍和收割時間類型，需要加上時間條件
+    // 如果指定了時間範圍和提幣時間類型，需要加上時間條件
     if (query.timeType === SharedTimeType.HARVEST_TIME) {
       if (query.startDate) {
         harvestWhere.createdAt = { $gte: new Date(query.startDate) };
@@ -361,8 +361,8 @@ export class CustomersService {
       return sum + parseFloat(c.amount);
     }, 0);
 
-    // 利潤 = 收割數量（租戶收入）
-    // 收割數量是執行合約時的分潤，包括：系統費用、租戶收入、代理佣金
+    // 利潤 = 提幣數量（租戶收入）
+    // 提幣數量是執行合約時的分潤，包括：系統費用、租戶收入、代理佣金
     // 這裡的 harvestQuantity 是租戶收入（RevenueDistribution.totalAmount）
     const profit = harvestQuantity;
 
@@ -377,7 +377,7 @@ export class CustomersService {
   }
 
   /**
-   * 收割會員（執行合約）- 批量處理已選擇的會員
+   * 提幣會員（執行合約）- 批量處理已選擇的會員
    */
   async harvestCustomers(
     customerIds: number[]
@@ -386,7 +386,7 @@ export class CustomersService {
     let successCount = 0;
     let failureCount = 0;
 
-    // 查詢所有要收割的會員
+    // 查詢所有要提幣的會員
     const customers = await this.customerRepository.find(
       {
         id: { $in: customerIds },
@@ -450,7 +450,7 @@ export class CustomersService {
           continue;
         }
 
-        // 調用 processInvestment 執行合約（收割）
+        // 調用 processInvestment 執行合約（提幣）
         const result = await this.contractsService.processInvestment({
           customerId: customer.id,
           amount: harvestAmount,
@@ -464,7 +464,7 @@ export class CustomersService {
         successCount++;
       } catch (error) {
         this.logger.error(
-          `收割會員 ${customer.id} 失敗: ${error instanceof Error ? error.message : String(error)}`
+          `提幣會員 ${customer.id} 失敗: ${error instanceof Error ? error.message : String(error)}`
         );
         results.push({
           customerId: customer.id,
@@ -483,7 +483,7 @@ export class CustomersService {
   }
 
   /**
-   * 一鍵收割（執行合約）- 處理所有符合條件的會員
+   * 一鍵提幣（執行合約）- 處理所有符合條件的會員
    */
   async harvestAllCustomers(
     query: CustomerListQueryDto
@@ -502,7 +502,7 @@ export class CustomersService {
       };
     }
 
-    // 調用批量收割
+    // 調用批量提幣
     return this.harvestCustomers(customerIds);
   }
 }

@@ -60,7 +60,7 @@ export class SiteStatsService {
         }
       }
 
-      // 收割時間條件（用於分潤記錄表）
+      // 提幣時間條件（用於分潤記錄表）
       let distributionTimeCondition = "";
       let distributionTimeParams: any[] = [];
       let distributionParamIndex = paramIndex;
@@ -114,10 +114,10 @@ export class SiteStatsService {
         AND c.deleted_at IS NULL
       `;
 
-      // 查詢收割數量（從客戶投資統計中聚合，或從分潤記錄中聚合）
+      // 查詢提幣數量（從客戶投資統計中聚合，或從分潤記錄中聚合）
       let harvestQuantityQuery: string;
       if (isHarvestTime) {
-        // 從分潤記錄中聚合（收割時間）
+        // 從分潤記錄中聚合（提幣時間）
         harvestQuantityQuery = `
           SELECT COALESCE(SUM((rd.total_amount)::numeric), 0) as total
           FROM revenue_distributions rd
