@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLogin } from "@refinedev/core";
+import { useLogin, useNotification } from "@refinedev/core";
 import {
   Button,
   Input,
@@ -20,6 +20,7 @@ export default function LoginPage() {
   }, []);
 
   const { mutate: login, isPending } = useLogin();
+  const { open } = useNotification();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -153,7 +154,11 @@ export default function LoginPage() {
                   type="button"
                   className="text-primary hover:underline font-medium"
                   onClick={() => {
-                    alert("忘记密码功能开发中");
+                    open?.({
+                      type: "progress",
+                      message: "功能开发中",
+                      description: "忘记密码功能正在开发中",
+                    });
                   }}
                 >
                   忘记密码？

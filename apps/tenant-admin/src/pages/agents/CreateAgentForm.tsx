@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreate } from "@refinedev/core";
+import { useCreate, useNotification } from "@refinedev/core";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
@@ -35,6 +35,7 @@ export default function CreateAgentForm({
     notes: "",
   });
 
+  const { open } = useNotification();
   const createMutation = useCreate();
   const { mutate: createAgent, mutation } = createMutation;
   const isCreating = mutation.isPending || false;
@@ -42,23 +43,39 @@ export default function CreateAgentForm({
   const handleSubmit = () => {
     // 验证必填字段
     if (!formData.name || !formData.username || !formData.walletAddress) {
-      alert("请填写所有必填字段");
+      open?.({
+        type: "error",
+        message: "验证失败",
+        description: "请填写所有必填字段",
+      });
       return;
     }
 
     if (!formData.email || !formData.password) {
-      alert("新增代理需要填写 Email 和密码");
+      open?.({
+        type: "error",
+        message: "验证失败",
+        description: "新增代理需要填写 Email 和密码",
+      });
       return;
     }
 
     if (!formData.uplineRate) {
-      alert("请填写上级比率");
+      open?.({
+        type: "error",
+        message: "验证失败",
+        description: "请填写上级比率",
+      });
       return;
     }
 
     const uplineRate = parseFloat(formData.uplineRate);
     if (isNaN(uplineRate) || uplineRate < 0 || uplineRate > 100) {
-      alert("上级比率必须在 0-100 之间");
+      open?.({
+        type: "error",
+        message: "验证失败",
+        description: "上级比率必须在 0-100 之间",
+      });
       return;
     }
 
@@ -92,13 +109,12 @@ export default function CreateAgentForm({
           onSuccess?.();
         },
         onError: (error: any) => {
-          alert(
-            `创建失败：${
-              error?.response?.data?.message ||
-              error?.message ||
-              "未知错误"
-            }`
-          );
+          open?.({
+            type: "error",
+            message: "创建失败",
+            description:
+              error?.response?.data?.message || error?.message || "未知错误",
+          });
         },
       }
     );

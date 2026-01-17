@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useCreate, useList, useNavigation } from "@refinedev/core";
+import { useCreate, useList, useNavigation, useNotification } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -73,6 +73,7 @@ export default function CreateAgentPage() {
   }, []);
 
   const { list } = useNavigation();
+  const { open } = useNotification();
   const createMutation = useCreate();
   const { mutate: createAgent, mutation } = createMutation;
   const isCreating = mutation.isPending || false;
@@ -132,12 +133,14 @@ export default function CreateAgentPage() {
           list("agents");
         },
         onError: (error: any) => {
-          console.error("创建代理失败:", error);
-          alert(
-            error?.response?.data?.message ||
+          open?.({
+            type: "error",
+            message: "创建失败",
+            description:
+              error?.response?.data?.message ||
               error?.message ||
-              "创建代理失败"
-          );
+              "创建代理失败",
+          });
         },
       }
     );

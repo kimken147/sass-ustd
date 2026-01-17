@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigation, useCustom } from "@refinedev/core";
+import { useNavigation, useCustom, useNotification } from "@refinedev/core";
 import {
   CreateView,
   CreateViewHeader,
@@ -39,6 +39,7 @@ export default function EditSubAgentPage() {
 
   const { id } = useParams<{ id: string }>();
   const { list } = useNavigation();
+  const { open } = useNotification();
   const [isUpdating, setIsUpdating] = useState(false);
 
   // 获取下级代理列表，找到要编辑的代理
@@ -89,13 +90,21 @@ export default function EditSubAgentPage() {
     e.preventDefault();
 
     if (!id || !agent) {
-      alert("下级代理不存在");
+      open?.({
+        type: "error",
+        message: "错误",
+        description: "下级代理不存在",
+      });
       return;
     }
 
     // 验证必填字段
     if (!formData.name || !formData.walletAddress) {
-      alert("请填写所有必填字段");
+      open?.({
+        type: "error",
+        message: "验证失败",
+        description: "请填写所有必填字段",
+      });
       return;
     }
 
@@ -108,7 +117,11 @@ export default function EditSubAgentPage() {
     if (formData.allocatedRate) {
       const allocatedRate = parseFloat(formData.allocatedRate);
       if (isNaN(allocatedRate) || allocatedRate < 0 || allocatedRate > 100) {
-        alert("分配比率必须在 0-100 之间");
+        open?.({
+          type: "error",
+          message: "验证失败",
+          description: "分配比率必须在 0-100 之间",
+        });
         return;
       }
       updateData.allocatedRate = allocatedRate;
@@ -126,13 +139,12 @@ export default function EditSubAgentPage() {
       // 成功后返回列表页
       list("sub-agents");
     } catch (error: any) {
-      alert(
-        `更新失败：${
-          error?.response?.data?.message ||
-          error?.message ||
-          "未知错误"
-        }`
-      );
+      open?.({
+        type: "error",
+        message: "更新失败",
+        description:
+          error?.response?.data?.message || error?.message || "未知错误",
+      });
     } finally {
       setIsUpdating(false);
     }

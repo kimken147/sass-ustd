@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useUpdate } from "@refinedev/core";
+import { useUpdate, useNotification } from "@refinedev/core";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
@@ -53,6 +53,7 @@ export default function EditAgentForm({
     });
   }, [agent]);
 
+  const { open } = useNotification();
   const updateMutation = useUpdate();
   const { mutate: updateAgent, mutation } = updateMutation;
   const isUpdating = mutation.isPending || false;
@@ -60,7 +61,11 @@ export default function EditAgentForm({
   const handleSubmit = () => {
     // 验证必填字段
     if (!formData.name || !formData.walletAddress) {
-      alert("请填写所有必填字段");
+      open?.({
+        type: "error",
+        message: "验证失败",
+        description: "请填写所有必填字段",
+      });
       return;
     }
 
@@ -73,7 +78,11 @@ export default function EditAgentForm({
     if (formData.uplineRate) {
       const uplineRate = parseFloat(formData.uplineRate);
       if (isNaN(uplineRate) || uplineRate < 0 || uplineRate > 100) {
-        alert("上级比率必须在 0-100 之间");
+        open?.({
+          type: "error",
+          message: "验证失败",
+          description: "上级比率必须在 0-100 之间",
+        });
         return;
       }
       updateData.uplineRate = uplineRate;
@@ -90,13 +99,12 @@ export default function EditAgentForm({
           onSuccess?.();
         },
         onError: (error: any) => {
-          alert(
-            `更新失败：${
-              error?.response?.data?.message ||
-              error?.message ||
-              "未知错误"
-            }`
-          );
+          open?.({
+            type: "error",
+            message: "更新失败",
+            description:
+              error?.response?.data?.message || error?.message || "未知错误",
+          });
         },
       }
     );

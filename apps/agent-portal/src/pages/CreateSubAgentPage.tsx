@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useCreate, useNavigation } from "@refinedev/core";
+import { useCreate, useNavigation, useNotification } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -48,6 +48,7 @@ export default function CreateSubAgentPage() {
   }, []);
 
   const { list } = useNavigation();
+  const { open } = useNotification();
   const createMutation = useCreate();
   const { mutate: createSubAgent, mutation } = createMutation;
   const isCreating = mutation.isPending || false;
@@ -93,12 +94,14 @@ export default function CreateSubAgentPage() {
           list("sub-agents");
         },
         onError: (error: any) => {
-          console.error("创建下级代理失败:", error);
-          alert(
-            error?.response?.data?.message ||
+          open?.({
+            type: "error",
+            message: "创建失败",
+            description:
+              error?.response?.data?.message ||
               error?.message ||
-              "创建下级代理失败"
-          );
+              "创建下级代理失败",
+          });
         },
       }
     );

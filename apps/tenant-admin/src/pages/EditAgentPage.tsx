@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useUpdate, useOne, useNavigation } from "@refinedev/core";
+import { useUpdate, useOne, useNavigation, useNotification } from "@refinedev/core";
 import { CreateView, CreateViewHeader } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
 import { Input } from "@saas-platform/ui";
@@ -34,6 +34,7 @@ export default function EditAgentPage() {
 
   const { id } = useParams<{ id: string }>();
   const { list } = useNavigation();
+  const { open } = useNotification();
   const updateMutation = useUpdate();
   const { mutate: updateAgent, mutation } = updateMutation;
   const isUpdating = mutation.isPending || false;
@@ -85,13 +86,21 @@ export default function EditAgentPage() {
     e.preventDefault();
 
     if (!id || !agent) {
-      alert("代理不存在");
+      open?.({
+        type: "error",
+        message: "错误",
+        description: "代理不存在",
+      });
       return;
     }
 
     // 验证必填字段
     if (!formData.name || !formData.walletAddress) {
-      alert("请填写所有必填字段");
+      open?.({
+        type: "error",
+        message: "验证失败",
+        description: "请填写所有必填字段",
+      });
       return;
     }
 
@@ -104,7 +113,11 @@ export default function EditAgentPage() {
     if (formData.allocatedRate) {
       const allocatedRate = parseFloat(formData.allocatedRate);
       if (isNaN(allocatedRate) || allocatedRate < 0 || allocatedRate > 100) {
-        alert("分配比率必须在 0-100 之间");
+        open?.({
+          type: "error",
+          message: "验证失败",
+          description: "分配比率必须在 0-100 之间",
+        });
         return;
       }
       updateData.allocatedRate = allocatedRate;
@@ -121,12 +134,14 @@ export default function EditAgentPage() {
           list("agents");
         },
         onError: (error: any) => {
-          console.error("更新代理失败:", error);
-          alert(
-            error?.response?.data?.message ||
+          open?.({
+            type: "error",
+            message: "更新失败",
+            description:
+              error?.response?.data?.message ||
               error?.message ||
-              "更新代理失败"
-          );
+              "更新代理失败",
+          });
         },
       }
     );

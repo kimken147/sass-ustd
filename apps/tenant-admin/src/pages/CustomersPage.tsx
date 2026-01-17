@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useCustom, useCustomMutation, useApiUrl } from "@refinedev/core";
+import { useCustom, useCustomMutation, useApiUrl, useNotification } from "@refinedev/core";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   ListView,
@@ -95,6 +95,8 @@ export default function CustomersPage() {
     document.title = "会员管理 - 租户管理后台";
   }, []);
 
+  const { open } = useNotification();
+
   // 筛选器状态
   const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
@@ -177,7 +179,11 @@ export default function CustomersPage() {
   // 处理收割（已选择的会员）
   const handleHarvest = () => {
     if (selectedIds.size === 0) {
-      alert("请先选择要收割的会员");
+      open?.({
+        type: "error",
+        message: "操作失败",
+        description: "请先选择要收割的会员",
+      });
       return;
     }
 
@@ -194,14 +200,21 @@ export default function CustomersPage() {
       {
         onSuccess: (data: any) => {
           const { successCount, failureCount } = data;
-          alert(`收割完成！成功: ${successCount} 个，失败: ${failureCount} 个`);
+          open?.({
+            type: "success",
+            message: "收割完成",
+            description: `成功: ${successCount} 个，失败: ${failureCount} 个`,
+          });
           setSelectedIds(new Set());
           query.refetch();
         },
         onError: (error: any) => {
-          alert(
-            `收割失败: ${error?.response?.data?.message || error?.message || "未知错误"}`
-          );
+          open?.({
+            type: "error",
+            message: "收割失败",
+            description:
+              error?.response?.data?.message || error?.message || "未知错误",
+          });
         },
       }
     );
@@ -213,7 +226,11 @@ export default function CustomersPage() {
   // 处理一键收割（全部会员）
   const handleHarvestAll = () => {
     if (!customerListData?.customers?.length) {
-      alert("没有可收割的会员");
+      open?.({
+        type: "error",
+        message: "操作失败",
+        description: "没有可收割的会员",
+      });
       return;
     }
 
@@ -243,13 +260,20 @@ export default function CustomersPage() {
       {
         onSuccess: (data: any) => {
           const { successCount, failureCount } = data;
-          alert(`一键收割完成！成功: ${successCount} 个，失败: ${failureCount} 个`);
+          open?.({
+            type: "success",
+            message: "一键收割完成",
+            description: `成功: ${successCount} 个，失败: ${failureCount} 个`,
+          });
           query.refetch();
         },
         onError: (error: any) => {
-          alert(
-            `一键收割失败: ${error?.response?.data?.message || error?.message || "未知错误"}`
-          );
+          open?.({
+            type: "error",
+            message: "一键收割失败",
+            description:
+              error?.response?.data?.message || error?.message || "未知错误",
+          });
         },
       }
     );

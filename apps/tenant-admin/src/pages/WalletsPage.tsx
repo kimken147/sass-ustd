@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useList, useCreate, useUpdate, useDelete } from "@refinedev/core";
+import { useList, useCreate, useUpdate, useDelete, useNotification } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -178,6 +178,7 @@ function WalletForm({
 
 export default function WalletsPage() {
   const isMobile = useIsMobile();
+  const { open } = useNotification();
 
   // 设置页面标题
   useEffect(() => {
@@ -326,7 +327,12 @@ export default function WalletsPage() {
             walletsQuery.query.refetch();
           },
           onError: (error: any) => {
-            alert(`创建失败：${error?.response?.data?.message || error?.message || "未知错误"}`);
+            open?.({
+              type: "error",
+              message: "创建失败",
+              description:
+                error?.response?.data?.message || error?.message || "未知错误",
+            });
           },
         }
       );
@@ -348,7 +354,12 @@ export default function WalletsPage() {
             walletsQuery.query.refetch();
           },
           onError: (error: any) => {
-            alert(`更新失败：${error?.response?.data?.message || error?.message || "未知错误"}`);
+            open?.({
+              type: "error",
+              message: "更新失败",
+              description:
+                error?.response?.data?.message || error?.message || "未知错误",
+            });
           },
         }
       );
@@ -364,7 +375,12 @@ export default function WalletsPage() {
       {
         onSuccess: () => walletsQuery.query.refetch(),
         onError: (error: any) => {
-          alert(`删除失败：${error?.response?.data?.message || error?.message || "未知错误"}`);
+          open?.({
+            type: "error",
+            message: "删除失败",
+            description:
+              error?.response?.data?.message || error?.message || "未知错误",
+          });
         },
       }
     );
