@@ -6,7 +6,6 @@ import {
   EditButton,
 } from "@saas-platform/ui";
 import { Button } from "@saas-platform/ui";
-import { Input } from "@saas-platform/ui";
 import {
   Select,
   SelectContent,
@@ -15,7 +14,8 @@ import {
   SelectValue,
 } from "@saas-platform/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@saas-platform/ui";
-import { Calendar, Search } from "lucide-react";
+import { DateTimePicker } from "@saas-platform/ui";
+import { Search } from "lucide-react";
 import {
   TimeType,
   SiteStats,
@@ -140,25 +140,19 @@ export default function DashboardPage() {
             <div className="flex-1 min-w-[200px]">
               <label className="text-sm font-medium mb-2 block">订单时间</label>
               <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                  <Input
-                    type="datetime-local"
-                    placeholder="请选择时间"
+                <div className="flex-1">
+                  <DateTimePicker
+                    placeholder="开始时间"
                     value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="pl-10"
+                    onChange={(value) => setStartTime(value)}
                   />
                 </div>
                 <span className="text-muted-foreground">至</span>
-                <div className="relative flex-1">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                  <Input
-                    type="datetime-local"
-                    placeholder="请选择时间"
+                <div className="flex-1">
+                  <DateTimePicker
+                    placeholder="结束时间"
                     value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="pl-10"
+                    onChange={(value) => setEndTime(value)}
                   />
                 </div>
               </div>

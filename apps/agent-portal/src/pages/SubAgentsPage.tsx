@@ -17,9 +17,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  DateTimePicker,
 } from "@saas-platform/ui";
 import {
-  Calendar,
   Search,
   ChevronRight,
   ChevronDown,
@@ -441,18 +441,11 @@ export default function SubAgentsPage() {
               {/* 建立时间 */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">创建时间</label>
-                <div className="relative">
-                  <Input
-                    type="datetime-local"
-                    placeholder="请选择时间"
-                    value={filters.createdAt}
-                    onChange={(e) =>
-                      handleFilterChange("createdAt", e.target.value)
-                    }
-                    className="pr-10"
-                  />
-                  <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
+                <DateTimePicker
+                  placeholder="请选择时间"
+                  value={filters.createdAt}
+                  onChange={(value) => handleFilterChange("createdAt", value)}
+                />
               </div>
 
               {/* 名称 */}

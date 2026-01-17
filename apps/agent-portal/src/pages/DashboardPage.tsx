@@ -13,6 +13,7 @@ import {
   CardTitle,
   CopyableText,
   TooltipProvider,
+  DateTimePicker,
 } from "@saas-platform/ui";
 import {
   Select,
@@ -21,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@saas-platform/ui";
-import { Calendar, Search, AlertCircle } from "lucide-react";
+import { Search, AlertCircle } from "lucide-react";
 import {
   TimeType,
   CustomerListResponse,
@@ -255,25 +256,19 @@ export default function DashboardPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block">订单时间</label>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <div className="relative flex-1">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                    <Input
-                      type="datetime-local"
-                      placeholder="请选择时间"
+                  <div className="flex-1">
+                    <DateTimePicker
+                      placeholder="开始时间"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="pl-10"
+                      onChange={(value) => setStartDate(value)}
                     />
                   </div>
                   <span className="text-muted-foreground text-center hidden sm:block">至</span>
-                  <div className="relative flex-1">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                    <Input
-                      type="datetime-local"
-                      placeholder="请选择时间"
+                  <div className="flex-1">
+                    <DateTimePicker
+                      placeholder="结束时间"
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="pl-10"
+                      onChange={(value) => setEndDate(value)}
                     />
                   </div>
                 </div>
