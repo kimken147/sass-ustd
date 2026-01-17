@@ -84,11 +84,6 @@ const columns: ColumnDef<RevenueDistributionItem, unknown>[] = [
     cell: (info) => formatAmount(info.getValue() as string),
   },
   {
-    accessorKey: "ratio",
-    header: "分配比例",
-    cell: (info) => `${(info.getValue() as number).toFixed(2)}%`,
-  },
-  {
     accessorKey: "revenueRate",
     header: "收入比例",
     cell: (info) => `${(info.getValue() as number).toFixed(2)}%`,

@@ -15,7 +15,6 @@ import {
 import { Search } from "lucide-react";
 import {
   CommissionPayoutItem,
-  CommissionPayoutType,
   CommissionPayoutStatus,
 } from "@saas-platform/shared-types";
 import { formatDateTimeLocalized } from "@saas-platform/utils";
@@ -38,12 +37,6 @@ const statusMap: Record<string, { label: string; className: string }> = {
     label: "失败",
     className: "bg-red-100 text-red-800",
   },
-};
-
-// 类型映射
-const typeMap: Record<string, string> = {
-  [CommissionPayoutType.SELF]: "自己保留",
-  [CommissionPayoutType.FROM_DOWNLINE]: "来自下级",
 };
 
 // 格式化金额
@@ -110,19 +103,6 @@ const columns: ColumnDef<CommissionPayoutItem, unknown>[] = [
     accessorKey: "ratio",
     header: "佣金比例",
     cell: (info) => `${(info.getValue() as number).toFixed(2)}%`,
-  },
-  {
-    accessorKey: "commissionRate",
-    header: "佣金率",
-    cell: (info) => `${(info.getValue() as number).toFixed(2)}%`,
-  },
-  {
-    accessorKey: "type",
-    header: "类型",
-    cell: (info) => {
-      const type = info.getValue() as string;
-      return typeMap[type] || type;
-    },
   },
   {
     accessorKey: "status",
