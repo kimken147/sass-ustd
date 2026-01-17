@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto';
 import { CreateRevenueWalletDto } from './dto/create-revenue-wallet.dto';
 import { UpdateRevenueWalletDto } from './dto/update-revenue-wallet.dto';
 import { SetRevenueWalletsDto } from './dto/set-revenue-wallets.dto';
+import { QueryRevenueWalletsDto } from './dto/query-revenue-wallets.dto';
 
 /**
  * 分潤錢包服務
@@ -36,9 +37,36 @@ export class RevenueWalletsService {
   /**
    * 獲取當前租戶的分潤錢包列表
    */
-  async getRevenueWallets(): Promise<RevenueWallet[]> {
+  async getRevenueWallets(query?: QueryRevenueWalletsDto): Promise<RevenueWallet[]> {
     const config = await this.getTenantConfig();
-    return config.revenueWallets || [];
+    let wallets = config.revenueWallets || [];
+
+    // 名稱模糊搜尋
+    if (query?.name) {
+      const searchName = query.name.toLowerCase();
+      wallets = wallets.filter((w) =>
+        w.name.toLowerCase().includes(searchName)
+      );
+    }
+
+    // 驗證時間範圍篩選
+    if (query?.verifiedAtStart) {
+      const startDate = new Date(query.verifiedAtStart);
+      wallets = wallets.filter((w) => {
+        if (!w.verifiedAt) return true; // 未驗證的錢包保留
+        return new Date(w.verifiedAt) >= startDate;
+      });
+    }
+
+    if (query?.verifiedAtEnd) {
+      const endDate = new Date(query.verifiedAtEnd);
+      wallets = wallets.filter((w) => {
+        if (!w.verifiedAt) return true; // 未驗證的錢包保留
+        return new Date(w.verifiedAt) <= endDate;
+      });
+    }
+
+    return wallets;
   }
 
   /**

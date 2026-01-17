@@ -21,6 +21,7 @@ import {
 import { PasswordService } from '@saas-platform/auth';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
+import { QueryAgentsDto } from './dto/query-agents.dto';
 
 /**
  * 代理链节点（用于分润计算）
@@ -68,14 +69,29 @@ export class AgentsService {
   /**
    * 获取代理列表（排除站长，只显示 level > 0 的代理）
    */
-  async getAgents(): Promise<Agent[]> {
-    return this.agentRepository.find(
-      { level: { $gt: 0 } },
-      {
-        populate: ['user', 'parentAgent'],
-        orderBy: { level: 'ASC', createdAt: 'DESC' },
-      },
-    );
+  async getAgents(query?: QueryAgentsDto): Promise<Agent[]> {
+    const where: any = { level: { $gt: 0 } };
+
+    // 名稱模糊搜尋
+    if (query?.name) {
+      where.name = { $like: `%${query.name}%` };
+    }
+
+    // 建立時間範圍
+    if (query?.createdAtStart || query?.createdAtEnd) {
+      where.createdAt = {};
+      if (query.createdAtStart) {
+        where.createdAt.$gte = new Date(query.createdAtStart);
+      }
+      if (query.createdAtEnd) {
+        where.createdAt.$lte = new Date(query.createdAtEnd);
+      }
+    }
+
+    return this.agentRepository.find(where, {
+      populate: ['user', 'parentAgent'],
+      orderBy: { level: 'ASC', createdAt: 'DESC' },
+    });
   }
 
   /**
@@ -159,7 +175,7 @@ export class AgentsService {
   /**
    * 获取指定代理的下级代理列表
    */
-  async getSubAgents(agentId: number): Promise<Agent[]> {
+  async getSubAgents(agentId: number, query?: QueryAgentsDto): Promise<Agent[]> {
     const currentAgent = await this.agentRepository.findOne(
       { id: agentId },
       { populate: ['user', 'parentAgent'] },
@@ -169,13 +185,28 @@ export class AgentsService {
       throw new NotFoundException('代理不存在');
     }
 
-    const subAgents = await this.agentRepository.find(
-      { parentAgent: agentId },
-      {
-        populate: ['user', 'parentAgent'],
-        orderBy: { level: 'ASC', createdAt: 'DESC' },
-      },
-    );
+    const where: any = { parentAgent: agentId };
+
+    // 名稱模糊搜尋
+    if (query?.name) {
+      where.name = { $like: `%${query.name}%` };
+    }
+
+    // 建立時間範圍
+    if (query?.createdAtStart || query?.createdAtEnd) {
+      where.createdAt = {};
+      if (query.createdAtStart) {
+        where.createdAt.$gte = new Date(query.createdAtStart);
+      }
+      if (query.createdAtEnd) {
+        where.createdAt.$lte = new Date(query.createdAtEnd);
+      }
+    }
+
+    const subAgents = await this.agentRepository.find(where, {
+      populate: ['user', 'parentAgent'],
+      orderBy: { level: 'ASC', createdAt: 'DESC' },
+    });
 
     return subAgents;
   }

@@ -22,8 +22,6 @@ import {
   SystemFeeWallet,
   SiteItem,
 } from "@saas-platform/shared-types";
-import { getTodayStartLocal } from "@saas-platform/utils";
-
 // 統計卡片組件
 function StatsCard({
   title,
@@ -72,39 +70,46 @@ export default function DashboardPage() {
     document.title = "站点列表 - 平台管理后台";
   }, []);
 
-  // 筛选器状态
-  const [startTime, setStartTime] = useState<string>(getTodayStartLocal());
+  // 筛选器输入状态（用户输入时更新）
+  const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(TimeType.AUTHORIZATION_TIME);
 
-  // 构建查询参数作为 filters
+  // 已提交的筛选状态（点击查询按钮时更新）
+  const [appliedFilters, setAppliedFilters] = useState({
+    startTime: "",
+    endTime: "",
+    timeType: TimeType.AUTHORIZATION_TIME,
+  });
+
+  // 构建查询参数作为 filters（基于已提交的筛选条件）
   const filters = useMemo(() => {
     const crudFilters: CrudFilter[] = [];
-    
-    if (startTime) {
+
+    if (appliedFilters.startTime) {
       crudFilters.push({
         field: "startTime",
         operator: "eq",
-        value: new Date(startTime).toISOString(),
+        value: new Date(appliedFilters.startTime).toISOString(),
       });
     }
-    if (endTime) {
+    if (appliedFilters.endTime) {
       crudFilters.push({
         field: "endTime",
         operator: "eq",
-        value: new Date(endTime).toISOString(),
+        value: new Date(appliedFilters.endTime).toISOString(),
       });
     }
-    if (timeType) {
+    if (appliedFilters.timeType) {
       crudFilters.push({
         field: "timeType",
         operator: "eq",
-        value: timeType,
+        value: appliedFilters.timeType,
       });
     }
 
     return crudFilters;
-  }, [startTime, endTime, timeType]);
+  }, [appliedFilters]);
 
   // 使用标准的 useList hook 获取站点列表
   const sitesQuery = useList<SiteItem>({
@@ -115,8 +120,13 @@ export default function DashboardPage() {
     filters,
   });
 
+  // 处理查询（将输入的筛选条件提交）
   const handleSearch = () => {
-    sitesQuery.query.refetch();
+    setAppliedFilters({
+      startTime,
+      endTime,
+      timeType,
+    });
   };
 
   // 從 result 中獲取數據

@@ -26,7 +26,7 @@ import {
   Plus,
   Pencil,
 } from "lucide-react";
-import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
+import { formatDateTime } from "@saas-platform/utils";
 import { useIsMobile } from "@saas-platform/ui";
 
 // Agent 类型定义
@@ -91,26 +91,37 @@ export default function SubAgentsPage() {
 
   const { create, edit } = useNavigation();
 
-  // 筛选状态
+  // 筛选输入状态（用户输入时更新）
   const [filters, setFilters] = useState({
     name: "",
-    createdAt: getTodayStartLocal(),
+    createdAtStart: "",
+    createdAtEnd: "",
+  });
+
+  // 已提交的筛选状态（点击查询按钮时更新）
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: "",
+    createdAtStart: "",
+    createdAtEnd: "",
   });
 
   // 展开/收合状态
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
-  // 构建查询参数
+  // 构建查询参数（基于已提交的筛选条件）
   const queryParams = useMemo(() => {
     const params: Record<string, any> = {};
-    if (filters.name) {
-      params.name = filters.name;
+    if (appliedFilters.name) {
+      params.name = appliedFilters.name;
     }
-    if (filters.createdAt) {
-      params.createdAt = filters.createdAt;
+    if (appliedFilters.createdAtStart) {
+      params.createdAtStart = new Date(appliedFilters.createdAtStart).toISOString();
+    }
+    if (appliedFilters.createdAtEnd) {
+      params.createdAtEnd = new Date(appliedFilters.createdAtEnd).toISOString();
     }
     return params;
-  }, [filters.name, filters.createdAt]);
+  }, [appliedFilters.name, appliedFilters.createdAtStart, appliedFilters.createdAtEnd]);
 
   // 获取当前代理信息（用于显示授权合约链接）
   const { query: myAgentQuery, result: myAgentResult } = useCustom<Agent>({
@@ -141,33 +152,14 @@ export default function SubAgentsPage() {
   const isError = subAgentsQuery.isError || myAgentQuery.isError;
   const error = subAgentsQuery.error || myAgentQuery.error;
 
-  // 构建树状结构
+  // 构建树状结构（API 已在后端进行日期和名称筛选）
   const treeData = useMemo(() => {
-    // 先过滤建立时间
-    let filtered = agents;
-    if (filters.createdAt) {
-      const filterDate = new Date(filters.createdAt);
-      filterDate.setHours(0, 0, 0, 0);
-      filtered = filtered.filter((agent) => {
-        const agentDate = new Date(agent.createdAt);
-        agentDate.setHours(0, 0, 0, 0);
-        return agentDate >= filterDate;
-      });
-    }
-
-    // 名称筛选
-    if (filters.name) {
-      filtered = filtered.filter((agent) =>
-        agent.name.toLowerCase().includes(filters.name.toLowerCase())
-      );
-    }
-
     // 构建树状结构
     const agentMap = new Map<number, TreeNode>();
     const rootNodes: TreeNode[] = [];
 
     // 第一遍：创建所有节点
-    filtered.forEach((agent) => {
+    agents.forEach((agent) => {
       agentMap.set(agent.id, {
         ...agent,
         children: [],
@@ -176,7 +168,7 @@ export default function SubAgentsPage() {
     });
 
     // 第二遍：建立父子关系
-    filtered.forEach((agent) => {
+    agents.forEach((agent) => {
       const node = agentMap.get(agent.id)!;
       if (agent.parentAgentId) {
         const parent = agentMap.get(agent.parentAgentId);
@@ -201,7 +193,7 @@ export default function SubAgentsPage() {
     rootNodes.forEach(sortChildren);
 
     return rootNodes;
-  }, [agents, filters, expandedIds]);
+  }, [agents, expandedIds]);
 
   // 扁平化树状数据（用于移动端显示）
   const flattenedData = useMemo(() => {
@@ -239,9 +231,9 @@ export default function SubAgentsPage() {
     }));
   };
 
-  // 处理查询
+  // 处理查询（将输入的筛选条件提交）
   const handleSearch = () => {
-    subAgentsQuery.refetch();
+    setAppliedFilters({ ...filters });
   };
 
   // 处理新增下级代理
@@ -437,37 +429,51 @@ export default function SubAgentsPage() {
             <CardTitle>筛选条件</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* 建立时间 */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">创建时间</label>
-                <DateTimePicker
-                  placeholder="请选择时间"
-                  value={filters.createdAt}
-                  onChange={(value) => handleFilterChange("createdAt", value)}
-                />
+            <div className="space-y-4">
+              {/* 创建时间范围 */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">创建时间</label>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <div className="flex-1">
+                    <DateTimePicker
+                      placeholder="开始时间"
+                      value={filters.createdAtStart}
+                      onChange={(value) => handleFilterChange("createdAtStart", value)}
+                    />
+                  </div>
+                  <span className="text-muted-foreground text-center hidden sm:block">至</span>
+                  <div className="flex-1">
+                    <DateTimePicker
+                      placeholder="结束时间"
+                      value={filters.createdAtEnd}
+                      onChange={(value) => handleFilterChange("createdAtEnd", value)}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* 名称 */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">名称</label>
-                <Input
-                  placeholder="请输入名称"
-                  value={filters.name}
-                  onChange={(e) => handleFilterChange("name", e.target.value)}
-                />
-              </div>
+              {/* 名称和查询按钮 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">名称</label>
+                  <Input
+                    placeholder="请输入名称"
+                    value={filters.name}
+                    onChange={(e) => handleFilterChange("name", e.target.value)}
+                  />
+                </div>
 
-              {/* 查询按钮 */}
-              <div className="flex items-end">
-                <Button
-                  onClick={handleSearch}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  查询
-                </Button>
+                {/* 查询按钮 */}
+                <div className="flex items-end">
+                  <Button
+                    onClick={handleSearch}
+                    disabled={isLoading}
+                    className="w-full"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    查询
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -22,6 +23,7 @@ import { UpdateRevenueWalletDto } from "./dto/update-revenue-wallet.dto";
 import { SetRevenueWalletsDto } from "./dto/set-revenue-wallets.dto";
 import { RevenueWalletResponseDto } from "./dto/revenue-wallet-response.dto";
 import { RevenueWalletListResponseDto } from "./dto/list-response.dto";
+import { QueryRevenueWalletsDto } from "./dto/query-revenue-wallets.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "./guards/tenant-admin.guard";
 
@@ -46,8 +48,10 @@ export class RevenueWalletsController {
     type: RevenueWalletListResponseDto,
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async getRevenueWallets(): Promise<RevenueWalletListResponseDto> {
-    const wallets = await this.revenueWalletsService.getRevenueWallets();
+  async getRevenueWallets(
+    @Query() query: QueryRevenueWalletsDto
+  ): Promise<RevenueWalletListResponseDto> {
+    const wallets = await this.revenueWalletsService.getRevenueWallets(query);
     return {
       data: wallets,
       total: wallets.length,

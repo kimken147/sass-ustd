@@ -14,10 +14,7 @@ import {
 } from "@saas-platform/ui";
 import { Search } from "lucide-react";
 import { RevenueDistributionItem } from "@saas-platform/shared-types";
-import {
-  formatDateTimeLocalized,
-  getTodayStartLocal,
-} from "@saas-platform/utils";
+import { formatDateTimeLocalized } from "@saas-platform/utils";
 
 // 状态映射
 const statusMap: Record<string, { label: string; className: string }> = {
@@ -142,28 +139,34 @@ export default function RevenueDistributionPage() {
     document.title = "站长收益列表 - 租户管理后台";
   }, []);
 
-  // 筛选器状态
-  const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
+  // 筛选器输入状态（用户输入时更新）
+  const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 构建 Refine 筛选参数
+  // 已提交的筛选状态（点击查询按钮时更新）
+  const [appliedFilters, setAppliedFilters] = useState({
+    startDate: "",
+    endDate: "",
+  });
+
+  // 构建 Refine 筛选参数（基于已提交的筛选条件）
   const filters = useMemo(() => {
     const filterArray: CrudFilter[] = [];
 
-    if (startDate) {
+    if (appliedFilters.startDate) {
       filterArray.push({
         field: "startDate",
         operator: "eq",
-        value: new Date(startDate).toISOString(),
+        value: new Date(appliedFilters.startDate).toISOString(),
       });
     }
-    if (endDate) {
+    if (appliedFilters.endDate) {
       filterArray.push({
         field: "endDate",
         operator: "eq",
-        value: new Date(endDate).toISOString(),
+        value: new Date(appliedFilters.endDate).toISOString(),
       });
     }
     if (page) {
@@ -182,7 +185,7 @@ export default function RevenueDistributionPage() {
     }
 
     return filterArray;
-  }, [startDate, endDate, page, limit]);
+  }, [appliedFilters, page, limit]);
 
   // 使用 useList hook 获取站长收益列表（使用官方 Refine hooks）
   // 注意：resource 直接使用嵌合路径 "transactions/revenue-distributions"
@@ -194,8 +197,13 @@ export default function RevenueDistributionPage() {
     },
   });
 
+  // 处理查询（将输入的筛选条件提交）
   const handleSearch = () => {
-    revenueQuery.query.refetch();
+    setPage(1); // 重置页码
+    setAppliedFilters({
+      startDate,
+      endDate,
+    });
   };
 
   // 转换数据格式：useList 返回 { data: RevenueDistributionItem[], total: number }

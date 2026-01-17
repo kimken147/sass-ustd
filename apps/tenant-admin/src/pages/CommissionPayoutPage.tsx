@@ -18,10 +18,7 @@ import {
   CommissionPayoutType,
   CommissionPayoutStatus,
 } from "@saas-platform/shared-types";
-import {
-  formatDateTimeLocalized,
-  getTodayStartLocal,
-} from "@saas-platform/utils";
+import { formatDateTimeLocalized } from "@saas-platform/utils";
 
 // 状态映射
 const statusMap: Record<string, { label: string; className: string }> = {
@@ -173,28 +170,34 @@ export default function CommissionPayoutPage() {
     document.title = "代理分润列表 - 租户管理后台";
   }, []);
 
-  // 筛选器状态
-  const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
+  // 筛选器输入状态（用户输入时更新）
+  const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 构建 Refine 筛选参数
+  // 已提交的筛选状态（点击查询按钮时更新）
+  const [appliedFilters, setAppliedFilters] = useState({
+    startDate: "",
+    endDate: "",
+  });
+
+  // 构建 Refine 筛选参数（基于已提交的筛选条件）
   const filters = useMemo(() => {
     const filterArray: CrudFilter[] = [];
 
-    if (startDate) {
+    if (appliedFilters.startDate) {
       filterArray.push({
         field: "startDate",
         operator: "eq",
-        value: new Date(startDate).toISOString(),
+        value: new Date(appliedFilters.startDate).toISOString(),
       });
     }
-    if (endDate) {
+    if (appliedFilters.endDate) {
       filterArray.push({
         field: "endDate",
         operator: "eq",
-        value: new Date(endDate).toISOString(),
+        value: new Date(appliedFilters.endDate).toISOString(),
       });
     }
     if (page) {
@@ -213,7 +216,7 @@ export default function CommissionPayoutPage() {
     }
 
     return filterArray;
-  }, [startDate, endDate, page, limit]);
+  }, [appliedFilters, page, limit]);
 
   // 使用 useList hook 获取代理分润列表
   const payoutQuery = useList<CommissionPayoutItem>({
@@ -224,8 +227,13 @@ export default function CommissionPayoutPage() {
     },
   });
 
+  // 处理查询（将输入的筛选条件提交）
   const handleSearch = () => {
-    payoutQuery.query.refetch();
+    setPage(1); // 重置页码
+    setAppliedFilters({
+      startDate,
+      endDate,
+    });
   };
 
   // 转换数据格式

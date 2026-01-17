@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -25,6 +26,7 @@ import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdateAgentDto } from "./dto/update-agent.dto";
 import { UpdateAgentWalletDto } from "./dto/update-agent-wallet.dto";
 import { AgentResponseDto } from "./dto/agent-response.dto";
+import { QueryAgentsDto } from "./dto/query-agents.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { TenantAdminGuard } from "../revenue-wallets/guards/tenant-admin.guard";
 import { AgentGuard } from "../customers/guards/agent.guard";
@@ -63,8 +65,8 @@ export class AgentsController {
     type: [AgentResponseDto],
   })
   @ApiResponse({ status: 403, description: "只有站長可以訪問" })
-  async getAgents(): Promise<AgentResponseDto[]> {
-    const agents = await this.agentsService.getAgents();
+  async getAgents(@Query() query: QueryAgentsDto): Promise<AgentResponseDto[]> {
+    const agents = await this.agentsService.getAgents(query);
     return Promise.all(agents.map((agent) => this.mapAgentToDto(agent)));
   }
 
@@ -152,7 +154,10 @@ export class AgentsController {
     type: [AgentResponseDto],
   })
   @ApiResponse({ status: 403, description: "只有代理可以訪問" })
-  async getMySubAgents(@CurrentUser() user: TenantUser): Promise<AgentResponseDto[]> {
+  async getMySubAgents(
+    @CurrentUser() user: TenantUser,
+    @Query() query: QueryAgentsDto
+  ): Promise<AgentResponseDto[]> {
     // 查找當前用戶對應的代理記錄
     const agent = await this.em.findOne(
       Agent,
@@ -165,7 +170,7 @@ export class AgentsController {
     }
 
     // 獲取下級代理列表
-    const subAgents = await this.agentsService.getSubAgents(agent.id);
+    const subAgents = await this.agentsService.getSubAgents(agent.id, query);
     return Promise.all(subAgents.map((subAgent) => this.mapAgentToDto(subAgent)));
   }
 

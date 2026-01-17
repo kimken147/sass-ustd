@@ -30,7 +30,7 @@ export default function WalletsPage() {
 
   const navigate = useNavigate();
 
-  // 筛选状态
+  // 筛选输入状态（用户输入时更新）
   const [filters, setFilters] = useState({
     name: "",
     type: "",
@@ -38,21 +38,29 @@ export default function WalletsPage() {
     createdAt: "",
   });
 
-  // 构建查询参数
+  // 已提交的筛选状态（点击查询按钮时更新）
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: "",
+    type: "",
+    status: "",
+    createdAt: "",
+  });
+
+  // 构建查询参数（基于已提交的筛选条件）
   const queryParams = useMemo(() => {
     const params: CrudFilter[] = [];
-    if (filters.name) {
-      params.push({ field: "name", operator: "contains", value: filters.name });
+    if (appliedFilters.name) {
+      params.push({ field: "name", operator: "contains", value: appliedFilters.name });
     }
-    if (filters.type) {
-      params.push({ field: "type", operator: "eq", value: filters.type });
+    if (appliedFilters.type) {
+      params.push({ field: "type", operator: "eq", value: appliedFilters.type });
     }
-    if (filters.status) {
-      params.push({ field: "status", operator: "eq", value: filters.status });
+    if (appliedFilters.status) {
+      params.push({ field: "status", operator: "eq", value: appliedFilters.status });
     }
     // createdAt 需要根据实际 API 格式处理，暂时不处理
     return params;
-  }, [filters]);
+  }, [appliedFilters]);
 
   // 获取钱包列表
   const walletsQuery = useList<SystemWallet>({
@@ -73,10 +81,9 @@ export default function WalletsPage() {
     }));
   };
 
-  // 处理查询
+  // 处理查询（将输入的筛选条件提交）
   const handleSearch = () => {
-    // 触发重新查询（通过 filters 变更）
-    walletsQuery.query.refetch();
+    setAppliedFilters({ ...filters });
   };
 
   // 获取分配比例（需要从站点配置中获取，这里暂时显示 "-"）

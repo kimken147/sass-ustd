@@ -29,10 +29,7 @@ import {
   CustomerItem,
   CustomerAuthorizationStatus,
 } from "@saas-platform/shared-types";
-import {
-  formatDateTimeLocalized,
-  getTodayStartLocal,
-} from "@saas-platform/utils";
+import { formatDateTimeLocalized } from "@saas-platform/utils";
 
 // 统计卡片组件
 function StatsCard({
@@ -162,8 +159,8 @@ export default function DashboardPage() {
     document.title = "总览 - 代理商后台";
   }, []);
 
-  // 筛选器状态
-  const [startDate, setStartDate] = useState<string>(getTodayStartLocal());
+  // 筛选器输入状态（用户输入时更新）
+  const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(
     TimeType.AUTHORIZATION_TIME
@@ -174,27 +171,36 @@ export default function DashboardPage() {
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
-  // 构建查询参数
+  // 已提交的筛选状态（点击查询按钮时更新）
+  const [appliedFilters, setAppliedFilters] = useState({
+    startDate: "",
+    endDate: "",
+    timeType: TimeType.AUTHORIZATION_TIME,
+    authorizationStatus: CustomerAuthorizationStatus.ALL,
+    address: "",
+  });
+
+  // 构建查询参数（基于已提交的筛选条件）
   const queryParams = useMemo(() => {
     const params: Record<string, any> = {
       page,
       limit,
-      timeType,
-      authorizationStatus,
+      timeType: appliedFilters.timeType,
+      authorizationStatus: appliedFilters.authorizationStatus,
     };
 
-    if (startDate) {
-      params.startDate = new Date(startDate).toISOString();
+    if (appliedFilters.startDate) {
+      params.startDate = new Date(appliedFilters.startDate).toISOString();
     }
-    if (endDate) {
-      params.endDate = new Date(endDate).toISOString();
+    if (appliedFilters.endDate) {
+      params.endDate = new Date(appliedFilters.endDate).toISOString();
     }
-    if (address) {
-      params.address = address;
+    if (appliedFilters.address) {
+      params.address = appliedFilters.address;
     }
 
     return params;
-  }, [startDate, endDate, timeType, authorizationStatus, address, page, limit]);
+  }, [appliedFilters, page, limit]);
 
   // 使用 useCustom hook 获取会员列表
   const { query: customerQuery, result: customerResult } =
@@ -206,8 +212,16 @@ export default function DashboardPage() {
       },
     });
 
+  // 处理查询（将输入的筛选条件提交）
   const handleSearch = () => {
-    customerQuery.refetch();
+    setPage(1); // 重置页码
+    setAppliedFilters({
+      startDate,
+      endDate,
+      timeType,
+      authorizationStatus,
+      address,
+    });
   };
 
   // 从包装的响应格式中提取实际数据
