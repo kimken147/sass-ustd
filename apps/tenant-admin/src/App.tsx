@@ -12,7 +12,6 @@ import { dataProvider } from "./providers/dataProvider";
 import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
 import { Toaster } from "./components/refine-ui/notification/toaster";
 import LoginPage from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
 import RevenueDistributionPage from "./pages/RevenueDistributionPage";
 import CommissionPayoutPage from "./pages/CommissionPayoutPage";
@@ -48,33 +47,8 @@ function App() {
           notificationProvider={useNotificationProvider()}
           resources={[
             {
-              name: "dashboard",
-              list: "/",
-              meta: {
-                label: "仪表板",
-                icon: (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect width="7" height="9" x="3" y="3" rx="1" />
-                    <rect width="7" height="5" x="14" y="3" rx="1" />
-                    <rect width="7" height="9" x="14" y="12" rx="1" />
-                    <rect width="7" height="5" x="3" y="16" rx="1" />
-                  </svg>
-                ),
-              },
-            },
-            {
               name: "customers",
-              list: "/customers",
+              list: "/",
               meta: {
                 label: "会员管理",
                 icon: (
@@ -233,8 +207,7 @@ function App() {
               }
             >
               <Route element={<DashboardLayout />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="/customers" element={<CustomersPage />} />
+                <Route index element={<CustomersPage />} />
                 <Route path="/wallets" element={<WalletsPage />} />
                 <Route path="/agents" element={<AgentsPage />} />
                 <Route path="/agents/create" element={<CreateAgentPage />} />

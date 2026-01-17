@@ -98,7 +98,10 @@ export const authProvider: AuthProvider = {
       return {
         logout: true,
         redirectTo: '/login',
-        error,
+        error: {
+          name: '登录已过期',
+          message: '您的登录已过期，请重新登录',
+        },
       };
     }
 
