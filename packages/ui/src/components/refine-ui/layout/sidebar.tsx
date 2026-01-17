@@ -351,10 +351,14 @@ function SidebarButton({
       className={cn(
         "flex w-full items-center justify-start gap-2 py-2 !px-3 text-sm",
         {
+          // 選中狀態
           "bg-sidebar-primary": isSelected,
           "hover:!bg-sidebar-primary/90": isSelected,
           "text-sidebar-primary-foreground": isSelected,
           "hover:text-sidebar-primary-foreground": isSelected,
+          // 非選中狀態的 hover 樣式
+          "hover:bg-sidebar-accent": !isSelected,
+          "hover:text-sidebar-accent-foreground": !isSelected,
         },
         className
       )}
