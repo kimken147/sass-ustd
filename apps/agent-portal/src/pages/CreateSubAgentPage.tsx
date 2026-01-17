@@ -88,6 +88,7 @@ export default function CreateSubAgentPage() {
       {
         resource: "sub-agents",
         values: createData,
+        errorNotification: false,
       },
       {
         onSuccess: () => {

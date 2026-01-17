@@ -93,6 +93,7 @@ export default function EditAgentForm({
         resource: "agents",
         id: agent.id.toString(),
         values: updateData,
+        errorNotification: false,
       },
       {
         onSuccess: () => {

@@ -196,6 +196,8 @@ export default function CustomersPage() {
         url: "/api/customers/harvest",
         method: "post",
         values: { customerIds: Array.from(selectedIds) },
+        errorNotification: false,
+        successNotification: false,
       },
       {
         onSuccess: (data: any) => {
@@ -256,6 +258,8 @@ export default function CustomersPage() {
         url: `/api/customers/harvest-all${queryString ? `?${queryString}` : ""}`,
         method: "post",
         values: {},
+        errorNotification: false,
+        successNotification: false,
       },
       {
         onSuccess: (data: any) => {

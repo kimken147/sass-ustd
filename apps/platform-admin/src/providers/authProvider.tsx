@@ -1,5 +1,5 @@
 import { AuthProvider } from '@refinedev/core';
-import { getPlatformApiClient } from '@saas-platform/api-client';
+import { getPlatformApiClient, PlatformUserInfo } from '@saas-platform/api-client';
 
 export const authProvider: AuthProvider = {
   login: async ({ username, password }) => {
@@ -149,9 +149,9 @@ export const authProvider: AuthProvider = {
 
   getPermissions: async () => {
     try {
-      const identity = await authProvider.getIdentity?.();
+      const identity = (await authProvider.getIdentity?.()) as PlatformUserInfo | null;
       return identity?.role ? [identity.role] : [];
-    } catch (error) {
+    } catch {
       return [];
     }
   },

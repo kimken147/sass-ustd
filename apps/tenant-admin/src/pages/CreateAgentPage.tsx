@@ -127,6 +127,7 @@ export default function CreateAgentPage() {
       {
         resource: "agents",
         values: createData,
+        errorNotification: false,
       },
       {
         onSuccess: () => {

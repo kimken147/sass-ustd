@@ -123,6 +123,8 @@ export default function CreateWalletPage() {
       {
         resource: "system-wallets",
         values: createData,
+        errorNotification: false,
+        successNotification: false,
       },
       {
         onSuccess: () => {

@@ -320,6 +320,7 @@ export default function WalletsPage() {
             description: data.description || undefined,
             isActive: true,
           },
+          errorNotification: false,
         },
         {
           onSuccess: () => {
@@ -347,6 +348,7 @@ export default function WalletsPage() {
             percentage: data.percentage,
             description: data.description || undefined,
           },
+          errorNotification: false,
         },
         {
           onSuccess: () => {
@@ -371,7 +373,7 @@ export default function WalletsPage() {
     if (!confirm("确定要删除此钱包吗？")) return;
 
     deleteWallet(
-      { resource: "revenue-wallets", id: walletId },
+      { resource: "revenue-wallets", id: walletId, errorNotification: false },
       {
         onSuccess: () => walletsQuery.query.refetch(),
         onError: (error: any) => {

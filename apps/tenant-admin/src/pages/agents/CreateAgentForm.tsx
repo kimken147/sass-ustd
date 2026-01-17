@@ -92,6 +92,7 @@ export default function CreateAgentForm({
           walletAddress: formData.walletAddress,
           notes: formData.notes || undefined,
         },
+        errorNotification: false,
       },
       {
         onSuccess: () => {

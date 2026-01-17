@@ -128,6 +128,7 @@ export default function EditAgentPage() {
         resource: "agents",
         id: id,
         values: updateData,
+        errorNotification: false,
       },
       {
         onSuccess: () => {
