@@ -8,27 +8,7 @@ import {
 } from "@mikro-orm/core";
 import { BaseEntity } from "./base.entity";
 import { Tenant } from "./tenant.entity";
-
-export enum UserRole {
-  PLATFORM_ADMIN = "platform_admin", // 平台管理員
-  TENANT_ADMIN = "tenant_admin", // 租戶管理員
-  AGENT = "agent", // 代理商
-  CUSTOMER = "customer", // 投資客戶
-}
-
-export enum UserStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  SUSPENDED = "suspended",
-}
-
-export interface UserSecurity {
-  twoFactorEnabled: boolean;
-  twoFactorSecret?: string;
-  lastPasswordChange?: Date;
-  failedLoginAttempts: number;
-  lastFailedLogin?: Date;
-}
+import { UserRole, UserStatus, UserSecurity } from "./user-base.entity";
 
 @Entity({ tableName: "users" })
 @Unique({ properties: ["email", "tenant"] })
