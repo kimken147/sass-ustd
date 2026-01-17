@@ -55,6 +55,7 @@ interface Agent {
     uplineRate: number;
     isEnabled: boolean;
   };
+  allocatedRate?: number;
   status: string;
   stats: {
     totalCustomers: number;
@@ -303,7 +304,9 @@ export default function SubAgentsPage() {
           </TableCell>
 
           {/* 分配比例% */}
-          <TableCell>{`${node.commission.selfRate}%`}</TableCell>
+          <TableCell>
+            {node.allocatedRate !== undefined ? `${node.allocatedRate}%` : "-"}
+          </TableCell>
 
           {/* 建立时间 */}
           <TableCell className="text-sm">
@@ -393,7 +396,9 @@ export default function SubAgentsPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">分配比例</span>
-              <span>{node.commission.selfRate}%</span>
+              <span>
+                {node.allocatedRate !== undefined ? `${node.allocatedRate}%` : "-"}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">建立时间</span>
