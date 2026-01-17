@@ -209,7 +209,7 @@ export default function CreateSitePage() {
           ...formProps,
         } as any)}
       >
-        <form onSubmit={handleSubmit(onSubmit) as any}>
+        <form onSubmit={handleSubmit(onSubmit as any) as any}>
           <Card>
             <CardHeader>
               <CardTitle>站点资讯</CardTitle>
