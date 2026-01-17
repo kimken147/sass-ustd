@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { format } from "date-fns"
-import { zhTW } from "date-fns/locale"
+import { zhCN } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 
 import { cn } from "../../lib/utils"
@@ -96,13 +96,13 @@ export function DateTimePicker({
     return `${year}-${month}-${day}T${hours}:${minutes}`
   }
 
-  // 顯示文字
+  // 显示文字
   const displayText = React.useMemo(() => {
     if (!dateValue) return placeholder
     if (dateOnly) {
-      return format(dateValue, "yyyy/MM/dd", { locale: zhTW })
+      return format(dateValue, "yyyy/MM/dd", { locale: zhCN })
     }
-    return format(dateValue, "yyyy/MM/dd HH:mm", { locale: zhTW })
+    return format(dateValue, "yyyy/MM/dd HH:mm", { locale: zhCN })
   }, [dateValue, placeholder, dateOnly])
 
   return (
@@ -126,12 +126,13 @@ export function DateTimePicker({
           mode="single"
           selected={dateValue}
           onSelect={handleDateSelect}
+          locale={zhCN}
           initialFocus
         />
         {!dateOnly && (
           <div className="border-t p-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">時間:</span>
+              <span className="text-sm text-muted-foreground">时间:</span>
               <Input
                 type="time"
                 value={timeValue}
