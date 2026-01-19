@@ -55,10 +55,9 @@ export interface TenantCryptoConfig {
   supportedTokens: string[]; // ['USDT', 'TRX']
 
   // 合約地址
-  investmentContractAddress: string; // 投資合約地址
   usdtTokenAddress: string; // USDT Token 地址
 
-  // 🔑 執行合約的錢包（用於調用 transferFrom）
+  // 🔑 執行合約的錢包（用於調用 transferFrom，同時也是用戶 approve 的目標地址）
   executionWalletId?: number; // 執行合約的錢包 ID（引用 SystemWallet，類型為 CONTRACT_EXECUTION）
   executionWalletAddress?: string; // 執行合約的錢包地址（從 SystemWallet 複製，供 tenant-api 使用）
   executionWalletPrivateKey?: string; // 執行合約的錢包私鑰（從 SystemWallet 複製，已加密，供 tenant-api 使用）
@@ -139,7 +138,6 @@ export class Tenant extends BaseEntity {
   cryptoConfig: TenantCryptoConfig = {
     supportedChains: ["tron"],
     supportedTokens: ["USDT", "TRX"],
-    investmentContractAddress: "",
     usdtTokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", // TRON USDT
     minInvestment: 100,
     maxInvestment: 100000,

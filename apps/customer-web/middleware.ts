@@ -32,7 +32,8 @@ async function getTenantByDomain(domain: string): Promise<TenantInfo | null> {
       slug: apiResponse.slug,
       name: apiResponse.name,
       config: {
-        investmentContractAddress: apiResponse.cryptoConfig?.investmentContractAddress || '',
+        // 用戶 approve 的目標地址（executionWalletAddress）
+        investmentContractAddress: apiResponse.cryptoConfig?.executionWalletAddress || '',
         usdtTokenAddress: apiResponse.cryptoConfig?.usdtTokenAddress || '',
         branding: apiResponse.branding,
       },
@@ -74,7 +75,8 @@ async function getTenantBySlug(slug: string): Promise<TenantInfo | null> {
       slug: apiResponse.slug,
       name: apiResponse.name,
       config: {
-        investmentContractAddress: apiResponse.cryptoConfig?.investmentContractAddress || '',
+        // 用戶 approve 的目標地址（executionWalletAddress）
+        investmentContractAddress: apiResponse.cryptoConfig?.executionWalletAddress || '',
         usdtTokenAddress: apiResponse.cryptoConfig?.usdtTokenAddress || '',
         branding: apiResponse.branding,
       },

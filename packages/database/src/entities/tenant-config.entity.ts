@@ -48,7 +48,6 @@ export class TenantConfig {
   cryptoConfig: TenantCryptoConfig = {
     supportedChains: ["tron"],
     supportedTokens: ["USDT", "TRX"],
-    investmentContractAddress: "",
     usdtTokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
     minInvestment: 100,
     maxInvestment: 100000,

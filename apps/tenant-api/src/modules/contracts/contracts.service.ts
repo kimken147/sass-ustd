@@ -172,11 +172,14 @@ export class ContractsService {
 
     const executionWalletAddress =
       config.cryptoConfig.executionWalletAddress ||
-      this.configService.get<string>("CONTRACT_EXECUTION_WALLET_ADDRESS") ||
-      config.cryptoConfig.investmentContractAddress;
+      this.configService.get<string>("CONTRACT_EXECUTION_WALLET_ADDRESS");
+
+    if (!executionWalletAddress) {
+      throw new NotFoundException("執行錢包地址未設定，請先在租戶配置中設定 executionWalletAddress");
+    }
 
     return {
-      contractAddress: config.cryptoConfig.investmentContractAddress,
+      contractAddress: executionWalletAddress, // 用戶 approve 的目標地址
       usdtTokenAddress: config.cryptoConfig.usdtTokenAddress,
       executionWalletAddress,
       minInvestment: config.cryptoConfig.minInvestment,

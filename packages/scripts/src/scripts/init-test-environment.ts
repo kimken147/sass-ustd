@@ -818,7 +818,6 @@ async function phase5_createTenant(
   const cryptoConfig: any = {
     supportedChains: ["tron"],
     supportedTokens: ["USDT", "TRX"],
-    investmentContractAddress: "",
     usdtTokenAddress: usdtAddress,
     executionWalletAddress: args.executionWallet,
     executionWalletPrivateKey: encryptedPrivateKey,
