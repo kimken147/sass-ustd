@@ -262,6 +262,24 @@ async function main() {
 
     console.log("✅ 資料庫連接成功");
 
+    // 檢查資料表是否存在
+    const connection = orm.em.getConnection();
+    const tableCheck = await connection.execute(
+      `SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'users'
+      ) as exists`
+    );
+
+    if (!tableCheck[0]?.exists) {
+      console.error("\n❌ 資料表不存在！");
+      console.error("   請先執行資料庫遷移：");
+      console.error("\n   pnpm migration:platform\n");
+      await orm.close();
+      process.exit(1);
+    }
+
     // 檢查用戶是否已存在
     const em = orm.em.fork();
     const queryConditions: any[] = [
