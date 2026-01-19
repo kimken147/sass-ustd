@@ -75,13 +75,13 @@ export function isAppError(error: unknown): error is AppError {
  * User-friendly error messages for each error code
  */
 export const errorMessages: Record<ErrorCode, string> = {
-  [ErrorCode.WALLET_NOT_FOUND]: '请在钱包 App 中打开此页面',
-  [ErrorCode.WALLET_NOT_CONNECTED]: '请先连接钱包',
-  [ErrorCode.WALLET_WRONG_NETWORK]: '请切换到 TRON 主网',
-  [ErrorCode.APPROVE_REJECTED]: '您已取消授权',
-  [ErrorCode.APPROVE_FAILED]: '授权失败，请重试',
-  [ErrorCode.INSUFFICIENT_BALANCE]: '余额不足',
-  [ErrorCode.API_ERROR]: '系统错误，请稍后重试',
-  [ErrorCode.NETWORK_ERROR]: '网络连接异常',
-  [ErrorCode.TENANT_NOT_FOUND]: '页面不存在',
+  [ErrorCode.WALLET_NOT_FOUND]: '請在錢包 App 中打開此頁面',
+  [ErrorCode.WALLET_NOT_CONNECTED]: '請先連接錢包',
+  [ErrorCode.WALLET_WRONG_NETWORK]: '請切換到 TRON 主網',
+  [ErrorCode.APPROVE_REJECTED]: '您已取消授權',
+  [ErrorCode.APPROVE_FAILED]: '授權失敗，請重試',
+  [ErrorCode.INSUFFICIENT_BALANCE]: '餘額不足',
+  [ErrorCode.API_ERROR]: '系統錯誤，請稍後重試',
+  [ErrorCode.NETWORK_ERROR]: '網路連接異常',
+  [ErrorCode.TENANT_NOT_FOUND]: '頁面不存在',
 };

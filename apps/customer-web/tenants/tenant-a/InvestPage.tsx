@@ -63,7 +63,7 @@ export function InvestPage({ tenantConfig }: TenantPageProps) {
             Tenant A Investment
           </h1>
           <p className="text-gray-600">
-            授权您的钱包开始投资
+            授權您的錢包開始投資
           </p>
         </div>
 
@@ -75,7 +75,7 @@ export function InvestPage({ tenantConfig }: TenantPageProps) {
 
         {isConnected && address && (
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">连接的钱包</p>
+            <p className="text-sm text-gray-600 mb-1">連接的錢包</p>
             <p className="text-sm font-mono text-gray-900 break-all">
               {address}
             </p>
@@ -85,7 +85,7 @@ export function InvestPage({ tenantConfig }: TenantPageProps) {
         {referralCode && (
           <div className="mb-6 p-4 bg-green-50 rounded-lg">
             <p className="text-sm text-green-800">
-              推荐码: <span className="font-semibold">{referralCode}</span>
+              推薦碼: <span className="font-semibold">{referralCode}</span>
             </p>
           </div>
         )}
@@ -96,11 +96,11 @@ export function InvestPage({ tenantConfig }: TenantPageProps) {
           disabled={!isConnected || approving || registering}
           className="w-full"
         >
-          {approving ? '授权中...' : registering ? '注册中...' : '授权投资'}
+          {approving ? '授權中...' : registering ? '註冊中...' : '授權投資'}
         </WalletButton>
 
         <p className="text-xs text-gray-500 text-center mt-4">
-          点击按钮将授权平台使用您的 USDT
+          點擊按鈕將授權平台使用您的 USDT
         </p>
       </div>
     </div>
