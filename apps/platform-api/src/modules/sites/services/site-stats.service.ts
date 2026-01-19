@@ -98,12 +98,18 @@ export class SiteStatsService {
           : `WHERE ((c.wallet->>'isApproved')::boolean = false OR c.wallet IS NULL)`;
       }
 
+      // 決定 deleted_at 條件的連接詞
+      const hasCustomerCondition = customerTimeCondition || authCondition;
+      const deletedAtCondition = hasCustomerCondition
+        ? `AND c.deleted_at IS NULL`
+        : `WHERE c.deleted_at IS NULL`;
+
       // 查詢授權客戶數量
       const authorizedClientsQuery = `
         SELECT COUNT(DISTINCT c.id) as count
         FROM customers c
         ${customerTimeCondition} ${authCondition}
-        AND c.deleted_at IS NULL
+        ${deletedAtCondition}
       `;
 
       // 查詢總投資數量（從客戶投資統計中聚合）
@@ -111,18 +117,21 @@ export class SiteStatsService {
         SELECT COALESCE(SUM((c.investment_stats->>'totalInvested')::numeric), 0) as total
         FROM customers c
         ${customerTimeCondition} ${authCondition}
-        AND c.deleted_at IS NULL
+        ${deletedAtCondition}
       `;
 
       // 查詢提幣數量（從客戶投資統計中聚合，或從分潤記錄中聚合）
       let harvestQuantityQuery: string;
       if (isHarvestTime) {
         // 從分潤記錄中聚合（提幣時間）
+        const rdDeletedAtCondition = distributionTimeCondition
+          ? `AND rd.deleted_at IS NULL`
+          : `WHERE rd.deleted_at IS NULL`;
         harvestQuantityQuery = `
           SELECT COALESCE(SUM((rd.total_amount)::numeric), 0) as total
           FROM revenue_distributions rd
           ${distributionTimeCondition}
-          AND rd.deleted_at IS NULL
+          ${rdDeletedAtCondition}
         `;
       } else {
         // 從客戶統計中聚合（授權時間）
@@ -130,7 +139,7 @@ export class SiteStatsService {
           SELECT COALESCE(SUM((c.investment_stats->>'totalWithdrawn')::numeric), 0) as total
           FROM customers c
           ${customerTimeCondition} ${authCondition}
-          AND c.deleted_at IS NULL
+          ${deletedAtCondition}
         `;
       }
 
@@ -139,48 +148,58 @@ export class SiteStatsService {
         SELECT COALESCE(SUM((c.investment_stats->>'totalProfit')::numeric), 0) as total
         FROM customers c
         ${customerTimeCondition} ${authCondition}
-        AND c.deleted_at IS NULL
+        ${deletedAtCondition}
       `;
 
       // 查詢商戶代理統計（從代理佣金記錄中聚合）
       let merchantAgentQuery: string;
       if (isHarvestTime) {
+        const cpDeletedAtCondition = distributionTimeCondition
+          ? `AND cp.deleted_at IS NULL`
+          : `WHERE cp.deleted_at IS NULL`;
         merchantAgentQuery = `
           SELECT COALESCE(SUM((cp.amount)::numeric), 0) as total
           FROM commission_payouts cp
           ${distributionTimeCondition}
-          AND cp.deleted_at IS NULL
+          ${cpDeletedAtCondition}
         `;
       } else {
         // 授權時間：使用客戶創建時間作為代理關聯時間
+        const cpJoinDeletedAtCondition = customerTimeCondition
+          ? `AND cp.deleted_at IS NULL AND c.deleted_at IS NULL`
+          : `WHERE cp.deleted_at IS NULL AND c.deleted_at IS NULL`;
         merchantAgentQuery = `
           SELECT COALESCE(SUM((cp.amount)::numeric), 0) as total
           FROM commission_payouts cp
           INNER JOIN customers c ON cp.customer_id = c.id
           ${customerTimeCondition.replace(/c\.wallet/g, "c.wallet")}
-          AND cp.deleted_at IS NULL
-          AND c.deleted_at IS NULL
+          ${cpJoinDeletedAtCondition}
         `;
       }
 
       // 查詢系統費用（從系統費分潤記錄中聚合）
       let systemFeeQuery: string;
       if (isHarvestTime) {
+        const sfdDeletedAtCondition = distributionTimeCondition
+          ? `AND sfd.deleted_at IS NULL`
+          : `WHERE sfd.deleted_at IS NULL`;
         systemFeeQuery = `
           SELECT COALESCE(SUM((sfd.amount)::numeric), 0) as total
           FROM system_fee_distributions sfd
           ${distributionTimeCondition}
-          AND sfd.deleted_at IS NULL
+          ${sfdDeletedAtCondition}
         `;
       } else {
         // 授權時間：使用客戶創建時間作為系統費關聯時間
+        const sfdJoinDeletedAtCondition = customerTimeCondition
+          ? `AND sfd.deleted_at IS NULL AND c.deleted_at IS NULL`
+          : `WHERE sfd.deleted_at IS NULL AND c.deleted_at IS NULL`;
         systemFeeQuery = `
           SELECT COALESCE(SUM((sfd.amount)::numeric), 0) as total
           FROM system_fee_distributions sfd
           INNER JOIN customers c ON sfd.customer_id = c.id
           ${customerTimeCondition.replace(/c\.wallet/g, "c.wallet")}
-          AND sfd.deleted_at IS NULL
-          AND c.deleted_at IS NULL
+          ${sfdJoinDeletedAtCondition}
         `;
       }
 
