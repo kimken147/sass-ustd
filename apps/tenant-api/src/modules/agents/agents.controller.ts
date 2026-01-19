@@ -12,6 +12,7 @@ import {
   HttpStatus,
   ParseIntPipe,
   NotFoundException,
+  Inject,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -32,8 +33,7 @@ import { TenantAdminGuard } from "../revenue-wallets/guards/tenant-admin.guard";
 import { AgentGuard } from "../customers/guards/agent.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { TenantUser, Agent, TenantConfig } from "@saas-platform/database";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository } from "@mikro-orm/postgresql";
+import { TENANT_ENTITY_MANAGER } from "../../common/database";
 
 /**
  * 代理管理控制器
@@ -49,9 +49,8 @@ export class AgentsController {
   constructor(
     private readonly agentsService: AgentsService,
     private readonly configService: ConfigService,
+    @Inject(TENANT_ENTITY_MANAGER)
     private readonly em: EntityManager,
-    @InjectRepository(TenantConfig)
-    private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
   ) {}
 
   // ========== 站長管理 API ==========
@@ -343,8 +342,8 @@ export class AgentsController {
    */
   private async generateReferralLink(agent: Agent): Promise<string> {
     // 獲取租戶配置
-    const config = await this.tenantConfigRepository.findOne({ id: 1 });
-    
+    const config = await this.em.findOne(TenantConfig, { id: 1 });
+
     let baseUrl: string;
 
     if (config?.customUrl) {

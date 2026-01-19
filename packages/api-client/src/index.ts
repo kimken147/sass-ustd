@@ -23,3 +23,6 @@ export type {
   RefreshTokenRequest,
   UserInfo,
 } from './tenant/client';
+
+export { TenantContext } from './tenant/tenant-context';
+export type { TenantInfo } from './tenant/tenant-context';

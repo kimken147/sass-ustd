@@ -1,13 +1,4 @@
 import { Module } from "@nestjs/common";
-import { MikroOrmModule } from "@mikro-orm/nestjs";
-import {
-  Customer,
-  RevenueDistribution,
-  CommissionPayout,
-  SystemFeeDistribution,
-  TenantConfig,
-  Agent,
-} from "@saas-platform/database";
 import { CustomersController } from "./customers.controller";
 import { CustomersService } from "./customers.service";
 import { ContractsModule } from "../contracts/contracts.module";
@@ -17,14 +8,6 @@ import { TenantAdminOrAgentGuard } from "./guards/tenant-admin-or-agent.guard";
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([
-      Customer,
-      RevenueDistribution,
-      CommissionPayout,
-      SystemFeeDistribution,
-      TenantConfig,
-      Agent,
-    ]),
     ContractsModule,
     AuthModule,
   ],

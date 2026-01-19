@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException, Inject } from "@nestjs/common";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/postgresql";
 import {
   TenantUser,
   UserRole,
@@ -17,6 +16,8 @@ import {
 } from "@saas-platform/auth";
 import { LoginDto } from "./dto/login.dto";
 import { AuthResponseDto } from "./dto/auth-response.dto";
+import { TenantContextService } from "../../common/tenant-context";
+import { TENANT_ENTITY_MANAGER } from "../../common/database";
 
 /**
  * Tenant API 認證服務
@@ -29,24 +30,30 @@ import { AuthResponseDto } from "./dto/auth-response.dto";
  */
 @Injectable()
 export class AuthService extends BaseAuthService {
-  protected readonly userRepository: EntityRepository<TenantUser>;
   protected readonly em: EntityManager;
   protected readonly jwtService: JwtService;
   protected readonly passwordService: PasswordService;
   protected readonly tokenBlacklist: TokenBlacklistService;
   protected readonly authConfig = AUTH_CONFIGS.TENANT;
 
+  // Create a wrapper to satisfy the abstract userRepository property
+  protected get userRepository() {
+    const em = this.em;
+    return {
+      findOne: (where: any) => em.findOne(TenantUser, where),
+    };
+  }
+
   constructor(
-    @InjectRepository(TenantUser)
-    userRepository: EntityRepository<TenantUser>,
+    @Inject(TENANT_ENTITY_MANAGER)
     em: EntityManager,
     jwtService: JwtService,
     passwordService: PasswordService,
     @Inject("TokenBlacklistService")
-    tokenBlacklist: TokenBlacklistService
+    tokenBlacklist: TokenBlacklistService,
+    private readonly tenantContextService: TenantContextService
   ) {
     super();
-    this.userRepository = userRepository;
     this.em = em;
     this.jwtService = jwtService;
     this.passwordService = passwordService;
@@ -58,11 +65,21 @@ export class AuthService extends BaseAuthService {
    * 不需要 tenantId 參數，因為整個 DB 都是同一租戶
    */
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
+    const tenantSlug = this.tenantContextService.getTenantSlugOrThrow();
     const result = await this.doLogin(loginDto.username, loginDto.password);
+
+    // 重新生成包含 tenantSlug 的 token
+    const tokenPair = this.jwtService.generateTokenPair({
+      sub: result.user.id,
+      email: result.user.email,
+      role: result.user.role,
+      tenantSlug: tenantSlug,
+    });
+
     return {
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      expiresIn: result.expiresIn,
+      accessToken: tokenPair.accessToken,
+      refreshToken: tokenPair.refreshToken,
+      expiresIn: tokenPair.expiresIn,
       user: {
         id: result.user.id,
         email: result.user.email,
@@ -81,6 +98,8 @@ export class AuthService extends BaseAuthService {
     username: string,
     password: string
   ): Promise<AuthResponseDto> {
+    const tenantSlug = this.tenantContextService.getTenantSlugOrThrow();
+
     // 查找用戶（必須是 AGENT 角色）
     const user = await this.userRepository.findOne({
       username,
@@ -112,11 +131,12 @@ export class AuthService extends BaseAuthService {
       throw new UnauthorizedException("代理記錄不存在或已被停用");
     }
 
-    // 生成 Token
+    // 生成包含 tenantSlug 的 Token
     const tokenPair = this.jwtService.generateTokenPair({
       sub: user.id,
       email: user.email,
       role: user.role,
+      tenantSlug: tenantSlug,
     });
 
     // 更新最後登入時間
@@ -141,11 +161,21 @@ export class AuthService extends BaseAuthService {
    * 刷新 Token
    */
   async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
+    const tenantSlug = this.tenantContextService.getTenantSlugOrThrow();
     const result = await this.doRefreshToken(refreshToken);
+
+    // 重新生成包含 tenantSlug 的 token
+    const tokenPair = this.jwtService.generateTokenPair({
+      sub: result.user.id,
+      email: result.user.email,
+      role: result.user.role,
+      tenantSlug: tenantSlug,
+    });
+
     return {
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      expiresIn: result.expiresIn,
+      accessToken: tokenPair.accessToken,
+      refreshToken: tokenPair.refreshToken,
+      expiresIn: tokenPair.expiresIn,
       user: {
         id: result.user.id,
         email: result.user.email,

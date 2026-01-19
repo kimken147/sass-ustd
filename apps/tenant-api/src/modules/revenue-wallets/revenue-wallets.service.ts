@@ -1,12 +1,12 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository, EntityManager } from '@mikro-orm/postgresql';
+import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { TenantConfig, RevenueWallet } from '@saas-platform/database';
 import { randomUUID } from 'crypto';
 import { CreateRevenueWalletDto } from './dto/create-revenue-wallet.dto';
 import { UpdateRevenueWalletDto } from './dto/update-revenue-wallet.dto';
 import { SetRevenueWalletsDto } from './dto/set-revenue-wallets.dto';
 import { QueryRevenueWalletsDto } from './dto/query-revenue-wallets.dto';
+import { TENANT_ENTITY_MANAGER } from '../../common/database';
 
 /**
  * 分潤錢包服務
@@ -17,8 +17,7 @@ import { QueryRevenueWalletsDto } from './dto/query-revenue-wallets.dto';
 @Injectable()
 export class RevenueWalletsService {
   constructor(
-    @InjectRepository(TenantConfig)
-    private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
+    @Inject(TENANT_ENTITY_MANAGER)
     private readonly em: EntityManager,
   ) {}
 
@@ -27,7 +26,7 @@ export class RevenueWalletsService {
    */
   private async getTenantConfig(): Promise<TenantConfig> {
     // TenantConfig 只有一筆記錄，id = 1
-    const config = await this.tenantConfigRepository.findOne({ id: 1 });
+    const config = await this.em.findOne(TenantConfig, { id: 1 });
     if (!config) {
       throw new NotFoundException('租戶配置不存在，請先初始化');
     }

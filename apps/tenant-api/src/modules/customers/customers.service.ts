@@ -1,42 +1,30 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
+import { Injectable, Logger, Inject } from "@nestjs/common";
+import { EntityManager } from "@mikro-orm/postgresql";
 import {
   Customer,
   RevenueDistribution,
   CommissionPayout,
   SystemFeeDistribution,
-  RevenueDistributionStatus,
   Agent,
-  UserRole,
 } from "@saas-platform/database";
 import { CustomerListQueryDto } from "./dto/customer-list-query.dto";
 import { CustomerListResponseDto } from "./dto/customer-list-response.dto";
 import { CustomerResponseDto } from "./dto/customer-response.dto";
 import { CustomerStatsDto } from "./dto/customer-stats.dto";
-import { RecentHarvestInfoDto } from "./dto/customer-response.dto";
 import { HarvestResponseDto, HarvestResultDto } from "./dto/harvest-customer.dto";
 import {
   CustomerAuthorizationStatus as SharedCustomerAuthorizationStatus,
   TimeType as SharedTimeType,
 } from "@saas-platform/shared-types";
 import { ContractsService } from "../contracts/contracts.service";
+import { TENANT_ENTITY_MANAGER } from "../../common/database";
 
 @Injectable()
 export class CustomersService {
   private readonly logger = new Logger(CustomersService.name);
 
   constructor(
-    @InjectRepository(Customer)
-    private readonly customerRepository: EntityRepository<Customer>,
-    @InjectRepository(RevenueDistribution)
-    private readonly revenueDistributionRepository: EntityRepository<RevenueDistribution>,
-    @InjectRepository(CommissionPayout)
-    private readonly commissionPayoutRepository: EntityRepository<CommissionPayout>,
-    @InjectRepository(SystemFeeDistribution)
-    private readonly systemFeeDistributionRepository: EntityRepository<SystemFeeDistribution>,
-    @InjectRepository(Agent)
-    private readonly agentRepository: EntityRepository<Agent>,
+    @Inject(TENANT_ENTITY_MANAGER)
     private readonly em: EntityManager,
     private readonly contractsService: ContractsService
   ) {}
@@ -71,9 +59,9 @@ export class CustomersService {
 
     // 時間範圍篩選（根據時間類型）
     const isHarvestTime = query.timeType === SharedTimeType.HARVEST_TIME;
-    
+
     // 先查詢所有符合基本條件的會員
-    let customers = await this.customerRepository.find(where, {
+    let customers = await this.em.find(Customer, where, {
       populate: ["user", "referralAgent"],
       orderBy: { createdAt: "DESC" },
     });
@@ -144,7 +132,7 @@ export class CustomersService {
           harvestWhere.createdAt = { ...harvestWhere.createdAt, $lte: endDate };
         }
 
-        const harvests = await this.revenueDistributionRepository.find(harvestWhere, {
+        const harvests = await this.em.find(RevenueDistribution, harvestWhere, {
           fields: ["customer"],
         });
         const customerIds = new Set(harvests.map((h) => h.customer.id));
@@ -234,7 +222,8 @@ export class CustomersService {
     }
 
     // 查詢每個會員的最新提幣記錄
-    const harvests = await this.revenueDistributionRepository.find(
+    const harvests = await this.em.find(
+      RevenueDistribution,
       {
         customer: { $in: customerIds },
         deletedAt: null,
@@ -310,7 +299,7 @@ export class CustomersService {
       }
     }
 
-    const harvests = await this.revenueDistributionRepository.find(harvestWhere);
+    const harvests = await this.em.find(RevenueDistribution, harvestWhere);
     const harvestQuantity = harvests.reduce((sum, h) => {
       return sum + parseFloat(h.totalAmount);
     }, 0);
@@ -331,7 +320,7 @@ export class CustomersService {
         };
       }
     }
-    const systemFees = await this.systemFeeDistributionRepository.find(systemFeeWhere);
+    const systemFees = await this.em.find(SystemFeeDistribution, systemFeeWhere);
     const systemFee = systemFees.reduce((sum, f) => {
       return sum + parseFloat(f.amount);
     }, 0);
@@ -356,7 +345,7 @@ export class CustomersService {
         };
       }
     }
-    const commissions = await this.commissionPayoutRepository.find(commissionWhere);
+    const commissions = await this.em.find(CommissionPayout, commissionWhere);
     const merchantAgent = commissions.reduce((sum, c) => {
       return sum + parseFloat(c.amount);
     }, 0);
@@ -387,7 +376,8 @@ export class CustomersService {
     let failureCount = 0;
 
     // 查詢所有要提幣的會員
-    const customers = await this.customerRepository.find(
+    const customers = await this.em.find(
+      Customer,
       {
         id: { $in: customerIds },
         deletedAt: null,

@@ -4,6 +4,7 @@ export interface JwtPayload {
   sub: number; // user id
   email: string;
   role: string;
+  tenantSlug?: string; // 租戶識別（可選，向後兼容）
   type: "access" | "refresh"; // token 類型
 }
 

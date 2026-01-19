@@ -1,8 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { TenantContext } from "./tenant-context";
 
 export interface TenantApiConfig {
   baseURL: string;
   timeout?: number;
+  tenantSlug?: string; // 可選：手動指定租戶（用於測試）
 }
 
 export interface LoginRequest {
@@ -40,8 +42,11 @@ export interface UserInfo {
 export class TenantApiClient {
   private client: AxiosInstance;
   private accessToken: string | null = null;
+  private tenantSlug: string | null = null;
 
   constructor(config: TenantApiConfig) {
+    this.tenantSlug = config.tenantSlug || null;
+
     this.client = axios.create({
       baseURL: config.baseURL,
       timeout: config.timeout || 10000,
@@ -50,12 +55,20 @@ export class TenantApiClient {
       },
     });
 
-    // 請求攔截器：自動添加 token
+    // 請求攔截器：自動添加 token 和 X-Tenant-ID
     this.client.interceptors.request.use(
       (config) => {
+        // 添加 token
         if (this.accessToken) {
           config.headers.Authorization = `Bearer ${this.accessToken}`;
         }
+
+        // 添加 X-Tenant-ID
+        const tenantSlug = this.tenantSlug || (TenantContext.isInitialized() ? TenantContext.getSlug() : null);
+        if (tenantSlug) {
+          config.headers['X-Tenant-ID'] = tenantSlug;
+        }
+
         return config;
       },
       (error) => {
@@ -104,6 +117,14 @@ export class TenantApiClient {
 
   getRefreshToken(): string | null {
     return localStorage.getItem("tenant_refresh_token");
+  }
+
+  setTenantSlug(slug: string | null): void {
+    this.tenantSlug = slug;
+  }
+
+  getTenantSlug(): string | null {
+    return this.tenantSlug || (TenantContext.isInitialized() ? TenantContext.getSlug() : null);
   }
 
   async login(credentials: LoginRequest): Promise<AuthResponse> {

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Refine, Authenticated } from "@refinedev/core";
 import routerProvider, {
   DocumentTitleHandler,
@@ -18,11 +19,10 @@ import SubAgentsPage from "./pages/SubAgentsPage";
 import CreateSubAgentPage from "./pages/CreateSubAgentPage";
 import EditSubAgentPage from "./pages/EditSubAgentPage";
 import DashboardLayout from "./layouts/DashboardLayout";
-import { createTenantApiClient } from "@saas-platform/api-client";
+import { TenantContext, createTenantApiClient } from "@saas-platform/api-client";
 
-// 初始化 API 客戶端
-const apiUrl = import.meta.env.VITE_TENANT_API_URL || "http://localhost:3001";
-createTenantApiClient(apiUrl);
+const platformApiUrl = import.meta.env.VITE_PLATFORM_API_URL || "http://localhost:3000";
+const tenantApiUrl = import.meta.env.VITE_TENANT_API_URL || "http://localhost:3001";
 
 // 建立 QueryClient
 const queryClient = new QueryClient({
@@ -35,6 +35,50 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        // 1. 初始化租戶 Context
+        await TenantContext.init(platformApiUrl);
+
+        // 2. 初始化 API 客戶端
+        createTenantApiClient(tenantApiUrl);
+
+        setReady(true);
+      } catch (err) {
+        console.error('Failed to initialize tenant:', err);
+        setError(err instanceof Error ? err.message : 'Failed to identify tenant');
+      }
+    };
+
+    init();
+  }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md">
+          <h1 className="text-xl font-bold text-red-600 mb-4">無法識別租戶</h1>
+          <p className="text-gray-600">{error}</p>
+          <p className="text-gray-500 mt-2 text-sm">
+            請確認域名設定正確，或聯繫系統管理員。
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-gray-600">載入中...</div>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>

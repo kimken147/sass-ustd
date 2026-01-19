@@ -1,22 +1,13 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { MikroOrmModule } from "@mikro-orm/nestjs";
-import {
-  TenantConfig,
-  TenantUser,
-  Agent,
-  AgentCommissionSetting,
-  Customer,
-  SystemFeeDistribution,
-  RevenueDistribution,
-  CommissionPayout,
-} from "@saas-platform/database";
+import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./modules/auth/auth.module";
 import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.module";
 import { AgentsModule } from "./modules/agents/agents.module";
 import { ContractsModule } from "./modules/contracts/contracts.module";
 import { TransactionsModule } from "./modules/transactions/transactions.module";
 import { CustomersModule } from "./modules/customers/customers.module";
+import { TenantContextModule, TenantContextMiddleware } from "./common/tenant-context";
+import { DatabaseModule } from "./common/database";
 
 @Module({
   imports: [
@@ -26,59 +17,11 @@ import { CustomersModule } from "./modules/customers/customers.module";
       envFilePath: ".env",
     }),
 
-    // 租戶 MikroORM 配置（每個租戶獨立資料庫）
-    MikroOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        // 使用 TENANT_SLUG 來識別租戶（資料庫名稱格式：tenant_{slug}）
-        const tenantSlug = configService.get<string>("TENANT_SLUG");
+    // 多租戶 Context 模組
+    TenantContextModule,
 
-        if (!tenantSlug) {
-          throw new Error("TENANT_SLUG 環境變數未設定");
-        }
-
-        // 資料庫名稱：tenant_{slug}
-        const tenantDbName = `tenant_${tenantSlug}`;
-
-        return {
-          driver: require("@mikro-orm/postgresql").PostgreSqlDriver,
-          dbName: tenantDbName,
-          host: configService.get("TENANT_DB_HOST", "localhost"),
-          port: configService.get("TENANT_DB_PORT", 5432),
-          user: configService.get("TENANT_DB_USER", "postgres"),
-          password: configService.get("TENANT_DB_PASSWORD", "postgres"),
-
-          // 實體列表（使用 TenantConfig 取代 Tenant）
-          entities: [
-            TenantConfig,
-            TenantUser,
-            Agent,
-            AgentCommissionSetting,
-            Customer,
-            SystemFeeDistribution,
-            RevenueDistribution,
-            CommissionPayout,
-          ],
-
-          // 開發環境設置
-          debug: configService.get("NODE_ENV") !== "production",
-
-          // 自動發現實體
-          discovery: {
-            warnWhenNoEntities: true,
-            requireEntitiesArray: true, // 要求明確指定 entities，不自動發現
-            disableDynamicFileAccess: true, // 禁用動態文件訪問
-          },
-
-          // 遷移配置
-          migrations: {
-            path: "./migrations",
-            transactional: true,
-          },
-        };
-      },
-      inject: [ConfigService],
-    }),
+    // 多租戶資料庫模組
+    DatabaseModule,
 
     // 功能模組
     AuthModule,
@@ -87,10 +30,14 @@ import { CustomersModule } from "./modules/customers/customers.module";
     ContractsModule,
     TransactionsModule,
     CustomersModule,
-    // ProductsModule,
-    // OrdersModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TenantContextMiddleware)
+      .forRoutes('*'); // 所有路由都需要租戶識別
+  }
+}

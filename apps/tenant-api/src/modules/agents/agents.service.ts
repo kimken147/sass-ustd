@@ -4,9 +4,9 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  Inject,
 } from '@nestjs/common';
-import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository, EntityManager } from '@mikro-orm/postgresql';
+import { EntityManager } from '@mikro-orm/postgresql';
 import {
   TenantUser,
   UserRole,
@@ -22,6 +22,7 @@ import { PasswordService } from '@saas-platform/auth';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
 import { QueryAgentsDto } from './dto/query-agents.dto';
+import { TENANT_ENTITY_MANAGER } from '../../common/database';
 
 /**
  * 代理链节点（用于分润计算）
@@ -43,14 +44,7 @@ export class AgentsService {
   private readonly logger = new Logger(AgentsService.name);
 
   constructor(
-    @InjectRepository(TenantUser)
-    private readonly userRepository: EntityRepository<TenantUser>,
-    @InjectRepository(Agent)
-    private readonly agentRepository: EntityRepository<Agent>,
-    @InjectRepository(TenantConfig)
-    private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
-    @InjectRepository(AgentCommissionSetting)
-    private readonly commissionSettingRepository: EntityRepository<AgentCommissionSetting>,
+    @Inject(TENANT_ENTITY_MANAGER)
     private readonly em: EntityManager,
     private readonly passwordService: PasswordService,
   ) {}
@@ -59,7 +53,7 @@ export class AgentsService {
    * 获取租户配置（只有一笔）
    */
   private async getTenantConfig(): Promise<TenantConfig> {
-    const config = await this.tenantConfigRepository.findOne({ id: 1 });
+    const config = await this.em.findOne(TenantConfig, { id: 1 });
     if (!config) {
       throw new NotFoundException('租户配置不存在，请先初始化');
     }
@@ -88,7 +82,7 @@ export class AgentsService {
       }
     }
 
-    return this.agentRepository.find(where, {
+    return this.em.find(Agent, where, {
       populate: ['user', 'parentAgent'],
       orderBy: { level: 'ASC', createdAt: 'DESC' },
     });
@@ -98,7 +92,8 @@ export class AgentsService {
    * 获取单个代理
    */
   async getAgent(agentId: number): Promise<Agent> {
-    const agent = await this.agentRepository.findOne(
+    const agent = await this.em.findOne(
+      Agent,
       { id: agentId },
       { populate: ['user', 'parentAgent'] },
     );
@@ -114,13 +109,13 @@ export class AgentsService {
    * 获取代理被分配的全局比率
    */
   async getAgentAllocatedRate(agentId: number): Promise<number> {
-    const setting = await this.commissionSettingRepository.findOne({
+    const setting = await this.em.findOne(AgentCommissionSetting, {
       childAgent: agentId,
     });
 
     if (!setting) {
       // 如果没有找到，可能是站长（顶级代理）
-      const agent = await this.agentRepository.findOne({ id: agentId });
+      const agent = await this.em.findOne(Agent, { id: agentId });
       if (agent && agent.level === 0) {
         // 站长的比率是自动计算的（100% - systemFeeRate）
         const config = await this.getTenantConfig();
@@ -176,7 +171,8 @@ export class AgentsService {
    * 获取指定代理的下级代理列表
    */
   async getSubAgents(agentId: number, query?: QueryAgentsDto): Promise<Agent[]> {
-    const currentAgent = await this.agentRepository.findOne(
+    const currentAgent = await this.em.findOne(
+      Agent,
       { id: agentId },
       { populate: ['user', 'parentAgent'] },
     );
@@ -203,7 +199,7 @@ export class AgentsService {
       }
     }
 
-    const subAgents = await this.agentRepository.find(where, {
+    const subAgents = await this.em.find(Agent, where, {
       populate: ['user', 'parentAgent'],
       orderBy: { level: 'ASC', createdAt: 'DESC' },
     });
@@ -228,7 +224,7 @@ export class AgentsService {
     }
 
     // 检查 username 是否已存在
-    const existingUser = await this.userRepository.findOne({
+    const existingUser = await this.em.findOne(TenantUser, {
       username: dto.username,
     });
     if (existingUser) {
@@ -237,7 +233,7 @@ export class AgentsService {
 
     // 检查 email 是否已存在
     if (dto.email) {
-      const existingEmail = await this.userRepository.findOne({
+      const existingEmail = await this.em.findOne(TenantUser, {
         email: dto.email,
       });
       if (existingEmail) {
@@ -256,7 +252,7 @@ export class AgentsService {
 
     if (dto.parentAgentId !== undefined) {
       // 使用指定的上级
-      parentAgent = await this.agentRepository.findOne({
+      parentAgent = await this.em.findOne(Agent, {
         id: dto.parentAgentId,
       });
 
@@ -272,7 +268,8 @@ export class AgentsService {
       path = `${parentAgent.path}/${parentAgent.id}`;
     } else {
       // 预设上级为站长
-      parentAgent = await this.agentRepository.findOne(
+      parentAgent = await this.em.findOne(
+        Agent,
         {
           level: 0,
           parentAgent: null,
@@ -302,7 +299,7 @@ export class AgentsService {
 
     // 创建 TenantUser
     const hashedPassword = await this.passwordService.hashPassword(dto.password);
-    const user = this.userRepository.create({
+    const user = this.em.create(TenantUser, {
       username: dto.username,
       email: dto.email,
       password: hashedPassword,
@@ -323,7 +320,7 @@ export class AgentsService {
       totalPaidAmount: 0,
     };
 
-    const agent = this.agentRepository.create({
+    const agent = this.em.create(Agent, {
       user,
       name: dto.name,
       code: agentCode,
@@ -337,7 +334,7 @@ export class AgentsService {
     });
 
     // 创建 AgentCommissionSetting
-    const commissionSetting = this.commissionSettingRepository.create({
+    const commissionSetting = this.em.create(AgentCommissionSetting, {
       parentAgent: parentAgent.level === 0 ? undefined : parentAgent,  // 站长时 parentAgent 为 null
       childAgent: agent,
       allocatedRate,
@@ -362,7 +359,8 @@ export class AgentsService {
    * 更新代理
    */
   async updateAgent(agentId: number, dto: UpdateAgentDto): Promise<Agent> {
-    const agent = await this.agentRepository.findOne(
+    const agent = await this.em.findOne(
+      Agent,
       { id: agentId },
       { populate: ['user', 'parentAgent'] },
     );
@@ -400,7 +398,7 @@ export class AgentsService {
       }
 
       // 检查是否有下级代理，确保新比率不低于下级的比率
-      const subAgentSettings = await this.commissionSettingRepository.find({
+      const subAgentSettings = await this.em.find(AgentCommissionSetting, {
         parentAgent: agentId,
       });
 
@@ -413,7 +411,7 @@ export class AgentsService {
       }
 
       // 更新 AgentCommissionSetting
-      const setting = await this.commissionSettingRepository.findOne({
+      const setting = await this.em.findOne(AgentCommissionSetting, {
         childAgent: agentId,
       });
 
@@ -463,7 +461,8 @@ export class AgentsService {
    * 删除代理（软删除）
    */
   async deleteAgent(agentId: number): Promise<void> {
-    const agent = await this.agentRepository.findOne(
+    const agent = await this.em.findOne(
+      Agent,
       { id: agentId },
       { populate: ['user'] },
     );
@@ -473,7 +472,7 @@ export class AgentsService {
     }
 
     // 检查是否有下级代理
-    const subAgents = await this.agentRepository.find({ parentAgent: agentId });
+    const subAgents = await this.em.find(Agent, { parentAgent: agentId });
 
     if (subAgents.length > 0) {
       throw new BadRequestException(
@@ -489,7 +488,7 @@ export class AgentsService {
 
     // 更新上级代理的统计
     if (agent.parentAgent) {
-      const parentAgent = await this.agentRepository.findOne({
+      const parentAgent = await this.em.findOne(Agent, {
         id: agent.parentAgent.id,
       });
       if (parentAgent) {
@@ -520,7 +519,7 @@ export class AgentsService {
       const randomNum = Math.floor(Math.random() * 1000000);
       code = `AG${randomNum.toString().padStart(6, '0')}`;
 
-      const existing = await this.agentRepository.findOne({ code });
+      const existing = await this.em.findOne(Agent, { code });
 
       if (!existing) {
         isUnique = true;

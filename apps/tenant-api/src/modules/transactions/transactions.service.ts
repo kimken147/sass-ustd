@@ -1,18 +1,16 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository } from "@mikro-orm/postgresql";
+import { Injectable, Inject } from "@nestjs/common";
+import { EntityManager } from "@mikro-orm/postgresql";
 import { RevenueDistribution, CommissionPayout } from "@saas-platform/database";
 import { QueryTransactionsDto } from "./dto/query-transactions.dto";
 import { CommissionPayoutListResponseDto } from "./dto/commission-payout-list-response.dto";
 import { RevenueDistributionResponseDto } from "./dto/revenue-distribution-response.dto";
+import { TENANT_ENTITY_MANAGER } from "../../common/database";
 
 @Injectable()
 export class TransactionsService {
   constructor(
-    @InjectRepository(RevenueDistribution)
-    private readonly revenueDistributionRepository: EntityRepository<RevenueDistribution>,
-    @InjectRepository(CommissionPayout)
-    private readonly commissionPayoutRepository: EntityRepository<CommissionPayout>
+    @Inject(TENANT_ENTITY_MANAGER)
+    private readonly em: EntityManager,
   ) {}
 
   /**
@@ -53,10 +51,10 @@ export class TransactionsService {
     }
 
     // 查詢總數
-    const total = await this.commissionPayoutRepository.count(where);
+    const total = await this.em.count(CommissionPayout, where);
 
     // 查詢列表（包含關聯數據）
-    const payouts = await this.commissionPayoutRepository.find(where, {
+    const payouts = await this.em.find(CommissionPayout, where, {
       populate: ["customer", "customer.user", "agent", "agent.user"],
       orderBy: { createdAt: "DESC" },
       limit,
@@ -135,7 +133,8 @@ export class TransactionsService {
     }
 
     // 查詢所有符合條件的 distributions（用於展開和計算總數）
-    const allDistributions = await this.revenueDistributionRepository.find(
+    const allDistributions = await this.em.find(
+      RevenueDistribution,
       where,
       {
         populate: ["customer", "customer.user"],

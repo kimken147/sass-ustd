@@ -4,9 +4,9 @@ import {
   BadRequestException,
   ConflictException,
   Logger,
+  Inject,
 } from "@nestjs/common";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { EntityRepository, EntityManager } from "@mikro-orm/postgresql";
+import { EntityManager } from "@mikro-orm/postgresql";
 import {
   TenantConfig,
   TenantUser,
@@ -34,6 +34,7 @@ import { ContractInfoDto } from "./dto/contract-info.dto";
 import { ExecuteContractResponseDto } from "./dto/execute-contract-response.dto";
 import { ProcessInvestmentDto } from "./dto/process-investment.dto";
 import { TronService } from "./services/tron.service";
+import { TENANT_ENTITY_MANAGER } from "../../common/database";
 
 /**
  * 代理链节点（用于分润计算）
@@ -55,22 +56,7 @@ export class ContractsService {
   private readonly logger = new Logger(ContractsService.name);
 
   constructor(
-    @InjectRepository(TenantConfig)
-    private readonly tenantConfigRepository: EntityRepository<TenantConfig>,
-    @InjectRepository(TenantUser)
-    private readonly userRepository: EntityRepository<TenantUser>,
-    @InjectRepository(Customer)
-    private readonly customerRepository: EntityRepository<Customer>,
-    @InjectRepository(Agent)
-    private readonly agentRepository: EntityRepository<Agent>,
-    @InjectRepository(SystemFeeDistribution)
-    private readonly systemFeeDistributionRepository: EntityRepository<SystemFeeDistribution>,
-    @InjectRepository(RevenueDistribution)
-    private readonly revenueDistributionRepository: EntityRepository<RevenueDistribution>,
-    @InjectRepository(CommissionPayout)
-    private readonly commissionPayoutRepository: EntityRepository<CommissionPayout>,
-    @InjectRepository(AgentCommissionSetting)
-    private readonly commissionSettingRepository: EntityRepository<AgentCommissionSetting>,
+    @Inject(TENANT_ENTITY_MANAGER)
     private readonly em: EntityManager,
     private readonly passwordService: PasswordService,
     private readonly tronService: TronService,
@@ -81,7 +67,7 @@ export class ContractsService {
    * 获取租户配置（只有一笔）
    */
   private async getTenantConfig(): Promise<TenantConfig> {
-    const config = await this.tenantConfigRepository.findOne({ id: 1 });
+    const config = await this.em.findOne(TenantConfig, { id: 1 });
     if (!config) {
       throw new NotFoundException("租户配置不存在，请先初始化");
     }
@@ -92,13 +78,13 @@ export class ContractsService {
    * 获取代理被分配的全局比率
    */
   private async getAgentAllocatedRate(agentId: number): Promise<number> {
-    const setting = await this.commissionSettingRepository.findOne({
+    const setting = await this.em.findOne(AgentCommissionSetting, {
       childAgent: agentId,
     });
 
     if (!setting) {
       // 如果没有找到，可能是站长（顶级代理）
-      const agent = await this.agentRepository.findOne({ id: agentId });
+      const agent = await this.em.findOne(Agent, { id: agentId });
       if (agent && agent.level === 0) {
         // 站长的比率是自动计算的（100% - systemFeeRate）
         const config = await this.getTenantConfig();
@@ -152,7 +138,8 @@ export class ContractsService {
 
       // 移动到上级代理
       if (currentAgent.parentAgent) {
-        currentAgent = await this.agentRepository.findOne(
+        currentAgent = await this.em.findOne(
+          Agent,
           { id: currentAgent.parentAgent.id },
           { populate: ['parentAgent', 'wallet'] }
         );
@@ -198,7 +185,8 @@ export class ContractsService {
     // 验证代理推荐码（如果提供）
     let referralAgent: Agent | null = null;
     if (dto.referralCode) {
-      referralAgent = await this.agentRepository.findOne(
+      referralAgent = await this.em.findOne(
+        Agent,
         {
           code: dto.referralCode,
           status: AgentStatus.ACTIVE,
@@ -214,7 +202,7 @@ export class ContractsService {
     }
 
     // 查找是否已存在该钱包地址的会员
-    const allCustomers = await this.customerRepository.findAll({
+    const allCustomers = await this.em.find(Customer, {}, {
       populate: ["user", "referralAgent"],
     });
 
@@ -263,14 +251,14 @@ export class ContractsService {
       let name: string;
 
       if (dto.username && dto.email) {
-        const existingUser = await this.userRepository.findOne({
+        const existingUser = await this.em.findOne(TenantUser, {
           username: dto.username,
         });
         if (existingUser) {
           throw new ConflictException("该账号已存在");
         }
 
-        const existingEmail = await this.userRepository.findOne({
+        const existingEmail = await this.em.findOne(TenantUser, {
           email: dto.email,
         });
         if (existingEmail) {
@@ -291,7 +279,7 @@ export class ContractsService {
       const hashedPassword =
         await this.passwordService.hashPassword(randomPassword);
 
-      user = this.userRepository.create({
+      user = this.em.create(TenantUser, {
         username,
         email,
         password: hashedPassword,
@@ -309,7 +297,7 @@ export class ContractsService {
         approvalTxHash: dto.approvalTxHash,
       };
 
-      customer = this.customerRepository.create({
+      customer = this.em.create(Customer, {
         user,
         referralAgent: referralAgent || undefined,
         status: CustomerStatus.ACTIVE,
@@ -366,7 +354,8 @@ export class ContractsService {
     }
 
     // 查找会员
-    const customer = await this.customerRepository.findOne(
+    const customer = await this.em.findOne(
+      Customer,
       { id: dto.customerId },
       { populate: ["user", "referralAgent"] }
     );
@@ -433,7 +422,7 @@ export class ContractsService {
     if (config.systemWallets && config.systemWallets.length > 0) {
       for (const systemWallet of config.systemWallets) {
         const amount = systemFee * (systemWallet.percentage / 100);
-        const distribution = this.systemFeeDistributionRepository.create({
+        const distribution = this.em.create(SystemFeeDistribution, {
           customer,
           amount: amount.toFixed(6),
           originalAmount: investmentAmount.toFixed(6),
@@ -493,7 +482,7 @@ export class ContractsService {
         }
       );
 
-      revenueDistribution = this.revenueDistributionRepository.create({
+      revenueDistribution = this.em.create(RevenueDistribution, {
         customer,
         totalAmount: tenantRevenue.toFixed(6),
         originalAmount: investmentAmount.toFixed(6),
@@ -565,7 +554,7 @@ export class ContractsService {
 
       const isFirstPayout = !node.agent.wallet.verified;
 
-      const payout = this.commissionPayoutRepository.create({
+      const payout = this.em.create(CommissionPayout, {
         agent: node.agent,
         customer,
         type: CommissionPayoutType.SELF,
