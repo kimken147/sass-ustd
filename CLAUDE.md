@@ -12,9 +12,13 @@ pnpm install
 pnpm dev                    # Start all services
 pnpm dev:api                # Start only API services (platform-api + tenant-api)
 pnpm dev:web                # Start only frontend services
+pnpm dev:test002            # Start test002 tenant development (platform-api + tenant-api + tenant-admin)
 
 # Run single package
 pnpm --filter @saas-platform/<package-name> dev
+
+# Run tenant-admin with custom tenant host
+TENANT_HOST=http://demo.test:5174 pnpm --filter @saas-platform/tenant-admin dev
 
 # Build
 pnpm build                  # Build all projects
@@ -46,15 +50,34 @@ pnpm setup:local            # Auto-setup local environment
 This is a multi-tenant SaaS platform for cryptocurrency investment (TRON/USDT):
 
 - **Platform-level** (`platform-api`): Manages all tenants, system wallets, global configuration
-- **Tenant-level** (`tenant-api`): Independent deployment per tenant with isolated PostgreSQL database (`tenant_<TENANT_ID>`)
-- Each tenant has its own: domain/subdomain, database, API deployment, branding
+- **Tenant-level** (`tenant-api`): **Shared deployment** with dynamic database connection per tenant
+  - Uses `X-Tenant-ID` header to identify tenant
+  - Each tenant has isolated PostgreSQL database (`tenant_<tenant_slug>`)
+  - Connection pooling with LRU eviction for multiple tenants
+- Each tenant has its own: domain/subdomain, database, branding
+
+#### Local Development Setup
+
+For local multi-tenant development, use `.test` domain (avoid `.local` which causes DNS delays on macOS):
+
+1. Add to `/etc/hosts`:
+   ```
+   127.0.0.1 test002.test
+   ```
+
+2. Run development server:
+   ```bash
+   pnpm dev:test002
+   ```
+
+3. Access tenant admin at `http://test002.test:5174`
 
 ### Apps
 
 | App | Port | Stack | Purpose |
 |-----|------|-------|---------|
 | `platform-api` | 3000 | NestJS + MikroORM | Platform management API |
-| `tenant-api` | 3001 | NestJS + MikroORM + TronWeb | Per-tenant business API (deployment template) |
+| `tenant-api` | 3001 | NestJS + MikroORM + TronWeb | Shared multi-tenant business API |
 | `platform-admin` | 5173 | Vite + React + Refine + shadcn/ui | Platform superadmin dashboard |
 | `tenant-admin` | 5174 | Vite + React + Refine + shadcn/ui | Tenant management dashboard |
 | `agent-portal` | 5175 | Vite + React + Refine + shadcn/ui | Agent/reseller dashboard |

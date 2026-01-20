@@ -5,7 +5,12 @@ import { AppModule } from "./app.module";
 import { TransformInterceptor } from "@saas-platform/shared";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // 開發環境啟用所有日誌級別（包括 debug）
+    logger: process.env.NODE_ENV === 'production'
+      ? ['error', 'warn', 'log']
+      : ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
   const reflector = app.get(Reflector);
 
   // 全局驗證管道
@@ -25,7 +30,7 @@ async function bootstrap() {
     origin: true, // 允許所有來源（開發環境）
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-tenant-slug", "x-tenant-config"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-ID", "x-tenant-slug", "x-tenant-config"],
   });
 
   // API 前綴

@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AuthModule } from "./modules/auth/auth.module";
 import { RevenueWalletsModule } from "./modules/revenue-wallets/revenue-wallets.module";
@@ -38,6 +38,6 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TenantContextMiddleware)
-      .forRoutes('*'); // 所有路由都需要租戶識別
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }

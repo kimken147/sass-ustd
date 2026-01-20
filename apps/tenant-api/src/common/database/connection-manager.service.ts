@@ -27,17 +27,25 @@ export class ConnectionManagerService implements OnModuleDestroy {
     maxPools: 100,
     poolMin: 2,
     poolMax: 20,
-    idleTimeout: 30000,
+    // Tarn.js pool 設定（MikroORM 底層使用 Knex -> Tarn）
+    idleTimeoutMillis: 30000,           // 連線閒置 30 秒後關閉
+    acquireTimeoutMillis: 30000,        // 獲取連線最多等待 30 秒
+    createTimeoutMillis: 30000,         // 創建連線最多等待 30 秒
+    reapIntervalMillis: 1000,           // 每秒檢查一次過期連線
+    createRetryIntervalMillis: 200,     // 創建失敗後 200ms 重試
   };
 
   constructor(private readonly configService: ConfigService) {}
 
   async getConnection(tenantSlug: string): Promise<MikroORM> {
+    const startTime = Date.now();
+
     // 1. 已存在：更新 LRU
     const existing = this.pools.get(tenantSlug);
     if (existing) {
       existing.lastUsed = Date.now();
       this.updateLRU(tenantSlug);
+      this.logger.debug(`[${tenantSlug}] Cache hit, took ${Date.now() - startTime}ms`);
       return existing.orm;
     }
 
@@ -47,7 +55,8 @@ export class ConnectionManagerService implements OnModuleDestroy {
     }
 
     // 3. 建立新連接池
-    this.logger.log(`Creating connection pool for tenant: ${tenantSlug}`);
+    this.logger.log(`[${tenantSlug}] Creating new connection pool...`);
+    const initStartTime = Date.now();
 
     const orm = await MikroORM.init({
       driver: require('@mikro-orm/postgresql').PostgreSqlDriver,
@@ -69,17 +78,29 @@ export class ConnectionManagerService implements OnModuleDestroy {
       pool: {
         min: this.config.poolMin,
         max: this.config.poolMax,
+        // 連線池超時和健康檢查設定
+        idleTimeoutMillis: this.config.idleTimeoutMillis,
+        acquireTimeoutMillis: this.config.acquireTimeoutMillis,
+        createTimeoutMillis: this.config.createTimeoutMillis,
+        reapIntervalMillis: this.config.reapIntervalMillis,
+        createRetryIntervalMillis: this.config.createRetryIntervalMillis,
       },
       discovery: {
         warnWhenNoEntities: true,
         requireEntitiesArray: true,
         disableDynamicFileAccess: true,
       },
+      // 開發環境啟用 debug 日誌
+      debug: this.configService.get('NODE_ENV') !== 'production',
     });
+
+    const initDuration = Date.now() - initStartTime;
+    this.logger.log(`[${tenantSlug}] MikroORM.init() took ${initDuration}ms`);
 
     this.pools.set(tenantSlug, { orm, lastUsed: Date.now() });
     this.lruOrder.push(tenantSlug);
 
+    this.logger.log(`[${tenantSlug}] Total getConnection() took ${Date.now() - startTime}ms`);
     return orm;
   }
 

@@ -7,6 +7,7 @@
     "dev": "turbo run dev",
     "dev:api": "turbo run dev --filter=@saas-platform/platform-api --filter=@saas-platform/tenant-api",
     "dev:web": "turbo run dev --filter=@saas-platform/platform-admin --filter=@saas-platform/tenant-admin --filter=@saas-platform/agent-portal",
+    "dev:test002": "turbo run dev --filter=@saas-platform/platform-api --filter=@saas-platform/tenant-api --filter=@saas-platform/tenant-admin",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
