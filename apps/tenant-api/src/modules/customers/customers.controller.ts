@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Body, Query, UseGuards, Inject } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -18,6 +18,7 @@ import { TenantAdminGuard } from "../revenue-wallets/guards/tenant-admin.guard";
 import { TenantAdminOrAgentGuard } from "./guards/tenant-admin-or-agent.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { TenantUser, UserRole, Agent } from "@saas-platform/database";
+import { TENANT_ENTITY_MANAGER } from "../../common/database/tenant-entity-manager.provider";
 
 @ApiTags("會員管理")
 @Controller("customers")
@@ -25,7 +26,7 @@ import { TenantUser, UserRole, Agent } from "@saas-platform/database";
 export class CustomersController {
   constructor(
     private readonly customersService: CustomersService,
-    private readonly em: EntityManager
+    @Inject(TENANT_ENTITY_MANAGER) private readonly em: EntityManager
   ) {}
 
   @Get()
