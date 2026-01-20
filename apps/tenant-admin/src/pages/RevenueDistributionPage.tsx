@@ -14,7 +14,7 @@ import {
 } from "@saas-platform/ui";
 import { Search } from "lucide-react";
 import { RevenueDistributionItem } from "@saas-platform/shared-types";
-import { formatDateTimeLocalized } from "@saas-platform/utils";
+import { formatDateTimeLocalized, getTodayStartLocal } from "@saas-platform/utils";
 
 // 状态映射
 const statusMap: Record<string, { label: string; className: string }> = {
@@ -135,16 +135,16 @@ export default function RevenueDistributionPage() {
   }, []);
 
   // 筛选器输入状态（用户输入时更新）
-  const [startDate, setStartDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>(() => getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const limit = 20;
 
   // 已提交的筛选状态（点击查询按钮时更新）
-  const [appliedFilters, setAppliedFilters] = useState({
-    startDate: "",
+  const [appliedFilters, setAppliedFilters] = useState(() => ({
+    startDate: getTodayStartLocal(),
     endDate: "",
-  });
+  }));
 
   // 构建 Refine 筛选参数（基于已提交的筛选条件）
   const filters = useMemo(() => {

@@ -26,7 +26,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
-import { formatDateTime } from "@saas-platform/utils";
+import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
 import { useIsMobile } from "@saas-platform/ui";
 
 // Agent 类型定义
@@ -90,18 +90,18 @@ export default function AgentsPage() {
   }, []);
 
   // 筛选输入状态（用户输入时更新）
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => ({
     name: "",
-    createdAtStart: "",
+    createdAtStart: getTodayStartLocal(),
     createdAtEnd: "",
-  });
+  }));
 
   // 已提交的筛选状态（点击查询按钮时更新）
-  const [appliedFilters, setAppliedFilters] = useState({
+  const [appliedFilters, setAppliedFilters] = useState(() => ({
     name: "",
-    createdAtStart: "",
+    createdAtStart: getTodayStartLocal(),
     createdAtEnd: "",
-  });
+  }));
 
   // 展开/收合状态
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());

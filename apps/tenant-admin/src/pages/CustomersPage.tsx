@@ -28,7 +28,7 @@ import {
   CustomerItem,
   CustomerAuthorizationStatus,
 } from "@saas-platform/shared-types";
-import { formatDateTimeLocalized } from "@saas-platform/utils";
+import { formatDateTimeLocalized, getTodayStartLocal } from "@saas-platform/utils";
 
 // 统计卡片组件
 function StatsCard({
@@ -96,7 +96,7 @@ export default function CustomersPage() {
   const { open } = useNotification();
 
   // 筛选器输入状态（用户输入时更新）
-  const [startDate, setStartDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>(() => getTodayStartLocal());
   const [endDate, setEndDate] = useState<string>("");
   const [timeType, setTimeType] = useState<TimeType>(TimeType.AUTHORIZATION_TIME);
   const [authorizationStatus, setAuthorizationStatus] =
@@ -106,13 +106,13 @@ export default function CustomersPage() {
   const limit = 20;
 
   // 已提交的筛选状态（点击查询按钮时更新）
-  const [appliedFilters, setAppliedFilters] = useState({
-    startDate: "",
+  const [appliedFilters, setAppliedFilters] = useState(() => ({
+    startDate: getTodayStartLocal(),
     endDate: "",
     timeType: TimeType.AUTHORIZATION_TIME,
     authorizationStatus: CustomerAuthorizationStatus.ALL,
     address: "",
-  });
+  }));
 
   // 选中状态
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
