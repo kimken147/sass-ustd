@@ -1,0 +1,37 @@
+# Amplify build spec for tenant-admin (Vite SPA)
+# Amplify Console setup: set "Root directory" to apps/tenant-admin
+#
+# Required Amplify environment variables:
+#   VITE_TENANT_API_URL     - Tenant API endpoint
+#   VITE_PLATFORM_API_URL   - Platform API endpoint (for tenant context init)
+#   VITE_APP_NAME           - App display name
+#   VITE_APP_ENV            - Environment (production/staging)
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 20
+        - nvm use 20
+        - corepack enable
+        - corepack prepare pnpm@9.15.0 --activate
+        - cd ../.. && pnpm install --frozen-lockfile
+    build:
+      commands:
+        - cd ../.. && pnpm --filter @saas-platform/tenant-admin build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - ../../node_modules/**/*
+  customHeaders:
+    - pattern: '**/*'
+      headers:
+        - key: Cache-Control
+          value: 'public, max-age=31536000, immutable'
+    - pattern: index.html
+      headers:
+        - key: Cache-Control
+          value: 'no-cache, no-store, must-revalidate'

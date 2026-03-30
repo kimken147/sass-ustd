@@ -65,6 +65,12 @@ export class ConnectionManagerService implements OnModuleDestroy {
       port: this.configService.get('TENANT_DB_PORT', 5432),
       user: this.configService.get('TENANT_DB_USER', 'postgres'),
       password: this.configService.get('TENANT_DB_PASSWORD', 'postgres'),
+      // SSL 配置（RDS 需要）
+      ...(this.configService.get('TENANT_DB_SSL') === 'true' && {
+        driverOptions: {
+          connection: { ssl: { rejectUnauthorized: false } },
+        },
+      }),
       entities: [
         TenantConfig,
         TenantUser,

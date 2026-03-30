@@ -1,0 +1,99 @@
+# Deploy platform-api to AWS Elastic Beanstalk
+#
+# Required GitHub Secrets:
+#   AWS_ACCESS_KEY_ID         - IAM user access key
+#   AWS_SECRET_ACCESS_KEY     - IAM user secret key
+
+name: Deploy Platform API
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/platform-api/**'
+      - 'packages/auth/**'
+      - 'packages/database/**'
+      - 'packages/shared/**'
+      - 'packages/shared-types/**'
+      - 'packages/utils/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REPO: saas-platform-api
+  EB_APP: saas-platform-api
+  EB_ENV: saas-platform-api-env
+  S3_BUCKET: saas-platform-deploy-243776527511
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -f apps/platform-api/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPO:latest \
+            .
+          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:latest
+
+      - name: Deploy to Elastic Beanstalk
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+          VERSION_LABEL: platform-api-${{ github.sha }}
+        run: |
+          # Generate Dockerrun.aws.json
+          cat > Dockerrun.aws.json << HEREDOC
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Image": {
+              "Name": "${ECR_REGISTRY}/${ECR_REPO}:${IMAGE_TAG}",
+              "Update": "true"
+            },
+            "Ports": [
+              { "ContainerPort": 3000, "HostPort": 80 }
+            ]
+          }
+          HEREDOC
+
+          # Bundle and upload
+          zip -r deploy.zip Dockerrun.aws.json
+          aws s3 cp deploy.zip s3://$S3_BUCKET/$VERSION_LABEL.zip
+
+          # Create version and deploy
+          aws elasticbeanstalk create-application-version \
+            --application-name "$EB_APP" \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="$S3_BUCKET",S3Key="$VERSION_LABEL.zip" \
+            --no-auto-create-application
+
+          aws elasticbeanstalk update-environment \
+            --application-name "$EB_APP" \
+            --environment-name "$EB_ENV" \
+            --version-label "$VERSION_LABEL"
+
+      - name: Wait for deployment
+        run: |
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names "$EB_ENV"
+          echo "Deployment complete"

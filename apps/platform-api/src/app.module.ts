@@ -25,7 +25,14 @@ import { SitesModule } from './modules/sites/sites.module';
         port: configService.get('PLATFORM_DB_PORT', 5432),
         user: configService.get('PLATFORM_DB_USER', 'postgres'),
         password: configService.get('PLATFORM_DB_PASSWORD', 'postgres'),
-        
+
+        // SSL 配置（RDS 需要）
+        ...(configService.get('PLATFORM_DB_SSL') === 'true' && {
+          driverOptions: {
+            connection: { ssl: { rejectUnauthorized: false } },
+          },
+        }),
+
         // 實體列表 - 只包含 Platform DB 的實體
         entities: [Tenant, PlatformUser, SystemWallet],
         
