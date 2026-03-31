@@ -8,7 +8,7 @@ name: Deploy Tenant API
 
 on:
   push:
-    branches: [master]
+    branches: [master, dev]
     paths:
       - 'apps/tenant-api/**'
       - 'packages/auth/**'

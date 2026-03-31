@@ -8,7 +8,7 @@ name: Deploy Platform API
 
 on:
   push:
-    branches: [master]
+    branches: [master, dev]
     paths:
       - 'apps/platform-api/**'
       - 'packages/auth/**'
