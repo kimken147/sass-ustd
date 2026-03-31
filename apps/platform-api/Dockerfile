@@ -28,12 +28,21 @@ COPY packages/ ./packages/
 # Build (nest build compiles app + referenced workspace packages into dist/)
 RUN pnpm --filter @saas-platform/platform-api build
 
-# Compile tenant-api migrations to JS (MikroORM needs JS in production, no ts-node)
-RUN npx tsc --target ES2022 --module commonjs --esModuleInterop \
-    --moduleResolution node --skipLibCheck --declaration false \
-    --rootDir apps/tenant-api/src/migrations \
-    --outDir apps/tenant-api/src/migrations \
-    apps/tenant-api/src/migrations/Migration*.ts
+# Transpile tenant-api migrations to JS (MikroORM needs JS in production, no ts-node)
+# Uses TypeScript transpileModule API to skip type-checking (no need to resolve @mikro-orm/migrations)
+RUN node -e " \
+  const ts = require('typescript'); \
+  const fs = require('fs'); \
+  const path = require('path'); \
+  const dir = 'apps/tenant-api/src/migrations'; \
+  fs.readdirSync(dir).filter(f => f.endsWith('.ts')).forEach(f => { \
+    const src = fs.readFileSync(path.join(dir, f), 'utf8'); \
+    const out = ts.transpileModule(src, { compilerOptions: { \
+      target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true \
+    }}).outputText; \
+    fs.writeFileSync(path.join(dir, f.replace('.ts', '.js')), out); \
+    console.log('Compiled:', f); \
+  });"
 
 # nest build outputs to dist/ with structure:
 #   dist/apps/platform-api/src/  (compiled app)
