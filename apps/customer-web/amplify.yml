@@ -14,11 +14,9 @@ applications:
         build:
           commands:
             - pnpm --filter @saas-platform/customer-web build
+            - cp -r .next/static .next/standalone/apps/customer-web/.next/static
+            - if [ -d public ]; then cp -r public .next/standalone/apps/customer-web/public; fi
       artifacts:
-        baseDirectory: .next
+        baseDirectory: .next/standalone
         files:
           - '**/*'
-      cache:
-        paths:
-          - node_modules/**/*
-          - .next/cache/**/*
