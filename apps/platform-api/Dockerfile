@@ -28,21 +28,22 @@ COPY packages/ ./packages/
 # Build (nest build compiles app + referenced workspace packages into dist/)
 RUN pnpm --filter @saas-platform/platform-api build
 
-# Transpile tenant-api migrations to JS (MikroORM needs JS in production, no ts-node)
-# Uses TypeScript transpileModule API to skip type-checking (no need to resolve @mikro-orm/migrations)
-RUN node -e " \
-  const ts = require('typescript'); \
-  const fs = require('fs'); \
-  const path = require('path'); \
-  const dir = 'apps/tenant-api/src/migrations'; \
-  fs.readdirSync(dir).filter(f => f.endsWith('.ts')).forEach(f => { \
-    const src = fs.readFileSync(path.join(dir, f), 'utf8'); \
-    const out = ts.transpileModule(src, { compilerOptions: { \
-      target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true \
-    }}).outputText; \
-    fs.writeFileSync(path.join(dir, f.replace('.ts', '.js')), out); \
-    console.log('Compiled:', f); \
-  });"
+# Transpile tenant-api migrations TS→JS (production has no ts-node)
+# Locate typescript via pnpm's store, then use transpileModule (no type-checking)
+RUN TS_LIB=$(find /app/node_modules -path "*/typescript/lib/typescript.js" | head -1) && \
+    node -e " \
+      const ts = require('$TS_LIB'.replace('/lib/typescript.js','')); \
+      const fs = require('fs'); const path = require('path'); \
+      const dir = 'apps/tenant-api/src/migrations'; \
+      fs.readdirSync(dir).filter(f => f.endsWith('.ts')).forEach(f => { \
+        const src = fs.readFileSync(path.join(dir, f), 'utf8'); \
+        const out = ts.transpileModule(src, { compilerOptions: { \
+          target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true \
+        }}).outputText; \
+        fs.writeFileSync(path.join(dir, f.replace('.ts', '.js')), out); \
+        console.log('Compiled:', f); \
+      });" && \
+    rm -f apps/tenant-api/src/migrations/*.ts
 
 # nest build outputs to dist/ with structure:
 #   dist/apps/platform-api/src/  (compiled app)
