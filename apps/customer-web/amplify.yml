@@ -13,11 +13,11 @@ applications:
         build:
           commands:
             - cd ../.. && pnpm --filter @saas-platform/customer-web build
-            # Amplify SSR requires node_modules with 'next' in the build output
-            - cp -r node_modules .next/node_modules
-            - cp package.json .next/package.json
+            # standalone output doesn't include static assets, copy them manually
+            - cp -r .next/static .next/standalone/apps/customer-web/.next/static
+            - if [ -d public ]; then cp -r public .next/standalone/apps/customer-web/public; fi
       artifacts:
-        baseDirectory: .next
+        baseDirectory: .next/standalone
         files:
           - '**/*'
       cache:
