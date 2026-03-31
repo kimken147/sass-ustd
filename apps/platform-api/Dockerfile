@@ -22,6 +22,7 @@ RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY apps/platform-api/ ./apps/platform-api/
+COPY apps/tenant-api/src/migrations/ ./apps/tenant-api/src/migrations/
 COPY packages/ ./packages/
 
 # Build (nest build compiles app + referenced workspace packages into dist/)
@@ -62,6 +63,12 @@ RUN pnpm install --frozen-lockfile --prod && \
 
 # Copy built artifacts (includes compiled app + packages + symlinks)
 COPY --from=builder /app/apps/platform-api/dist ./apps/platform-api/dist
+
+# Copy tenant-api migration files (needed by TenantMigrationService to init new tenant DBs)
+# Path must match: path.resolve(__dirname, "../../../../../", "apps/tenant-api/src/migrations")
+# where __dirname at runtime = /app/apps/platform-api/dist/apps/platform-api/src/modules/tenants/
+# resolves to: /app/apps/platform-api/dist/apps/tenant-api/src/migrations
+COPY --from=builder /app/apps/tenant-api/src/migrations ./apps/platform-api/dist/apps/tenant-api/src/migrations
 
 # Remove pnpm's workspace symlinks (point to TypeScript source).
 # Our dist/node_modules/@saas-platform/* symlinks (point to compiled JS) take over.
