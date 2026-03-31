@@ -21,8 +21,9 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
   // CORS 設置
+  const allowedOrigins = process.env.ALLOWED_ORIGINS;
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") || "*",
+    origin: allowedOrigins === "*" ? true : allowedOrigins?.split(",") || true,
     credentials: true,
   });
 
