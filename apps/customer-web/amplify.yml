@@ -2,7 +2,6 @@ version: 1
 applications:
   - appRoot: apps/customer-web
     frontend:
-      buildPath: apps/customer-web
       phases:
         preBuild:
           commands:
@@ -17,6 +16,10 @@ applications:
             - cp -r .next/static .next/standalone/apps/customer-web/.next/static
             - if [ -d public ]; then cp -r public .next/standalone/apps/customer-web/public; fi
       artifacts:
-        baseDirectory: .next/standalone/apps/customer-web
+        baseDirectory: .next
         files:
           - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
