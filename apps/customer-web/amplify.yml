@@ -2,6 +2,7 @@ version: 1
 applications:
   - appRoot: apps/customer-web
     frontend:
+      buildPath: apps/customer-web
       phases:
         preBuild:
           commands:
@@ -9,18 +10,15 @@ applications:
             - nvm use 20
             - corepack enable
             - corepack prepare pnpm@9.15.0 --activate
-            - cd ../.. && pnpm install --frozen-lockfile
+            - pnpm install --frozen-lockfile
         build:
           commands:
-            - (cd ../.. && pnpm --filter @saas-platform/customer-web build)
-            # standalone output doesn't include static assets, copy them manually
-            - cp -r .next/static .next/standalone/apps/customer-web/.next/static
-            - if [ -d public ]; then cp -r public .next/standalone/apps/customer-web/public; fi
+            - pnpm --filter @saas-platform/customer-web build
       artifacts:
-        baseDirectory: .next/standalone
+        baseDirectory: .next
         files:
           - '**/*'
       cache:
         paths:
-          - ../../node_modules/**/*
+          - node_modules/**/*
           - .next/cache/**/*
