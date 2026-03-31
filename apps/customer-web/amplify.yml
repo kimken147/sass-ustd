@@ -1,29 +1,23 @@
-# Amplify build spec for customer-web (Next.js SSR)
-# Amplify Console setup: set "Root directory" to apps/customer-web
-# Amplify auto-detects Next.js and provisions SSR compute (Lambda/CloudFront)
-#
-# Required Amplify environment variables:
-#   PLATFORM_API_URL         - Platform API endpoint (server-side, for tenant lookup)
-#   TENANT_API_URL           - Tenant API endpoint (server-side)
-#   NEXT_PUBLIC_TENANT_API_URL - Tenant API endpoint (client-side)
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - nvm install 20
-        - nvm use 20
-        - corepack enable
-        - corepack prepare pnpm@9.15.0 --activate
-        - cd ../.. && pnpm install --frozen-lockfile
-    build:
-      commands:
-        - cd ../.. && pnpm --filter @saas-platform/customer-web build
-  artifacts:
-    baseDirectory: .next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - ../../node_modules/**/*
-      - .next/cache/**/*
+applications:
+  - appRoot: apps/customer-web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - nvm install 20
+            - nvm use 20
+            - corepack enable
+            - corepack prepare pnpm@9.15.0 --activate
+            - cd ../.. && pnpm install --frozen-lockfile
+        build:
+          commands:
+            - cd ../.. && pnpm --filter @saas-platform/customer-web build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - ../../node_modules/**/*
+          - .next/cache/**/*
