@@ -12,7 +12,7 @@ applications:
             - cd ../.. && pnpm install --frozen-lockfile
         build:
           commands:
-            - cd ../.. && pnpm --filter @saas-platform/customer-web build
+            - (cd ../.. && pnpm --filter @saas-platform/customer-web build)
             # standalone output doesn't include static assets, copy them manually
             - cp -r .next/static .next/standalone/apps/customer-web/.next/static
             - if [ -d public ]; then cp -r public .next/standalone/apps/customer-web/public; fi
