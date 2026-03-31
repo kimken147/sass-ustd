@@ -28,6 +28,13 @@ COPY packages/ ./packages/
 # Build (nest build compiles app + referenced workspace packages into dist/)
 RUN pnpm --filter @saas-platform/platform-api build
 
+# Compile tenant-api migrations to JS (MikroORM needs JS in production, no ts-node)
+RUN npx tsc --target ES2022 --module commonjs --esModuleInterop \
+    --moduleResolution node --skipLibCheck --declaration false \
+    --rootDir apps/tenant-api/src/migrations \
+    --outDir apps/tenant-api/src/migrations \
+    apps/tenant-api/src/migrations/Migration*.ts
+
 # nest build outputs to dist/ with structure:
 #   dist/apps/platform-api/src/  (compiled app)
 #   dist/packages/*/src/         (compiled workspace packages)
