@@ -13,6 +13,9 @@ applications:
         build:
           commands:
             - cd ../.. && pnpm --filter @saas-platform/customer-web build
+            # Amplify SSR requires node_modules with 'next' in the build output
+            - cp -r node_modules .next/node_modules
+            - cp package.json .next/package.json
       artifacts:
         baseDirectory: .next
         files:
