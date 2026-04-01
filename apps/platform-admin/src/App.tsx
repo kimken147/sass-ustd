@@ -15,6 +15,7 @@ import { Toaster } from "./components/refine-ui/notification/toaster";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateSitePage from "./pages/CreateSitePage";
+import EditSitePage from "./pages/EditSitePage";
 import WalletsPage from "./pages/WalletsPage";
 import CreateWalletPage from "./pages/CreateWalletPage";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -66,6 +67,7 @@ function App() {
               name: "sites",
               list: "/",
               create: "/sites/create",
+              edit: "/sites/edit/:id",
               meta: {
                 label: "站点列表",
                 icon: (
@@ -151,6 +153,7 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="/sites/create" element={<CreateSitePage />} />
+                <Route path="/sites/edit/:id" element={<EditSitePage />} />
                 <Route path="/wallets" element={<WalletsPage />} />
                 <Route path="/wallets/create" element={<CreateWalletPage />} />
               </Route>
