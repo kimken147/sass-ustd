@@ -473,6 +473,57 @@ export class CustomersService {
   }
 
   /**
+   * 同步會員錢包餘額（從鏈上查詢並更新 cachedUsdtBalance）
+   */
+  async syncBalances(
+    customerIds: number[]
+  ): Promise<{ successCount: number; failureCount: number; results: { customerId: number; balance?: number; error?: string }[] }> {
+    const results: { customerId: number; balance?: number; error?: string }[] = [];
+    let successCount = 0;
+    let failureCount = 0;
+
+    const customers = await this.em.find(Customer, {
+      id: { $in: customerIds },
+      deletedAt: null,
+    });
+
+    for (const customer of customers) {
+      try {
+        if (!customer.wallet?.address) {
+          results.push({ customerId: customer.id, error: "會員未設定錢包地址" });
+          failureCount++;
+          continue;
+        }
+
+        const balance = await this.contractsService.getUSDTBalance(customer.wallet.address);
+
+        // 更新 cachedUsdtBalance
+        customer.wallet = {
+          ...customer.wallet,
+          cachedUsdtBalance: balance.toString(),
+          lastBalanceCheck: new Date(),
+        };
+
+        results.push({ customerId: customer.id, balance });
+        successCount++;
+      } catch (error) {
+        this.logger.error(
+          `同步會員 ${customer.id} 餘額失敗: ${error instanceof Error ? error.message : String(error)}`
+        );
+        results.push({
+          customerId: customer.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        failureCount++;
+      }
+    }
+
+    await this.em.flush();
+
+    return { successCount, failureCount, results };
+  }
+
+  /**
    * 一鍵提幣（執行合約）- 處理所有符合條件的會員
    */
   async harvestAllCustomers(

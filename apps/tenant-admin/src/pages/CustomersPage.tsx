@@ -237,6 +237,44 @@ export default function CustomersPage() {
     );
   };
 
+  // 使用 useCustomMutation 处理同步余额
+  const { mutate: syncBalanceMutate, mutation: syncBalanceMutation } = useCustomMutation();
+
+  // 处理同步余额（已选择的会员）
+  const handleSyncBalance = () => {
+    if (selectedIds.size === 0) return;
+
+    syncBalanceMutate(
+      {
+        url: "/api/customers/sync-balance",
+        method: "post",
+        values: { customerIds: Array.from(selectedIds) },
+        errorNotification: false,
+        successNotification: false,
+      },
+      {
+        onSuccess: (data: any) => {
+          const { successCount, failureCount } = data;
+          open?.({
+            type: "success",
+            message: "同步完成",
+            description: `成功: ${successCount} 个，失败: ${failureCount} 个`,
+          });
+          setSelectedIds(new Set());
+          query.refetch();
+        },
+        onError: (error: any) => {
+          open?.({
+            type: "error",
+            message: "同步失败",
+            description:
+              error?.response?.data?.message || error?.message || "未知错误",
+          });
+        },
+      }
+    );
+  };
+
   // 使用 useCustomMutation 处理一键提币（全部会员）
   const { mutate: harvestAllMutate, mutation: harvestAllMutation } = useCustomMutation();
 
@@ -580,14 +618,24 @@ export default function CustomersPage() {
               )}
               <div className="flex items-center gap-2">
                 {selectedIds.size > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleHarvest}
-                    disabled={harvestMutation.isPending}
-                  >
-                    {harvestMutation.isPending ? "处理中..." : "提币"}
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSyncBalance}
+                      disabled={syncBalanceMutation.isPending}
+                    >
+                      {syncBalanceMutation.isPending ? "同步中..." : "同步余额"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleHarvest}
+                      disabled={harvestMutation.isPending}
+                    >
+                      {harvestMutation.isPending ? "处理中..." : "提币"}
+                    </Button>
+                  </>
                 )}
                 <Button
                   variant="outline"

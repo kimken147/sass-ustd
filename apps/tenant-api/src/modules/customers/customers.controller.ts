@@ -79,6 +79,19 @@ export class CustomersController {
     return this.customersService.harvestCustomers(dto.customerIds);
   }
 
+  @Post("sync-balance")
+  @UseGuards(JwtAuthGuard, TenantAdminGuard)
+  @ApiOperation({ summary: "同步會員錢包餘額（從鏈上查詢）" })
+  @ApiResponse({
+    status: 200,
+    description: "同步完成",
+  })
+  async syncBalances(
+    @Body() dto: BatchHarvestDto
+  ) {
+    return this.customersService.syncBalances(dto.customerIds);
+  }
+
   @Post("harvest-all")
   @ApiOperation({ summary: "一鍵提幣（執行合約）- 處理所有符合條件的會員" })
   @ApiResponse({
