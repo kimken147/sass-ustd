@@ -118,16 +118,19 @@ export class TenantsService {
       });
     }
 
-    // 處理 cryptoConfig
-    let cryptoConfig = createTenantDto.cryptoConfig || {
+    // 處理 cryptoConfig（合併預設值，確保必要欄位不會遺失）
+    const defaultCryptoConfig = {
       supportedChains: ["tron"],
       supportedTokens: ["USDT", "TRX"],
-      investmentContractAddress: "",
       usdtTokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
       minInvestment: 100,
       maxInvestment: 100000,
       tenantRevenueRate: 60.0,
       agentCommissionRate: 30.0,
+    };
+    let cryptoConfig = {
+      ...defaultCryptoConfig,
+      ...createTenantDto.cryptoConfig,
     };
 
     // 如果提供了 executionWalletId，從 SystemWallet 獲取地址和私鑰
