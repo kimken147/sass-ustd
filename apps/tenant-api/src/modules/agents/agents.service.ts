@@ -61,10 +61,10 @@ export class AgentsService {
   }
 
   /**
-   * 获取代理列表（排除站长，只显示 level > 0 的代理）
+   * 获取代理列表（包含站长 level 0）
    */
   async getAgents(query?: QueryAgentsDto): Promise<Agent[]> {
-    const where: any = { level: { $gt: 0 } };
+    const where: any = {};
 
     // 名稱模糊搜尋
     if (query?.name) {

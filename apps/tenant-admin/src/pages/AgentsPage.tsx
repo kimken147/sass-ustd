@@ -26,7 +26,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
-import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
+import { formatDateTime } from "@saas-platform/utils";
 import { useIsMobile } from "@saas-platform/ui";
 
 // Agent 类型定义
@@ -92,14 +92,14 @@ export default function AgentsPage() {
   // 筛选输入状态（用户输入时更新）
   const [filters, setFilters] = useState(() => ({
     name: "",
-    createdAtStart: getTodayStartLocal(),
+    createdAtStart: "",
     createdAtEnd: "",
   }));
 
   // 已提交的筛选状态（点击查询按钮时更新）
   const [appliedFilters, setAppliedFilters] = useState(() => ({
     name: "",
-    createdAtStart: getTodayStartLocal(),
+    createdAtStart: "",
     createdAtEnd: "",
   }));
 
@@ -257,7 +257,7 @@ export default function AgentsPage() {
           {/* 授权合约链接 */}
           <TableCell>
             <CopyableText
-              text={node.referralLink}
+              text={`${node.referralLink}&wallet=tronlink`}
               displayText="复制链接"
               truncate={false}
               fontMono={false}
@@ -396,7 +396,7 @@ export default function AgentsPage() {
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">推荐链接</span>
               <CopyableText
-                text={node.referralLink}
+                text={`${node.referralLink}&wallet=tronlink`}
                 displayText="复制"
                 truncate={false}
                 fontMono={false}
@@ -480,22 +480,37 @@ export default function AgentsPage() {
         {!isLoading && treeData.length > 0 && (() => {
           const rootAgent = agents.find((a) => a.level === 0);
           if (!rootAgent) return null;
+          const walletTypes = [
+            { key: "tronlink", label: "TronLink" },
+            { key: "imtoken", label: "imToken" },
+            { key: "tokenpocket", label: "TokenPocket" },
+            { key: "bitpie", label: "Bitpie" },
+          ];
           return (
             <Card>
-              <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">站长默认推荐链接</p>
-                  <p className="text-xs text-muted-foreground">
-                    代理码: {rootAgent.code}
-                  </p>
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">站长推荐链接</p>
+                    <p className="text-xs text-muted-foreground">
+                      代理码: {rootAgent.code}
+                    </p>
+                  </div>
                 </div>
-                <CopyableText
-                  text={rootAgent.referralLink}
-                  displayText={rootAgent.referralLink}
-                  truncate={false}
-                  fontMono={true}
-                  textSize="sm"
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {walletTypes.map((w) => (
+                    <div key={w.key} className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-24 shrink-0">{w.label}</span>
+                      <CopyableText
+                        text={`${rootAgent.referralLink}&wallet=${w.key}`}
+                        displayText="复制链接"
+                        truncate={false}
+                        fontMono={false}
+                        textSize="sm"
+                      />
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           );
