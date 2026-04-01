@@ -27,7 +27,19 @@ export default function RedirectClient() {
       return;
     }
 
-    // Build deeplink
+    // Detect mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+    if (!isMobile) {
+      // Desktop: skip deep link, go directly to home page
+      // (desktop users use TronLink Chrome extension)
+      window.location.href = window.location.origin;
+      return;
+    }
+
+    // Mobile: use deep link to open wallet app
     const targetUrl = window.location.origin;
     const deeplinkUrl = buildWalletDeeplink(wallet, targetUrl);
 
