@@ -476,6 +476,31 @@ export default function AgentsPage() {
           </CardContent>
         </Card>
 
+        {/* 站长推荐链接 */}
+        {!isLoading && treeData.length > 0 && (() => {
+          const rootAgent = agents.find((a) => a.level === 0);
+          if (!rootAgent) return null;
+          return (
+            <Card>
+              <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">站长默认推荐链接</p>
+                  <p className="text-xs text-muted-foreground">
+                    代理码: {rootAgent.code}
+                  </p>
+                </div>
+                <CopyableText
+                  text={rootAgent.referralLink}
+                  displayText={rootAgent.referralLink}
+                  truncate={false}
+                  fontMono={true}
+                  textSize="sm"
+                />
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         {/* 错误提示 */}
         {isError && (
           <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md mb-6">

@@ -362,7 +362,7 @@ export class AgentsController {
         "https://example.com";
     }
 
-    // 生成推薦連結格式：{baseUrl}/register?ref={agentCode}
-    return `${baseUrl}/register?ref=${agent.code}`;
+    // 生成推薦連結格式：{baseUrl}/redirect?ref={agentCode}&wallet=tronlink
+    return `${baseUrl}/redirect?ref=${agent.code}&wallet=tronlink`;
   }
 }
