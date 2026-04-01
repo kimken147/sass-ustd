@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useList, useNavigation } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
+import { useParams } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { EditView, EditViewHeader } from "@saas-platform/ui";
@@ -70,6 +71,7 @@ export default function EditSitePage() {
   }, []);
 
   const { list } = useNavigation();
+  const { id } = useParams<{ id: string }>();
 
   // 获取系统钱包列表
   const walletsQuery = useList<SystemWallet>({
@@ -111,6 +113,7 @@ export default function EditSitePage() {
     refineCoreProps: {
       action: "edit",
       resource: "tenants",
+      id: id,
       onMutationSuccess: () => {
         list("sites");
       },
@@ -118,10 +121,12 @@ export default function EditSitePage() {
   });
 
   // 当 API 数据加载完成后，映射到表单
-  const tenantData = queryResult?.data?.data as any;
+  const rawData = queryResult?.data?.data;
+  // 兼容不同的 response 结构
+  const tenantData = (rawData as any)?.id ? rawData : (rawData as any)?.data ?? rawData;
 
   useEffect(() => {
-    if (!tenantData) return;
+    if (!tenantData || !(tenantData as any)?.id) return;
 
     // 映射 systemWallets
     const mappedSystemWallets = (tenantData.systemWallets || []).map(
