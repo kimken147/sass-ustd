@@ -239,12 +239,25 @@ export class TenantsService {
   }
 
   /**
-   * 根據 customDomain 查詢租戶
+   * 根據 customDomain 或 customUrl 查詢租戶
+   * tenant-admin 透過 customDomain 識別，customer-web 透過 customUrl 識別
    */
   async findByCustomDomain(domain: string): Promise<TenantResponseDto> {
-    const tenant = await this.tenantRepository.findOne({
+    // 先查 customDomain（tenant-admin 域名）
+    let tenant = await this.tenantRepository.findOne({
       customDomain: domain,
     });
+
+    // 再查 customUrl（customer-web URL，可能帶 protocol）
+    if (!tenant) {
+      tenant = await this.tenantRepository.findOne({
+        $or: [
+          { customUrl: domain },
+          { customUrl: `https://${domain}` },
+          { customUrl: `http://${domain}` },
+        ],
+      });
+    }
 
     if (!tenant) {
       throw new NotFoundException(
