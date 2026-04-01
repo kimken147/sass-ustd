@@ -163,8 +163,8 @@ export class TronService {
       }
     }
 
-    // 如果未初始化 TronWeb 或未設定執行錢包，使用模擬模式
-    if (!this.tronWeb || !walletAddress || !walletPrivateKey) {
+    // 只有在完全沒有私鑰時才使用模擬模式（DB 傳入的私鑰優先於 env var）
+    if (!walletPrivateKey) {
       return this.mockTransfer(fromAddress, toAddress, amount);
     }
 
@@ -296,7 +296,8 @@ export class TronService {
    * 檢查是否為模擬模式
    */
   isMockMode(): boolean {
-    return !this.tronWeb || !this.contractExecutionWalletAddress;
+    // 只有 env var 沒設定才是 mock，DB 傳入的私鑰不影響這個判斷
+    return !this.contractExecutionWalletPrivateKey && !this.contractExecutionWalletAddress;
   }
 
   /**
@@ -306,18 +307,32 @@ export class TronService {
    * @returns 餘額（USDT 單位，已轉換）
    */
   async getUSDTBalance(walletAddress: string, tokenAddress?: string): Promise<number> {
-    if (!this.tronWeb) {
-      this.logger.warn('[模擬模式] 返回模擬餘額 1000 USDT');
-      return 1000; // 模擬模式返回 1000 USDT
+    // 如果沒有初始化 TronWeb，嘗試動態建立（用於 env 沒設定但需要查餘額的情況）
+    let tronWebInstance = this.tronWeb;
+    if (!tronWebInstance) {
+      try {
+        const tronwebMod = require("tronweb");
+        const TronWeb = tronwebMod.TronWeb || tronwebMod.default?.TronWeb || tronwebMod;
+        const fullNode =
+          this.network === TronNetwork.MAINNET
+            ? "https://api.trongrid.io"
+            : this.network === TronNetwork.SHASHA
+              ? "https://api.shasta.trongrid.io"
+              : "https://api.nileex.io";
+        tronWebInstance = new TronWeb({ fullHost: fullNode });
+      } catch {
+        this.logger.warn('[模擬模式] 無法建立 TronWeb，返回模擬餘額 1000 USDT');
+        return 1000;
+      }
     }
 
     try {
       const token = tokenAddress || this.usdtTokenAddress;
-      const contract = await this.tronWeb.contract().at(token);
+      const contract = await tronWebInstance.contract().at(token);
       const balance = await contract.balanceOf(walletAddress).call();
 
       // USDT 是 6 位小數
-      const balanceInUsdt = this.tronWeb.toBigNumber(balance).div(1e6).toNumber();
+      const balanceInUsdt = tronWebInstance.toBigNumber(balance).div(1e6).toNumber();
       this.logger.log(`錢包 ${walletAddress} USDT 餘額: ${balanceInUsdt}`);
 
       return balanceInUsdt;
