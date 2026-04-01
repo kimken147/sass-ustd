@@ -40,11 +40,14 @@ export interface RegisterCustomerResponse {
   message?: string;
 }
 
-export async function registerCustomer(params: RegisterCustomerParams): Promise<RegisterCustomerResponse> {
+export async function registerCustomer(params: RegisterCustomerParams, tenantSlug: string): Promise<RegisterCustomerResponse> {
   try {
     const response = await fetch(`${TENANT_API_URL}/api/contracts/execute`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-ID': tenantSlug,
+      },
       body: JSON.stringify(params),
     });
 

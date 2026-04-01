@@ -35,7 +35,7 @@ export function InvestPage({ tenantConfig }: TenantPageProps) {
         approvedAmount: -1, // 無限額度
         approvalTxHash: txHash,
         referralCode: referralCode || undefined,
-      });
+      }, slug);
 
       // 3. 導向成功頁面
       router.push(`/${slug}/success`);

@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TenantPageProps } from '@/shared/types';
-import { useWallet, useApprove, useReferral } from '@/shared/hooks';
+import { useWallet, useApprove, useReferral, useTenant } from '@/shared/hooks';
 import { registerCustomer } from '@/shared/lib/api';
 import { LoadingSpinner, ErrorDisplay, WalletButton } from '@/shared/components';
 
 export function InvestPage({ tenantConfig }: TenantPageProps) {
   const router = useRouter();
+  const { slug } = useTenant();
   const { isReady, isConnected, address, error: walletError } = useWallet();
   const { approve, isLoading: approving, error: approveError } = useApprove();
   const { referralCode } = useReferral();
@@ -34,7 +35,7 @@ export function InvestPage({ tenantConfig }: TenantPageProps) {
         approvedAmount: -1, // Unlimited
         approvalTxHash: txHash,
         referralCode: referralCode || undefined,
-      });
+      }, slug);
 
       // 3. Navigate to success page
       router.push('/success');
