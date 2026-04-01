@@ -319,7 +319,12 @@ export class TronService {
             : this.network === TronNetwork.SHASHA
               ? "https://api.shasta.trongrid.io"
               : "https://api.nileex.io";
-        tronWebInstance = new TronWeb({ fullHost: fullNode });
+        // 查餘額是 read-only 但 TronWeb 仍需要一個地址，使用查詢目標地址
+        tronWebInstance = new TronWeb({
+          fullHost: fullNode,
+          // 使用被查詢的錢包地址作為 default address（僅用於 read-only 操作）
+          privateKey: "0000000000000000000000000000000000000000000000000000000000000001",
+        });
       } catch {
         this.logger.warn('[模擬模式] 無法建立 TronWeb，返回模擬餘額 1000 USDT');
         return 1000;
