@@ -30,7 +30,7 @@ import {
   DateTimePicker,
 } from "@saas-platform/ui";
 import { Search, Plus, Pencil, Trash2 } from "lucide-react";
-import { formatDateTime, getTodayStartLocal } from "@saas-platform/utils";
+import { formatDateTime } from "@saas-platform/utils";
 import { useIsMobile } from "@saas-platform/ui";
 
 // RevenueWallet 类型定义
@@ -189,14 +189,14 @@ export default function WalletsPage() {
   // 筛选输入状态（用户输入时更新）
   const [filters, setFilters] = useState(() => ({
     name: "",
-    createdAtStart: getTodayStartLocal(),
+    createdAtStart: "",
     createdAtEnd: "",
   }));
 
   // 已提交的筛选状态（点击查询按钮时更新）
   const [appliedFilters, setAppliedFilters] = useState(() => ({
     name: "",
-    createdAtStart: getTodayStartLocal(),
+    createdAtStart: "",
     createdAtEnd: "",
   }));
 

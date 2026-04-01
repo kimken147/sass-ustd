@@ -17,7 +17,7 @@ export class UpdateRevenueWalletDto {
     required: false,
   })
   @IsString({ message: '錢包地址必須是字串' })
-  @Matches(/^T[A-Za-z1-9]{34}$/, {
+  @Matches(/^T[A-Za-z1-9]{33}$/, {
     message: '無效的 TRON 地址格式',
   })
   @IsOptional()
