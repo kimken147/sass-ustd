@@ -175,9 +175,10 @@ export class TronService {
       }
     }
 
-    // 只有在完全沒有私鑰時才使用模擬模式（DB 傳入的私鑰優先於 env var）
+    // 沒有私鑰則無法執行轉帳
     if (!walletPrivateKey) {
-      return this.mockTransfer(fromAddress, toAddress, amount);
+      this.logger.error(`[轉帳失敗] 無可用私鑰，無法執行 ${amount} USDT 轉帳`);
+      throw new BadRequestException('執行合約錢包私鑰未設定，無法執行轉帳');
     }
 
     try {
@@ -341,8 +342,8 @@ export class TronService {
           privateKey: "0000000000000000000000000000000000000000000000000000000000000001",
         });
       } catch {
-        this.logger.warn('[模擬模式] 無法建立 TronWeb，返回模擬餘額 1000 USDT');
-        return 1000;
+        this.logger.error('[模擬模式] 無法建立 TronWeb，無法查詢餘額');
+        throw new BadRequestException('TronWeb 未初始化，無法查詢鏈上餘額');
       }
     }
 
