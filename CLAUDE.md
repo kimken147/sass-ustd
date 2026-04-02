@@ -97,7 +97,7 @@ Request → TenantContextMiddleware (validate X-Tenant-ID)
 | Package | Purpose |
 |---------|---------|
 | `database` | MikroORM entities (BaseEntity, BaseUser, Tenant, Agent, Customer, etc.) |
-| `shared` | `TransformInterceptor`, `ApiResponseDto`, `PaginatedResponseDto` |
+| `shared` | `TransformInterceptor`, `LoggingInterceptor`, `HttpExceptionFilter`, `HealthController`, `ApiResponseDto`, `PaginatedResponseDto` |
 | `shared-types` | Cross-project TypeScript types (wallet, customer, revenue, commission) |
 | `ui` | shadcn/ui components + Refine-specific layout/views/buttons/data-table |
 | `auth` | `JwtService`, `PasswordService`, `TokenBlacklistService`, `BaseAuthService` |
@@ -131,13 +131,15 @@ Entities live in `packages/database/src/entities/`:
 
 ### NestJS Conventions
 
-- **Global interceptor**: `TransformInterceptor` wraps all responses in `{ success, data, timestamp }` format
+- **Global interceptors**: `LoggingInterceptor` (request logging, skips ELB health checks) + `TransformInterceptor` (wraps all responses in `{ success, data, timestamp }` format)
+- **Global exception filter**: `HttpExceptionFilter` logs all 4xx (WARN) and 5xx (ERROR) with request body and tenant context
 - **Global validation pipe**: `whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`
 - **Guards**: `JwtAuthGuard` (+ `@Public()` bypass), `TenantAdminGuard`, `AgentGuard`, `TenantAdminOrAgentGuard`, `TenantTokenGuard`
 - **Decorators**: `@Public()` skips JWT auth, `@CurrentUser()` extracts request.user
 - **Global modules**: `TenantContextModule`, `DatabaseModule` (both `@Global()`)
 - **DI for tenant DB**: `@Inject(TENANT_ENTITY_MANAGER)` for REQUEST-scoped EntityManager
-- Swagger documentation available at `/api` endpoint on both APIs
+- **Health endpoint**: `GET /api/health` (shared `HealthController`, excluded from `TenantContextMiddleware` in tenant-api)
+- Swagger documentation available at `/api/docs` endpoint on both APIs
 
 ## Frontend Patterns
 
@@ -220,6 +222,13 @@ Each app has its own `.env.example` — refer to these for required environment 
 - **Frontend Apps**: AWS Amplify (auto-build from GitHub)
   - Each app has its own `amplify.yml` build spec
   - Custom domains configured per-tenant via Amplify domain associations
+
+**EB Environment Notes**:
+- `.ebextensions/cloudwatch-logs.config` enables CloudWatch log streaming (included in deploy zip via GitHub Actions)
+- Health check path: `/api/health` (configured via EB option settings, NOT reliably set by `.ebextensions` on Docker platform — may need CLI update)
+- This AWS account has **Launch Configurations disabled** — only Launch Templates work. Never use `rebuild-environment` if CF stack is broken; use terminate + create-environment instead
+- New EB environments need: HTTPS listener (port 443 with ACM cert) + ALB SG port 443 inbound + RDS SG inbound rule for EB instance SG (TCP 5432)
+- AWS CLI profile: `cn`, region: `ap-southeast-1`
 
 **Domain routing** (production): Tenants get custom domains pointing to Amplify CloudFront distributions. DNS managed in Route 53. Tenant `customDomain` (admin panel) and `customUrl` (customer site) stored in both `saas_platform.tenants` and per-tenant `tenant_config` tables.
 
