@@ -392,9 +392,16 @@ export class TenantsService {
 
       // 將地址和加密的私鑰複製到 cryptoConfig（供 tenant-api 使用）
       updateData.cryptoConfig = {
+        ...(tenant.cryptoConfig as any),
         ...updateData.cryptoConfig,
         executionWalletAddress: executionWallet.address,
         executionWalletPrivateKey: executionWallet.privateKey,
+      };
+    } else if (updateData.cryptoConfig) {
+      // 即使沒有 executionWalletId，也要與現有 cryptoConfig 合併
+      updateData.cryptoConfig = {
+        ...(tenant.cryptoConfig as any),
+        ...updateData.cryptoConfig,
       };
     }
 

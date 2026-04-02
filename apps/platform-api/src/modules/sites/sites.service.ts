@@ -50,28 +50,31 @@ export class SitesService {
       ),
     ]);
 
-    // 查詢所有活躍的授權錢包（執行合約錢包）
+    // 查詢所有活躍的授權錢包（執行合約錢包），建立 ID → 錢包 map
     const authorizationWallets = await this.systemWalletRepository.find({
       type: SystemWalletType.CONTRACT_EXECUTION,
       status: SystemWalletStatus.ACTIVE,
     });
+    const walletMap = new Map(authorizationWallets.map((w) => [w.id, w]));
 
     // 構建站點列表項
     const sites: SiteItemDto[] = tenants.map((tenant, index) => {
       const stats = siteStatsList[index];
 
-      // 構建授權錢包信息（從系統錢包表中查詢類型為 CONTRACT_EXECUTION 的錢包）
-      // 如果有多個，取第一個；如果沒有，使用默認值
-      const authorizationWallet =
-        authorizationWallets.length > 0
-          ? {
-              label: authorizationWallets[0].name,
-              address: authorizationWallets[0].address,
-            }
-          : {
-              label: "授權用1",
-              address: "",
-            };
+      // 根據租戶的 executionWalletId 查找對應的授權錢包
+      const executionWalletId = (tenant.cryptoConfig as any)?.executionWalletId;
+      const matchedWallet = executionWalletId
+        ? walletMap.get(executionWalletId)
+        : undefined;
+      const authorizationWallet = matchedWallet
+        ? {
+            label: matchedWallet.name,
+            address: matchedWallet.address,
+          }
+        : {
+            label: "未設定",
+            address: "",
+          };
 
       // 構建系統費錢包列表（從 tenant.systemWallets 中獲取）
       // 這些是類型為 REVENUE_DISTRIBUTION 的系統錢包，已經指派給租戶
