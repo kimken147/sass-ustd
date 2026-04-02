@@ -29,9 +29,13 @@ pnpm --filter @saas-platform/<app-name> test           # Test single app
 pnpm --filter @saas-platform/<app-name> test:watch     # Watch mode for single app
 pnpm --filter @saas-platform/<app-name> test:cov       # Coverage for single app
 
-# Lint & Format
+# Type Check & Lint
+pnpm type-check             # TypeScript type check all packages
 pnpm lint                   # Lint all code
 pnpm format                 # Format code with Prettier
+
+# Clean
+pnpm clean                  # Remove all build artifacts and node_modules
 
 # Database migrations (per-API, run separately)
 pnpm migration:platform                                           # Run platform-api migrations
@@ -44,6 +48,10 @@ pnpm setup:local
 
 # Initialize platform admin user
 pnpm script:init-platform-user
+
+# Tenant management scripts
+pnpm deploy:tenant          # Deploy a tenant (node scripts/deploy-tenant.js)
+pnpm create:tenant          # Create a new tenant (node scripts/create-tenant.js)
 ```
 
 ## Architecture Overview
@@ -97,6 +105,7 @@ Request → TenantContextMiddleware (validate X-Tenant-ID)
 | `config` | Shared ESLint, TypeScript, Tailwind, Prettier configs |
 | `theme` | White-label theming system |
 | `utils` | Shared utility functions (dayjs, lodash wrappers) |
+| `scripts` | Platform user initialization, test environment setup |
 
 ## Backend Patterns
 
@@ -201,6 +210,19 @@ For local multi-tenant development, use `.test` domain (avoid `.local` which cau
 
 Each app has its own `.env.example` — refer to these for required environment variables.
 
+## Deployment (AWS)
+
+**CI/CD**: GitHub Actions (`.github/workflows/`) triggered on `master` and `dev` branches with path filters.
+
+- **Backend APIs**: Docker → ECR → Elastic Beanstalk (ap-southeast-1)
+  - `platform-api` → `saas-platform-api-env.eba-vbk5hy2a.ap-southeast-1.elasticbeanstalk.com`
+  - `tenant-api` → `saas-tenant-api-env.eba-4kqn5gpn.ap-southeast-1.elasticbeanstalk.com`
+- **Frontend Apps**: AWS Amplify (auto-build from GitHub)
+  - Each app has its own `amplify.yml` build spec
+  - Custom domains configured per-tenant via Amplify domain associations
+
+**Domain routing** (production): Tenants get custom domains pointing to Amplify CloudFront distributions. DNS managed in Route 53. Tenant `customDomain` (admin panel) and `customUrl` (customer site) stored in both `saas_platform.tenants` and per-tenant `tenant_config` tables.
+
 ## Documentation
 
 Key design documents in `/docs`:
@@ -210,3 +232,6 @@ Key design documents in `/docs`:
 - `MULTI_SITE_ARCHITECTURE_FINAL.md` — Multi-site design
 - `DEPLOYMENT_ARCHITECTURE_CLARIFICATION.md` — Deployment strategy
 - `REVENUE_SHARING_CALCULATION_EXAMPLE.md` — Financial calculation examples
+- `DATABASE_MIGRATION_GUIDE.md` — Migration workflow
+- `QUICK_START_LOCAL.md` — Quick start guide
+- `SYSTEM_WALLET_SYNC_STRATEGY.md` — Wallet sync design
