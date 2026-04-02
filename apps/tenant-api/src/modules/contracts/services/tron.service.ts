@@ -23,12 +23,23 @@ export class TronService {
   private contractExecutionWalletAddress: string;
   private contractExecutionWalletPrivateKey: string;
   private usdtTokenAddress: string;
+  private tronApiKey: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly encryptionService: EncryptionService
   ) {
+    this.tronApiKey = this.configService.get<string>("TRON_API_KEY") || "";
     this.initialize();
+  }
+
+  /**
+   * 取得 TronGrid API headers（帶 API Key）
+   */
+  private getTronHeaders(): Record<string, string> {
+    return this.tronApiKey
+      ? { "TRON-PRO-API-KEY": this.tronApiKey }
+      : {};
   }
 
   /**
@@ -107,6 +118,7 @@ export class TronService {
           fullHost: fullNode,
           solidityNode: solidityNode,
           eventServer: eventServer,
+          headers: this.getTronHeaders(),
           privateKey: this.contractExecutionWalletPrivateKey,
         });
       }
@@ -194,6 +206,7 @@ export class TronService {
           fullHost: fullNode,
           solidityNode: fullNode,
           eventServer: fullNode,
+          headers: this.getTronHeaders(),
           privateKey: walletPrivateKey, // 使用已解密的私鑰
         });
       } else if (!this.tronWeb && walletPrivateKey) {
@@ -210,6 +223,7 @@ export class TronService {
           fullHost: fullNode,
           solidityNode: fullNode,
           eventServer: fullNode,
+          headers: this.getTronHeaders(),
           privateKey: walletPrivateKey, // 使用已解密的私鑰
         });
       }
@@ -322,6 +336,7 @@ export class TronService {
         // 查餘額是 read-only 但 TronWeb 仍需要一個地址，使用查詢目標地址
         tronWebInstance = new TronWeb({
           fullHost: fullNode,
+          headers: this.getTronHeaders(),
           // 使用被查詢的錢包地址作為 default address（僅用於 read-only 操作）
           privateKey: "0000000000000000000000000000000000000000000000000000000000000001",
         });
