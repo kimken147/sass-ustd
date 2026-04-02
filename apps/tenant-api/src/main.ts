@@ -2,7 +2,7 @@ import { NestFactory, Reflector } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
-import { TransformInterceptor } from "@saas-platform/shared";
+import { TransformInterceptor, LoggingInterceptor, HttpExceptionFilter } from "@saas-platform/shared";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -23,7 +23,13 @@ async function bootstrap() {
   );
 
   // 全局響應攔截器
-  app.useGlobalInterceptors(new TransformInterceptor(reflector));
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new TransformInterceptor(reflector),
+  );
+
+  // 全局異常過濾器（記錄所有錯誤到 log）
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // CORS 設置
   app.enableCors({

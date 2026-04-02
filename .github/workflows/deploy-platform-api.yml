@@ -76,8 +76,11 @@ jobs:
           }
           HEREDOC
 
+          # Include .ebextensions for CloudWatch log streaming
+          cp -r apps/platform-api/.ebextensions .ebextensions
+
           # Bundle and upload
-          zip -r deploy.zip Dockerrun.aws.json
+          zip -r deploy.zip Dockerrun.aws.json .ebextensions/
           aws s3 cp deploy.zip s3://$S3_BUCKET/$VERSION_LABEL.zip
 
           # Create version and deploy
