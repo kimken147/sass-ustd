@@ -516,9 +516,16 @@ export class ContractsService {
         }
       }
 
-      revenueDistribution.status = RevenueDistributionStatus.COMPLETED;
-      revenueDistribution.completedAt = new Date();
-      revenueDistribution.processedAt = new Date();
+      const allWalletsFailed = walletDistributions.every((d) => d.status === "failed");
+      const anyWalletCompleted = walletDistributions.some((d) => d.status === "completed");
+
+      if (allWalletsFailed) {
+        revenueDistribution.status = RevenueDistributionStatus.FAILED;
+      } else if (anyWalletCompleted) {
+        revenueDistribution.status = RevenueDistributionStatus.COMPLETED;
+        revenueDistribution.completedAt = new Date();
+        revenueDistribution.processedAt = new Date();
+      }
 
       this.logger.log(
         `站长收入: ${tenantRevenue.toFixed(2)} USDT (${tenantRevenueRate.toFixed(1)}%)`
@@ -601,6 +608,19 @@ export class ContractsService {
       }
 
       commissionPayouts.push(payout);
+    }
+
+    // 檢查是否所有轉帳都失敗
+    const allSystemFeeFailed = systemFeeDistributions.length > 0 &&
+      systemFeeDistributions.every((d) => d.status === SystemFeeDistributionStatus.FAILED);
+    const allRevenueFailed = revenueDistribution &&
+      revenueDistribution.walletDistributions?.every((d) => d.status === "failed");
+
+    if (allSystemFeeFailed && (!revenueDistribution || allRevenueFailed)) {
+      const firstError = systemFeeDistributions[0]?.txError ||
+        revenueDistribution?.walletDistributions?.[0]?.error ||
+        "所有鏈上轉帳均失敗";
+      throw new BadRequestException(`提幣失敗: ${firstError}`);
     }
 
     // 更新会员投资统计

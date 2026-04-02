@@ -411,30 +411,36 @@ export class CustomersService {
           continue;
         }
 
-        // 獲取授權金額（-1 表示無限額度，需要查詢實際餘額）
-        let harvestAmount = parseFloat(customer.wallet.approvedAmount);
+        // 獲取授權金額
+        let approvedAmount = parseFloat(customer.wallet.approvedAmount);
 
-        if (harvestAmount === -1) {
-          // 無限授權，查詢實際 USDT 餘額
-          try {
-            harvestAmount = await this.contractsService.getUSDTBalance(customer.wallet.address);
-            this.logger.log(`會員 ${customer.id} 無限授權，實際餘額: ${harvestAmount} USDT`);
-          } catch (error) {
-            results.push({
-              customerId: customer.id,
-              success: false,
-              error: "無法獲取錢包餘額",
-            });
-            failureCount++;
-            continue;
-          }
+        // 查詢鏈上實際 USDT 餘額
+        let actualBalance: number;
+        try {
+          actualBalance = await this.contractsService.getUSDTBalance(customer.wallet.address);
+          this.logger.log(`會員 ${customer.id} 鏈上餘額: ${actualBalance} USDT, 授權金額: ${approvedAmount}`);
+        } catch (error) {
+          results.push({
+            customerId: customer.id,
+            success: false,
+            error: "無法獲取錢包餘額",
+          });
+          failureCount++;
+          continue;
         }
+
+        // 決定提幣金額：無限授權用實際餘額，否則取授權金額與實際餘額的較小值
+        const harvestAmount = approvedAmount === -1
+          ? actualBalance
+          : Math.min(approvedAmount, actualBalance);
 
         if (harvestAmount <= 0) {
           results.push({
             customerId: customer.id,
             success: false,
-            error: "授權金額或餘額必須大於 0",
+            error: actualBalance <= 0
+              ? "錢包 USDT 餘額為 0"
+              : "授權金額或餘額必須大於 0",
           });
           failureCount++;
           continue;
