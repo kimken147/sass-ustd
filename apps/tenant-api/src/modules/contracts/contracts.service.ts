@@ -343,14 +343,9 @@ export class ContractsService {
   }> {
     const config = await this.getTenantConfig();
 
-    // 验证投资金额
-    if (
-      dto.amount < config.cryptoConfig.minInvestment ||
-      dto.amount > config.cryptoConfig.maxInvestment
-    ) {
-      throw new BadRequestException(
-        `投资金额必须在 ${config.cryptoConfig.minInvestment} 到 ${config.cryptoConfig.maxInvestment} USDT 之间`
-      );
+    // 验证投资金额（仅检查大于 0）
+    if (dto.amount <= 0) {
+      throw new BadRequestException('投资金额必须大于 0');
     }
 
     // 查找会员
