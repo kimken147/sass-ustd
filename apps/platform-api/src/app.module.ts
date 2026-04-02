@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { SystemWalletsModule } from './modules/system-wallets/system-wallets.module';
 import { SitesModule } from './modules/sites/sites.module';
+import { HealthController } from '@saas-platform/shared';
 
 @Module({
   imports: [
@@ -62,7 +63,7 @@ import { SitesModule } from './modules/sites/sites.module';
     // BillingModule,
     // AnalyticsModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}

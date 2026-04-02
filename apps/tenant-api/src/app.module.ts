@@ -8,6 +8,7 @@ import { TransactionsModule } from "./modules/transactions/transactions.module";
 import { CustomersModule } from "./modules/customers/customers.module";
 import { TenantContextModule, TenantContextMiddleware } from "./common/tenant-context";
 import { DatabaseModule } from "./common/database";
+import { HealthController } from "@saas-platform/shared";
 
 @Module({
   imports: [
@@ -31,13 +32,14 @@ import { DatabaseModule } from "./common/database";
     TransactionsModule,
     CustomersModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(TenantContextMiddleware)
+      .exclude({ path: 'health', method: RequestMethod.GET })
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }
